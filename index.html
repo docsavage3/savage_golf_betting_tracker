@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savage Golf - Side Game Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏌️ Savage Golf</h1>
+            <p class="subtitle">Track your side games and bets</p>
+        </header>
+
+        <!-- Game Setup Section -->
+        <section id="gameSetup" class="card">
+            <h2>Game Setup</h2>
+            <div class="players-section">
+                <h3>Players (4 required)</h3>
+                <div class="player-inputs">
+                    <div class="player-input">
+                        <input type="text" id="player1" placeholder="Player 1" required>
+                    </div>
+                    <div class="player-input">
+                        <input type="text" id="player2" placeholder="Player 2" required>
+                    </div>
+                    <div class="player-input">
+                        <input type="text" id="player3" placeholder="Player 3" required>
+                    </div>
+                    <div class="player-input">
+                        <input type="text" id="player4" placeholder="Player 4" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="games-section">
+                <h3>Select Games to Play</h3>
+                <div class="game-selection">
+                    <div class="game-option">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="gameMurph" value="murph" checked>
+                            <span class="checkmark"></span>
+                            Murph
+                        </label>
+                        <div class="bet-amount" id="murphBetAmount" style="display: block;">
+                            <label for="murphBet">Bet Amount ($):</label>
+                            <input type="number" id="murphBet" min="0.01" step="0.01" value="1.00">
+                        </div>
+                    </div>
+                    <div class="game-option">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="gameSkins" value="skins">
+                            <span class="checkmark"></span>
+                            Skins
+                        </label>
+                        <div class="bet-amount" id="skinsBetAmount" style="display: none;">
+                            <label for="skinsBet">Bet Amount ($):</label>
+                            <input type="number" id="skinsBet" min="0.01" step="0.01" value="1.00">
+                        </div>
+                        <div class="team-selection" id="skinsTeamSelection" style="display: none;">
+                            <label>Team Selection:</label>
+                            <div class="team-inputs">
+                                <div class="team-input">
+                                    <label for="team1Player1">Team 1 Player 1:</label>
+                                    <select id="team1Player1" required>
+                                        <option value="">Select player...</option>
+                                    </select>
+                                </div>
+                                <div class="team-input">
+                                    <label for="team1Player2">Team 1 Player 2:</label>
+                                    <select id="team1Player2" required>
+                                        <option value="">Select player...</option>
+                                    </select>
+                                </div>
+                                <div class="team-input">
+                                    <label for="team2Player1">Team 2 Player 1:</label>
+                                    <select id="team2Player1" required>
+                                        <option value="">Select player...</option>
+                                    </select>
+                                </div>
+                                <div class="team-input">
+                                    <label for="team2Player2">Team 2 Player 2:</label>
+                                    <select id="team2Player2" required>
+                                        <option value="">Select player...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" id="startGame" class="btn btn-primary">Start Game</button>
+        </section>
+
+        <!-- Game Play Section -->
+        <section id="gamePlay" class="card" style="display: none;">
+            <h2>Current Hole</h2>
+            <div class="hole-info">
+                <span>Hole: <span id="currentHole">1</span></span>
+                <button type="button" id="nextHole" class="btn btn-secondary">Next Hole</button>
+            </div>
+            
+            <div class="game-actions">
+                <h3>Game Actions</h3>
+                <div id="murphActions" class="game-section">
+                    <h4>Murph</h4>
+                    <div id="murphActionsList"></div>
+                    <button type="button" id="callMurph" class="btn btn-warning">Call Murph</button>
+                </div>
+                
+                <div id="skinsActions" class="game-section" style="display: none;">
+                    <h4>Skins</h4>
+                    <div id="skinsActionsList"></div>
+                    <button type="button" id="recordSkins" class="btn btn-warning">Record Skins</button>
+                </div>
+            </div>
+
+            <div class="game-summary">
+                <h3>Game Summary</h3>
+                <div id="gameSummary"></div>
+            </div>
+        </section>
+
+        <!-- Murph Modal -->
+        <div id="murphModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Call Murph</h3>
+                <div class="form-group">
+                    <label for="murphPlayer">Player:</label>
+                    <select id="murphPlayer" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="murphHole">Hole:</label>
+                    <input type="number" id="murphHole" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="murphResult">Result:</label>
+                    <select id="murphResult" required>
+                        <option value="">Select result...</option>
+                        <option value="success">✅ Made it (within 2 shots)</option>
+                        <option value="fail">❌ Failed (over 2 shots)</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="saveMurph" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelMurph" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skins Modal -->
+        <div id="skinsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Record Skins</h3>
+                <div class="form-group">
+                    <label for="skinsHole">Hole:</label>
+                    <input type="number" id="skinsHole" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="skinsWinner">Hole Result:</label>
+                    <select id="skinsWinner" required>
+                        <option value="">Select result...</option>
+                        <option value="team1" id="team1Option">Team 1</option>
+                        <option value="team2" id="team2Option">Team 2</option>
+                        <option value="carryover">Carryover (No Winner)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="skinsCarryoverCount">Skins Carrying Over:</label>
+                    <input type="number" id="skinsCarryoverCount" min="1" value="1" readonly>
+                    <small style="color: #7f8c8d; font-size: 0.9rem;">This shows how many skins are currently at stake</small>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="saveSkins" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelSkins" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Results Section -->
+        <section id="finalResults" class="card" style="display: none;">
+            <h2>Final Results</h2>
+            <div id="finalResultsContent"></div>
+            <button type="button" id="newGame" class="btn btn-primary">New Game</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
