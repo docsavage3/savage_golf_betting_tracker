@@ -1,29 +1,28 @@
 # 🏌️ Savage Golf - Side Game Tracker
 
-A mobile-friendly web application to track various golf side games and bets. Currently features the "Murph" game with more games coming soon!
+A mobile-friendly web application to track golf side games and bets. Perfect for foursomes looking to add some excitement to their rounds with multiple side games running simultaneously.
 
-## 🎯 Available Side Games
+## 🎮 Games Available
 
-### Murph
-**Murph** is a golf side game where any player can call "Murph" at any time, challenging themselves to get the ball in the hole within 2 shots.
+### **Murph Game**
+- **Players**: 2-4 players (now requires exactly 4)
+- **Objective**: Call "Murph" and get the ball in the hole within 2 shots
+- **Betting**: Agreed amount per Murph call
+- **Rules**: 
+  - Success: All other players pay the caller
+  - Failure: Caller pays all other players
+  - Multiple calls per hole allowed
+  - Agreed bet amount is applied to each Murph call
 
-**Rules:**
-- Any player can call "Murph" on any hole
-- Multiple "Murph" calls can be made per hole
-- If the player makes it within 2 shots: **All other players pay the caller**
-- If the player fails: **The caller pays all other players**
-- Agreed bet amount is applied to each Murph call
-
-### Skins
-**Skins** is a team-based game where 2 players are paired together to play against the other two.
-
-**Rules:**
-- **4 players required** (2 teams of 2)
-- **Flexible team selection** - Choose any 2v2 combination
-- **Dynamic team naming** - Teams are named after their players
-- **Carryover system** - Unwon skins carry over to the next hole
-- **Multiple skin wins** - Teams can win 2+ skins when they finally win a hole
-- Agreed bet amount is applied to each skin won
+### **Skins Game**
+- **Players**: Exactly 4 players (2 teams of 2)
+- **Objective**: Lowest net team score wins the skin
+- **Betting**: Agreed amount per skin won
+- **Rules**: 
+  - Teams are formed from 4 players
+  - Lowest net score from one team wins the skin
+  - Carryover system: if no team wins, skins accumulate
+  - Agreed bet amount is applied to each skin won
 
 ## 📱 Features
 
@@ -34,6 +33,8 @@ A mobile-friendly web application to track various golf side games and bets. Cur
 - **Combined totals** - See overall financial standings across all games
 - **Real-time tracking** - See who owes what as the game progresses
 - **Hole-by-hole organization** - Track game actions by hole
+- **Bidirectional hole navigation** - Move forward and backward between holes
+- **Page-based navigation** - Dedicated pages for each game type and combined totals
 - **Financial summary** - Always know the current standings
 - **Responsive notifications** - Get feedback on game actions
 
@@ -47,32 +48,73 @@ A mobile-friendly web application to track various golf side games and bets. Cur
 
 ## 🎮 During the Game
 
-### Murph Game:
+### **Game Navigation**
+Once the game starts, you'll see a central navigation page with:
+- **Hole navigation** - Previous/Next hole buttons
+- **Game buttons** - Large, easy-to-tap buttons for each game type
+- **Status indicators** - See how many actions have been recorded for each game
+
+### **Murph Game Page:**
 1. Click **"Call Murph"** button
 2. Select the player calling Murph
 3. Choose the hole number
 4. Select the result (Made it ✅ or Failed ❌)
 5. Save the call
+6. View **Murph Calls History** organized by hole
+7. See **Murph Financial Summary** for current standings
 
-### Skins Game:
+### **Skins Game Page:**
 1. **Select your teams** from the dropdown menus (each player can only be on one team)
 2. Click **"Record Skins"** button
 3. Enter the hole number
 4. Select the winning team or carryover
 5. **Carryover tracking** - See how many skins are at stake
 6. Save the result
+7. View **Skins History** organized by hole
+8. See **Skins Financial Summary** for current standings
 
-### Moving Between Holes:
+### **Combined Total Page:**
+- **Overall Financial Summary** - Combined totals across all games
+- **Game Breakdowns** - Individual summaries for each game type
+- **Complete picture** - See who's winning/losing overall
+
+### **Moving Between Holes:**
 - Use the **"Next Hole"** button to advance
+- Use the **"Previous Hole"** button to go back and make edits
 - The app automatically tracks the current hole
+- **18-hole limit** - Game automatically ends after hole 18
+- Previous Hole button is disabled on hole 1
+- Next Hole button shows "Game Complete" on hole 18
 
-### Tracking Results:
-- View all game actions organized by hole and game type
-- See real-time financial standings for each game individually
-- View combined totals across all games
-- Green indicates successful actions/wins
-- Red indicates failed actions/losses
-- Orange indicates carryovers (for Skins)
+### **Navigation Between Pages:**
+- **From any game page**: Click "← Back to Navigation" to return to the main navigation
+- **From navigation**: Click any game button to go to that specific game page
+- **Seamless switching**: Move between games and combined totals easily
+- **Always accessible**: New Game button is always visible for quick resets
+
+### **Correcting Mistakes:**
+- **Delete individual actions** - Click the 🗑️ button on any Murph call or Skins action
+- **Confirmation dialogs** - Prevents accidental deletions
+- **Automatic recalculation** - Financial summaries update immediately
+- **Carryover handling** - Skins carryover counts recalculate correctly when deleting carryover actions
+
+### **Game Completion:**
+- **18-hole limit** - Game automatically ends after completing hole 18
+- **Final Results Page** - Comprehensive summary of all games played
+- **Individual game breakdowns** - See results for Murph and Skins separately
+- **Combined totals** - Overall financial standings across all games
+- **Payment instructions** - Clear breakdown of who needs to pay whom
+- **Easy restart** - Start a new game directly from final results
+
+### **Tracking Results:**
+- **Dedicated spaces** - Each game has its own page with history and summary
+- **Real-time updates** - See standings update as you record actions
+- **Organized by hole** - All actions grouped by hole number
+- **Easy corrections** - Delete individual actions with 🗑️ buttons
+- **Clear visual indicators**:
+  - 🟢 Green for successful actions/wins
+  - 🔴 Red for failed actions/losses  
+  - 🟠 Orange for carryovers (Skins)
 
 ## 💰 Financial Tracking
 
@@ -86,38 +128,42 @@ The app automatically calculates:
 
 ## 🔄 Starting a New Game
 
-Click **"New Game"** to reset everything and start fresh with new players or bet amounts.
+Click **"🔄 New Game"** to reset everything and start fresh with new players or bet amounts.
 
 ## 📱 Mobile Optimization
 
-- Touch-friendly buttons and inputs
-- Responsive design for all screen sizes
-- Optimized for portrait orientation
-- Fast loading and smooth animations
+- **Touch-friendly navigation** - Large buttons and easy page switching
+- **Responsive design** - Works perfectly on all screen sizes
+- **Optimized for portrait orientation** - Perfect for one-handed use on the course
+- **Fast loading** - Smooth animations and transitions
+- **Intuitive layout** - Easy to find what you need
 
 ## 🎨 Design Features
 
-- Modern, clean interface
-- Golf-themed color scheme
-- Smooth animations and transitions
-- Easy-to-read typography
-- Intuitive navigation
+- **Modern, clean interface** - Professional golf app appearance
+- **Golf-themed color scheme** - Familiar and pleasant to use
+- **Smooth animations** - Professional feel with transitions
+- **Easy-to-read typography** - Clear information display
+- **Intuitive navigation** - Logical page flow and easy access
 
 ## 🛠️ Technical Details
 
 - **Pure HTML/CSS/JavaScript** - No external dependencies
 - **Modular architecture** - Easy to add new side games
+- **Page-based navigation** - Clean separation of concerns
 - **Local storage** - Game data persists during the session
 - **Responsive design** - Works on all devices
 - **Progressive Web App** ready
 
 ## 💡 Tips for Best Experience
 
-- Use on a mobile device for optimal experience
-- Keep the browser tab open during your round
-- Enter player names clearly to avoid confusion
-- Update Murph calls immediately after each attempt
-- Use the hole navigation to keep track of progress
+- **Use on a mobile device** for optimal experience
+- **Keep the browser tab open** during your round
+- **Enter player names clearly** to avoid confusion
+- **Update game actions immediately** after each hole
+- **Use the hole navigation** to keep track of progress
+- **Switch between game pages** to focus on specific games
+- **Check combined totals** regularly to see overall standings
 
 ---
 

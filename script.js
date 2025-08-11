@@ -9,6 +9,7 @@ class SavageGolf {
         };
         this.gameStarted = false;
         this.requiredPlayers = 4;
+        this.currentPage = 'navigation';
         
         this.initializeEventListeners();
         this.setupGameCheckboxes();
@@ -19,7 +20,22 @@ class SavageGolf {
         document.getElementById('startGame').addEventListener('click', () => this.startGame());
         
         // Game play
+        document.getElementById('previousHole').addEventListener('click', () => this.previousHole());
         document.getElementById('nextHole').addEventListener('click', () => this.nextHole());
+        
+        // Navigation buttons
+        document.getElementById('navMurph').addEventListener('click', () => this.showPage('murph'));
+        document.getElementById('navSkins').addEventListener('click', () => this.showPage('skins'));
+        document.getElementById('navCombined').addEventListener('click', () => this.showPage('combined'));
+        
+        // Back to navigation buttons
+        document.getElementById('backToNav').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNav2').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNav3').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNav4').addEventListener('click', () => this.showPage('navigation'));
+        
+        // New game from final results
+        document.getElementById('newGameFromFinal').addEventListener('click', () => this.resetGame());
         
         // Murph game
         document.getElementById('callMurph').addEventListener('click', () => this.showMurphModal());
@@ -48,6 +64,55 @@ class SavageGolf {
         });
     }
 
+    showPage(pageName) {
+        // Hide all pages
+        const pages = ['gameNavigation', 'murphPage', 'skinsPage', 'combinedPage', 'finalResults'];
+        pages.forEach(page => {
+            document.getElementById(page).style.display = 'none';
+        });
+        
+        // Show the requested page
+        if (pageName === 'navigation') {
+            document.getElementById('gameNavigation').style.display = 'block';
+        } else if (pageName === 'murph') {
+            document.getElementById('murphPage').style.display = 'block';
+        } else if (pageName === 'skins') {
+            document.getElementById('skinsPage').style.display = 'block';
+        } else if (pageName === 'combined') {
+            document.getElementById('combinedPage').style.display = 'block';
+        } else if (pageName === 'finalResults') {
+            document.getElementById('finalResults').style.display = 'block';
+        }
+        
+        this.currentPage = pageName;
+        
+        // Update the specific page content
+        if (pageName === 'murph') {
+            this.updateMurphPage();
+        } else if (pageName === 'skins') {
+            this.updateSkinsPage();
+        } else if (pageName === 'combined') {
+            this.updateCombinedPage();
+        } else if (pageName === 'finalResults') {
+            this.updateFinalResults();
+        }
+    }
+
+    updateMurphPage() {
+        this.updateMurphActionsList();
+        this.updateMurphSummary();
+    }
+
+    updateSkinsPage() {
+        this.updateSkinsActionsList();
+        this.updateSkinsSummary();
+    }
+
+    updateCombinedPage() {
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+    }
+
     setupGameCheckboxes() {
         // Set up game selection checkboxes
         const murphCheckbox = document.getElementById('gameMurph');
@@ -68,6 +133,7 @@ class SavageGolf {
         const playerInputs = document.querySelectorAll('.player-input input');
         playerInputs.forEach(input => {
             input.addEventListener('input', () => {
+                console.log('Player input changed, updating team selects...');
                 this.updateTeamSelects();
             });
         });
@@ -79,9 +145,12 @@ class SavageGolf {
             .map(input => input.value.trim())
             .filter(name => name.length > 0);
         
-        // Only populate if we have 4 players
+        // Only populate if we have exactly 4 players
         if (playerNames.length === 4) {
             this.populateTeamSelects();
+        } else {
+            // Clear team selections if we don't have 4 players
+            this.clearTeamSelections();
         }
     }
 
@@ -91,6 +160,15 @@ class SavageGolf {
             .map(input => input.value.trim())
             .filter(name => name.length > 0);
         
+        console.log('Populating team selects with players:', playerNames);
+        
+        // Only proceed if we have exactly 4 players
+        if (playerNames.length !== 4) {
+            console.log('Not enough players, clearing team selects');
+            this.clearTeamSelections();
+            return;
+        }
+        
         // Populate all team selection dropdowns
         const teamSelects = [
             'team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'
@@ -98,14 +176,19 @@ class SavageGolf {
         
         teamSelects.forEach(selectId => {
             const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Select player...</option>';
-            
-            playerNames.forEach(player => {
-                const option = document.createElement('option');
-                option.value = player;
-                option.textContent = player;
-                select.appendChild(option);
-            });
+            if (select) {
+                select.innerHTML = '<option value="">Select player...</option>';
+                
+                playerNames.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player;
+                    option.textContent = player;
+                    select.appendChild(option);
+                });
+                console.log(`Populated ${selectId} with ${playerNames.length} players`);
+            } else {
+                console.error(`Could not find select element: ${selectId}`);
+            }
         });
         
         // Add change listeners to update other dropdowns when selections change
@@ -120,12 +203,13 @@ class SavageGolf {
         teamSelects.forEach(selectId => {
             const select = document.getElementById(selectId);
             select.addEventListener('change', () => {
-                this.updateTeamSelectsAvailability();
+                // Only update other dropdowns when this one changes
+                this.updateOtherDropdowns(selectId);
             });
         });
     }
 
-    updateTeamSelectsAvailability() {
+    updateOtherDropdowns(changedSelectId) {
         const teamSelects = [
             'team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'
         ];
@@ -136,8 +220,10 @@ class SavageGolf {
             return select.value;
         });
         
-        // Update each dropdown to show only available players
-        teamSelects.forEach((selectId, index) => {
+        // Update other dropdowns (not the one that just changed)
+        teamSelects.forEach((selectId) => {
+            if (selectId === changedSelectId) return; // Skip the changed one
+            
             const select = document.getElementById(selectId);
             const currentValue = select.value;
             
@@ -155,8 +241,8 @@ class SavageGolf {
             // Add options for available players
             playerNames.forEach(player => {
                 // Check if this player is already selected in another dropdown
-                const isSelectedElsewhere = selectedValues.some((value, otherIndex) => 
-                    value === player && otherIndex !== index
+                const isSelectedElsewhere = selectedValues.some((value, otherSelectId) => 
+                    value === player && otherSelectId !== selectId
                 );
                 
                 // Only add if not selected elsewhere, or if this is the current selection
@@ -198,14 +284,19 @@ class SavageGolf {
         const teamSelects = ['team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'];
         teamSelects.forEach(selectId => {
             const select = document.getElementById(selectId);
-            select.value = '';
+            if (select) {
+                select.value = '';
+                select.innerHTML = '<option value="">Select player...</option>';
+                console.log(`Cleared ${selectId}`);
+            } else {
+                console.error(`Could not find select element to clear: ${selectId}`);
+            }
         });
     }
 
     toggleGameSection(gameType) {
         const checkbox = document.getElementById(`game${gameType.charAt(0).toUpperCase() + gameType.slice(1)}`);
         const betAmount = document.getElementById(`${gameType}BetAmount`);
-        const gameSection = document.getElementById(`${gameType}Actions`);
         
         if (gameType === 'skins') {
             const teamSelection = document.getElementById('skinsTeamSelection');
@@ -214,29 +305,17 @@ class SavageGolf {
                 teamSelection.style.display = 'block';
                 // Populate team selects if we have 4 players
                 this.updateTeamSelects();
-                if (this.gameStarted) {
-                    gameSection.style.display = 'block';
-                }
             } else {
                 betAmount.style.display = 'none';
                 teamSelection.style.display = 'none';
                 // Clear team selections when unchecking
                 this.clearTeamSelections();
-                if (this.gameStarted) {
-                    gameSection.style.display = 'none';
-                }
             }
         } else {
             if (checkbox.checked) {
                 betAmount.style.display = 'block';
-                if (this.gameStarted) {
-                    gameSection.style.display = 'block';
-                }
             } else {
                 betAmount.style.display = 'none';
-                if (this.gameStarted) {
-                    gameSection.style.display = 'none';
-                }
             }
         }
     }
@@ -291,12 +370,12 @@ class SavageGolf {
         
         this.gameStarted = true;
         
-        // Hide setup, show game
+        // Hide setup, show navigation
         document.getElementById('gameSetup').style.display = 'none';
-        document.getElementById('gamePlay').style.display = 'block';
+        this.showPage('navigation');
         
-        // Show/hide game sections based on selection
-        this.updateGameSections();
+        // Initialize hole navigation button states
+        this.updatePreviousHoleButton();
         
         // Initialize game state
         this.updateGameDisplay();
@@ -353,26 +432,264 @@ class SavageGolf {
         return true;
     }
 
-    updateGameSections() {
-        // Show/hide game sections based on what's enabled
-        if (this.gameConfigs.murph?.enabled) {
-            document.getElementById('murphActions').style.display = 'block';
-        } else {
-            document.getElementById('murphActions').style.display = 'none';
-        }
-        
-        if (this.gameConfigs.skins?.enabled) {
-            document.getElementById('skinsActions').style.display = 'block';
-        } else {
-            document.getElementById('skinsActions').style.display = 'none';
+    previousHole() {
+        if (this.currentHole > 1) {
+            this.currentHole--;
+            document.getElementById('currentHole').textContent = this.currentHole;
+            this.updatePreviousHoleButton();
+            this.updateGameDisplay();
+            this.showNotification(`Moved back to hole ${this.currentHole}`, 'info');
         }
     }
 
     nextHole() {
+        if (this.currentHole >= 18) {
+            this.showNotification('Maximum 18 holes reached. Game complete!', 'success');
+            this.endGame();
+            return;
+        }
+        
         this.currentHole++;
         document.getElementById('currentHole').textContent = this.currentHole;
+        this.updatePreviousHoleButton();
         this.updateGameDisplay();
         this.showNotification(`Moving to hole ${this.currentHole}`, 'info');
+    }
+
+    updatePreviousHoleButton() {
+        const previousButton = document.getElementById('previousHole');
+        const nextButton = document.getElementById('nextHole');
+        
+        previousButton.disabled = this.currentHole <= 1;
+        
+        // Disable next button on hole 18
+        if (nextButton) {
+            nextButton.disabled = this.currentHole >= 18;
+            if (this.currentHole >= 18) {
+                nextButton.textContent = 'Game Complete';
+                nextButton.style.opacity = '0.6';
+            } else {
+                nextButton.textContent = 'Next Hole →';
+                nextButton.style.opacity = '1';
+            }
+        }
+    }
+
+    endGame() {
+        // Show final results page
+        this.showPage('finalResults');
+        
+        // Update final results content
+        this.updateFinalResults();
+    }
+
+    updateFinalResults() {
+        const container = document.getElementById('finalResultsContent');
+        
+        if (!container) return;
+        
+        let finalResultsHTML = '';
+        
+        // Game Summary Header
+        finalResultsHTML += `
+            <div class="final-header">
+                <h2>🏆 Game Complete!</h2>
+                <p class="final-subtitle">Final results for all games played</p>
+            </div>
+        `;
+        
+        // Individual Game Results
+        if (this.gameConfigs.murph?.enabled && this.gameActions.murph.length > 0) {
+            finalResultsHTML += this.generateMurphFinalSummary();
+        }
+        
+        if (this.gameConfigs.skins?.enabled && this.gameActions.skins.length > 0) {
+            finalResultsHTML += this.generateSkinsFinalSummary();
+        }
+        
+        // Combined Final Summary
+        finalResultsHTML += this.generateCombinedFinalSummary();
+        
+        // Payment Instructions
+        finalResultsHTML += this.generatePaymentInstructions();
+        
+        container.innerHTML = finalResultsHTML;
+    }
+
+    generateMurphFinalSummary() {
+        const murphSummary = this.calculateMurphSummary();
+        let html = `
+            <div class="final-game-section">
+                <h3>🎯 Murph Game Results</h3>
+                <div class="final-game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Calls:</span>
+                        <span class="stat-value">${this.gameActions.murph.length}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bet Amount:</span>
+                        <span class="stat-value">$${this.gameConfigs.murph.betAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="final-game-summary">
+        `;
+        
+        Object.entries(murphSummary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            html += `
+                <div class="final-summary-item">
+                    <span class="final-summary-player">${player}</span>
+                    <span class="final-summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    generateSkinsFinalSummary() {
+        const skinsSummary = this.calculateSkinsSummary();
+        const totalSkins = this.gameActions.skins.filter(skin => skin.winner !== 'carryover').length;
+        const carryoverSkins = this.gameActions.skins.filter(skin => skin.winner === 'carryover').length;
+        
+        let html = `
+            <div class="final-game-section">
+                <h3>🏆 Skins Game Results</h3>
+                <div class="final-game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Skins Won:</span>
+                        <span class="stat-value">${totalSkins}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Carryover Skins:</span>
+                        <span class="stat-value">${carryoverSkins}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bet Amount:</span>
+                        <span class="stat-value">$${this.gameConfigs.skins.betAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="final-game-summary">
+        `;
+        
+        Object.entries(skinsSummary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            html += `
+                <div class="final-summary-item">
+                    <span class="final-summary-player">${player}</span>
+                    <span class="final-summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    generateCombinedFinalSummary() {
+        const gameSummaries = {};
+        
+        if (this.gameConfigs.murph?.enabled) {
+            gameSummaries.murph = this.calculateMurphSummary();
+        }
+        
+        if (this.gameConfigs.skins?.enabled) {
+            gameSummaries.skins = this.calculateSkinsSummary();
+        }
+        
+        const combinedSummary = this.calculateCombinedSummary(gameSummaries);
+        
+        let html = `
+            <div class="final-game-section final-combined">
+                <h3>💰 Combined Final Results</h3>
+                <div class="final-game-summary">
+        `;
+        
+        Object.entries(combinedSummary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            html += `
+                <div class="final-summary-item">
+                    <span class="final-summary-player">${player}</span>
+                    <span class="final-summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    generatePaymentInstructions() {
+        const gameSummaries = {};
+        
+        if (this.gameConfigs.murph?.enabled) {
+            gameSummaries.murph = this.calculateMurphSummary();
+        }
+        
+        if (this.gameConfigs.skins?.enabled) {
+            gameSummaries.skins = this.calculateSkinsSummary();
+        }
+        
+        const combinedSummary = this.calculateCombinedSummary(gameSummaries);
+        
+        // Separate winners and losers
+        const winners = Object.entries(combinedSummary).filter(([player, balance]) => balance > 0);
+        const losers = Object.entries(combinedSummary).filter(([player, balance]) => balance < 0);
+        
+        let html = `
+            <div class="final-game-section payment-instructions">
+                <h3>💳 Payment Instructions</h3>
+        `;
+        
+        if (winners.length === 0 && losers.length === 0) {
+            html += '<p class="no-payments">No payments needed - all players are even!</p>';
+        } else {
+            html += '<div class="payment-list">';
+            
+            // Generate payment instructions
+            winners.forEach(([winner, amount]) => {
+                const paymentAmount = Math.abs(amount);
+                html += `
+                    <div class="payment-item">
+                        <div class="payment-header">
+                            <span class="payment-recipient">${winner} receives $${paymentAmount.toFixed(2)}</span>
+                        </div>
+                        <div class="payment-breakdown">
+                `;
+                
+                // Show who pays this winner
+                losers.forEach(([loser, lossAmount]) => {
+                    if (Math.abs(lossAmount) > 0) {
+                        const payment = Math.min(paymentAmount, Math.abs(lossAmount));
+                        html += `
+                            <div class="payment-detail">
+                                <span class="payment-from">${loser}</span>
+                                <span class="payment-arrow">→</span>
+                                <span class="payment-to">${winner}</span>
+                                <span class="payment-amount">$${payment.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div></div>';
+            });
+            
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        return html;
     }
 
     // Murph Game Methods
@@ -511,9 +828,31 @@ class SavageGolf {
     }
 
     updateGameDisplay() {
-        this.updateMurphActionsList();
-        this.updateSkinsActionsList();
-        this.updateGameSummary();
+        // Update navigation status
+        this.updateNavigationStatus();
+        
+        // Update current page if it's visible
+        if (this.currentPage === 'murph') {
+            this.updateMurphPage();
+        } else if (this.currentPage === 'skins') {
+            this.updateSkinsPage();
+        } else if (this.currentPage === 'combined') {
+            this.updateCombinedPage();
+        }
+    }
+
+    updateNavigationStatus() {
+        // Update Murph status
+        if (this.gameConfigs.murph?.enabled) {
+            const murphCount = this.gameActions.murph.length;
+            document.getElementById('murphStatus').textContent = `${murphCount} call${murphCount !== 1 ? 's' : ''}`;
+        }
+        
+        // Update Skins status
+        if (this.gameConfigs.skins?.enabled) {
+            const skinsCount = this.gameActions.skins.length;
+            document.getElementById('skinsStatus').textContent = `${skinsCount} skin${skinsCount !== 1 ? 's' : ''}`;
+        }
     }
 
     updateMurphActionsList() {
@@ -547,6 +886,9 @@ class SavageGolf {
                     <div class="game-action-header">
                         <span class="game-action-player">${call.player}</span>
                         <span class="game-action-hole">Hole ${call.hole}</span>
+                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteMurphCall(${call.id})" title="Delete this Murph call">
+                            🗑️
+                        </button>
                     </div>
                     <div class="game-action-result ${call.result}">
                         ${call.result === 'success' ? '✅ Made it!' : '❌ Failed'}
@@ -600,6 +942,9 @@ class SavageGolf {
                     <div class="game-action-header">
                         <span class="game-action-player">Hole ${skin.hole}</span>
                         <span class="game-action-hole">Skins</span>
+                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteSkinsAction(${skin.id})" title="Delete this Skins action">
+                            🗑️
+                        </button>
                     </div>
                     <div class="game-action-result ${skin.winner === 'carryover' ? 'neutral' : 'success'}">
                         ${resultText}
@@ -612,92 +957,84 @@ class SavageGolf {
         });
     }
 
-    updateGameSummary() {
-        const container = document.getElementById('gameSummary');
+    updateMurphSummary() {
+        const container = document.getElementById('murphSummary');
+        
+        if (this.gameActions.murph.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Murph calls yet</p>';
+            return;
+        }
+        
+        const summary = this.calculateMurphSummary();
+        this.displaySummary(container, summary);
+    }
+
+    updateSkinsSummary() {
+        const container = document.getElementById('skinsSummary');
+        
+        if (this.gameActions.skins.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Skins recorded yet</p>';
+            return;
+        }
+        
+        const summary = this.calculateSkinsSummary();
+        this.displaySummary(container, summary);
+    }
+
+    updateCombinedSummary() {
+        const container = document.getElementById('combinedSummary');
         
         if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No activity yet</p>';
             return;
         }
         
-        // Calculate financial summary for each game
+        // Calculate combined summary
         const gameSummaries = {};
         
-        // Murph game summary
         if (this.gameConfigs.murph?.enabled) {
             gameSummaries.murph = this.calculateMurphSummary();
         }
         
-        // Skins game summary
         if (this.gameConfigs.skins?.enabled) {
             gameSummaries.skins = this.calculateSkinsSummary();
         }
         
-        // Combined total summary
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
+        this.displaySummary(container, combinedSummary);
+    }
+
+    updateGameBreakdowns() {
+        // Update Murph breakdown
+        if (this.gameConfigs.murph?.enabled) {
+            const murphBreakdown = document.getElementById('murphBreakdown');
+            const summary = this.calculateMurphSummary();
+            this.displaySummary(murphBreakdown, summary);
+        }
         
-        // Display summaries
+        // Update Skins breakdown
+        if (this.gameConfigs.skins?.enabled) {
+            const skinsBreakdown = document.getElementById('skinsBreakdown');
+            const summary = this.calculateSkinsSummary();
+            this.displaySummary(skinsBreakdown, summary);
+        }
+    }
+
+    displaySummary(container, summary) {
         let summaryHTML = '';
         
-        // Individual game summaries
-        Object.entries(gameSummaries).forEach(([gameType, summary]) => {
-            const gameName = gameType === 'murph' ? 'Murph' : 'Skins';
-            const betAmount = this.gameConfigs[gameType].betAmount;
-            
-            let gameHeader = `${gameName} ($${betAmount.toFixed(2)} per action)`;
-            
-            // Add team information for Skins
-            if (gameType === 'skins' && this.gameConfigs.skins?.teamNames) {
-                gameHeader += `<br><small style="font-weight: normal; color: #7f8c8d;">${this.gameConfigs.skins.teamNames.team1} vs ${this.gameConfigs.skins.teamNames.team2}</small>`;
-            }
+        Object.entries(summary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
             
             summaryHTML += `
-                <div class="game-summary-section">
-                    <h4 style="margin: 16px 0 8px 0; color: #2c3e50; border-bottom: 1px solid #bdc3c7; padding-bottom: 4px;">
-                        ${gameHeader}
-                    </h4>
+                <div class="summary-item">
+                    <span class="summary-player">${player}</span>
+                    <span class="summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
             `;
-            
-            Object.entries(summary).forEach(([player, balance]) => {
-                const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
-                const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
-                                  balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
-                
-                summaryHTML += `
-                    <div class="summary-item">
-                        <span class="summary-player">${player}</span>
-                        <span class="summary-amount ${balanceClass}">${balanceText}</span>
-                    </div>
-                `;
-            });
-            
-            summaryHTML += '</div>';
         });
-        
-        // Combined total summary
-        if (Object.keys(gameSummaries).length > 1) {
-            summaryHTML += `
-                <div class="game-summary-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #3498db;">
-                    <h4 style="margin: 16px 0 8px 0; color: #2c3e50; border-bottom: 1px solid #3498db; padding-bottom: 4px;">
-                        Combined Total
-                    </h4>
-            `;
-            
-            Object.entries(combinedSummary).forEach(([player, balance]) => {
-                const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
-                const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
-                                  balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
-                
-                summaryHTML += `
-                    <div class="summary-item">
-                        <span class="summary-player">${player}</span>
-                        <span class="summary-amount ${balanceClass}">${balanceText}</span>
-                    </div>
-                `;
-            });
-            
-            summaryHTML += '</div>';
-        }
         
         container.innerHTML = summaryHTML;
     }
@@ -848,6 +1185,7 @@ class SavageGolf {
             skins: []
         };
         this.gameStarted = false;
+        this.currentPage = 'navigation';
         
         // Reset form inputs
         document.getElementById('murphBet').value = '1.00';
@@ -867,18 +1205,103 @@ class SavageGolf {
         document.getElementById('currentHole').textContent = '1';
         document.getElementById('murphActionsList').innerHTML = '';
         document.getElementById('skinsActionsList').innerHTML = '';
-        document.getElementById('gameSummary').innerHTML = '';
+        document.getElementById('murphSummary').innerHTML = '';
+        document.getElementById('skinsSummary').innerHTML = '';
+        document.getElementById('combinedSummary').innerHTML = '';
+        document.getElementById('murphBreakdown').innerHTML = '';
+        document.getElementById('skinsBreakdown').innerHTML = '';
         
-        // Show setup, hide game
+        // Show setup, hide all game pages
         document.getElementById('gameSetup').style.display = 'block';
-        document.getElementById('gamePlay').style.display = 'none';
+        document.getElementById('gameNavigation').style.display = 'none';
+        document.getElementById('murphPage').style.display = 'none';
+        document.getElementById('skinsPage').style.display = 'none';
+        document.getElementById('combinedPage').style.display = 'none';
         document.getElementById('finalResults').style.display = 'none';
         
         // Reset game sections
         this.toggleGameSection('murph');
         this.toggleGameSection('skins');
         
+        // Reset previous hole button state
+        this.updatePreviousHoleButton();
+        
         this.showNotification('Game reset! Ready for a new round.', 'info');
+    }
+
+    deleteMurphCall(callId) {
+        // Find the call to delete
+        const callIndex = this.gameActions.murph.findIndex(call => call.id === callId);
+        if (callIndex === -1) {
+            this.showNotification('Murph call not found.', 'error');
+            return;
+        }
+        
+        const call = this.gameActions.murph[callIndex];
+        
+        // Show confirmation dialog
+        if (confirm(`Are you sure you want to delete this Murph call?\n\n${call.player} on Hole ${call.hole} - ${call.result === 'success' ? 'Made it' : 'Failed'}`)) {
+            // Remove the call
+            this.gameActions.murph.splice(callIndex, 1);
+            
+            // Update display
+            this.updateGameDisplay();
+            
+            // Show success message
+            this.showNotification(`Deleted Murph call for ${call.player} on Hole ${call.hole}`, 'success');
+        }
+    }
+
+    deleteSkinsAction(actionId) {
+        // Find the action to delete
+        const actionIndex = this.gameActions.skins.findIndex(action => action.id === actionId);
+        if (actionIndex === -1) {
+            this.showNotification('Skins action not found.', 'error');
+            return;
+        }
+        
+        const action = this.gameActions.skins[actionIndex];
+        
+        // Show confirmation dialog
+        let actionDescription = '';
+        if (action.winner === 'team1') {
+            actionDescription = `${this.gameConfigs.skins.teamNames.team1} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
+        } else if (action.winner === 'team2') {
+            actionDescription = `${this.gameConfigs.skins.teamNames.team2} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
+        } else {
+            actionDescription = `Carryover - ${action.carryoverCount} skin${action.carryoverCount > 1 ? 's' : ''} at stake`;
+        }
+        
+        if (confirm(`Are you sure you want to delete this Skins action?\n\nHole ${action.hole}: ${actionDescription}`)) {
+            // Remove the action
+            this.gameActions.skins.splice(actionIndex, 1);
+            
+            // Recalculate carryover count if this was a carryover action
+            if (action.winner === 'carryover') {
+                this.recalculateCarryoverCount();
+            }
+            
+            // Update display
+            this.updateGameDisplay();
+            
+            // Show success message
+            this.showNotification(`Deleted Skins action for Hole ${action.hole}`, 'success');
+        }
+    }
+
+    recalculateCarryoverCount() {
+        // Find the most recent carryover action to determine current carryover count
+        const carryoverActions = this.gameActions.skins
+            .filter(action => action.winner === 'carryover')
+            .sort((a, b) => b.hole - a.hole); // Sort by hole descending
+        
+        if (carryoverActions.length > 0) {
+            // Get the carryover count from the most recent carryover
+            this.gameConfigs.skins.carryoverCount = carryoverActions[0].carryoverCount;
+        } else {
+            // No carryovers, reset to 1
+            this.gameConfigs.skins.carryoverCount = 1;
+        }
     }
 }
 

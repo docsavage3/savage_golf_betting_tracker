@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savage Golf - Side Game Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -94,32 +97,124 @@
             <button type="button" id="startGame" class="btn btn-primary">Start Game</button>
         </section>
 
-        <!-- Game Play Section -->
-        <section id="gamePlay" class="card" style="display: none;">
-            <h2>Current Hole</h2>
-            <div class="hole-info">
-                <span>Hole: <span id="currentHole">1</span></span>
-                <button type="button" id="nextHole" class="btn btn-secondary">Next Hole</button>
+        <!-- Game Navigation Section -->
+        <section id="gameNavigation" class="card" style="display: none;">
+            <h2>Game Navigation</h2>
+            <div class="hole-navigation">
+                <button type="button" id="previousHole" class="btn btn-secondary" disabled>← Previous Hole</button>
+                <span class="hole-display">Hole: <span id="currentHole">1</span></span>
+                <button type="button" id="nextHole" class="btn btn-secondary">Next Hole →</button>
+            </div>
+            
+            <div class="game-buttons">
+                <button type="button" id="navMurph" class="btn btn-primary game-nav-btn">
+                    <span class="game-icon">🎯</span>
+                    <span class="game-name">Murph</span>
+                    <span class="game-status" id="murphStatus">0 calls</span>
+                </button>
+                
+                <button type="button" id="navSkins" class="btn btn-warning game-nav-btn">
+                    <span class="game-icon">🏆</span>
+                    <span class="game-name">Skins</span>
+                    <span class="game-status" id="skinsStatus">0 skins</span>
+                </button>
+                
+                <button type="button" id="navCombined" class="btn btn-success game-nav-btn">
+                    <span class="game-icon">💰</span>
+                    <span class="game-name">Combined Total</span>
+                    <span class="game-status">All Games</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Murph Game Page -->
+        <section id="murphPage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🎯 Murph Game</h2>
+                <button type="button" id="backToNav" class="btn btn-secondary">← Back to Navigation</button>
             </div>
             
             <div class="game-actions">
-                <h3>Game Actions</h3>
-                <div id="murphActions" class="game-section">
-                    <h4>Murph</h4>
-                    <div id="murphActionsList"></div>
-                    <button type="button" id="callMurph" class="btn btn-warning">Call Murph</button>
+                <button type="button" id="callMurph" class="btn btn-warning btn-large">
+                    <span class="btn-icon">📞</span>
+                    Call Murph
+                </button>
+            </div>
+            
+            <div class="game-history">
+                <h3>Murph Calls History</h3>
+                <div id="murphActionsList"></div>
+            </div>
+            
+            <div class="game-summary">
+                <h3>Murph Financial Summary</h3>
+                <div id="murphSummary"></div>
+            </div>
+        </section>
+
+        <!-- Skins Game Page -->
+        <section id="skinsPage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🏆 Skins Game</h2>
+                <button type="button" id="backToNav2" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div class="game-actions">
+                <button type="button" id="recordSkins" class="btn btn-warning btn-large">
+                    <span class="btn-icon">📝</span>
+                    Record Skins
+                </button>
+            </div>
+            
+            <div class="game-history">
+                <h3>Skins History</h3>
+                <div id="skinsActionsList"></div>
+            </div>
+            
+            <div class="game-summary">
+                <h3>Skins Financial Summary</h3>
+                <div id="skinsSummary"></div>
+            </div>
+        </section>
+
+        <!-- Combined Total Page -->
+        <section id="combinedPage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>💰 Combined Total</h2>
+                <button type="button" id="backToNav3" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div class="combined-summary">
+                <h3>Overall Financial Summary</h3>
+                <div id="combinedSummary"></div>
+            </div>
+            
+            <div class="game-breakdown">
+                <div class="breakdown-section">
+                    <h4>Murph Breakdown</h4>
+                    <div id="murphBreakdown"></div>
                 </div>
                 
-                <div id="skinsActions" class="game-section" style="display: none;">
-                    <h4>Skins</h4>
-                    <div id="skinsActionsList"></div>
-                    <button type="button" id="recordSkins" class="btn btn-warning">Record Skins</button>
+                <div class="breakdown-section">
+                    <h4>Skins Breakdown</h4>
+                    <div id="skinsBreakdown"></div>
                 </div>
             </div>
+        </section>
 
-            <div class="game-summary">
-                <h3>Game Summary</h3>
-                <div id="gameSummary"></div>
+        <!-- Final Results Page -->
+        <section id="finalResults" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🏆 Final Results</h2>
+                <button type="button" id="backToNav4" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div id="finalResultsContent"></div>
+            
+            <div class="final-actions">
+                <button type="button" id="newGameFromFinal" class="btn btn-primary btn-large">
+                    🆕 Start New Game
+                </button>
             </div>
         </section>
 
@@ -179,11 +274,9 @@
             </div>
         </div>
 
-        <!-- Final Results Section -->
-        <section id="finalResults" class="card" style="display: none;">
-            <h2>Final Results</h2>
-            <div id="finalResultsContent"></div>
-            <button type="button" id="newGame" class="btn btn-primary">New Game</button>
+        <!-- New Game Button (always visible) -->
+        <div class="new-game-section">
+            <button type="button" id="newGame" class="btn btn-danger">🔄 New Game</button>
         </div>
     </div>
 
