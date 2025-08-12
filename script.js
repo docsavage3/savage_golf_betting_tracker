@@ -1,3 +1,5 @@
+
+
 class SavageGolf {
     constructor() {
         this.players = [];
@@ -5,7 +7,9 @@ class SavageGolf {
         this.currentHole = 1;
         this.gameActions = {
             murph: [],
-            skins: []
+            skins: [],
+            kp: [],
+            snake: []
         };
         this.gameStarted = false;
         this.requiredPlayers = 4;
@@ -13,6 +17,7 @@ class SavageGolf {
         
         this.initializeEventListeners();
         this.setupGameCheckboxes();
+        this.setupPlayerCountSelector();
     }
 
     initializeEventListeners() {
@@ -26,11 +31,15 @@ class SavageGolf {
         // Navigation buttons
         document.getElementById('navMurph').addEventListener('click', () => this.showPage('murph'));
         document.getElementById('navSkins').addEventListener('click', () => this.showPage('skins'));
+        document.getElementById('navKP').addEventListener('click', () => this.showPage('kp'));
+        document.getElementById('navSnake').addEventListener('click', () => this.showPage('snake'));
         document.getElementById('navCombined').addEventListener('click', () => this.showPage('combined'));
         
         // Back to navigation buttons
         document.getElementById('backToNav').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav2').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNavKP').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNavSnake').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav3').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav4').addEventListener('click', () => this.showPage('navigation'));
         
@@ -47,6 +56,17 @@ class SavageGolf {
         document.getElementById('saveSkins').addEventListener('click', () => this.saveSkinsAction());
         document.getElementById('cancelSkins').addEventListener('click', () => this.hideSkinsModal());
         
+        // KP game
+        document.getElementById('recordKP').addEventListener('click', () => this.showKPModal());
+        document.getElementById('saveKP').addEventListener('click', () => this.saveKPAction());
+        document.getElementById('cancelKP').addEventListener('click', () => this.hideKPModal());
+        
+        // Snake game
+        document.getElementById('recordSnake').addEventListener('click', () => this.showSnakeModal());
+        document.getElementById('saveSnake').addEventListener('click', () => this.saveSnakeAction());
+        document.getElementById('cancelSnake').addEventListener('click', () => this.hideSnakeModal());
+
+        
         // New game
         document.getElementById('newGame').addEventListener('click', () => this.resetGame());
         
@@ -62,11 +82,23 @@ class SavageGolf {
                 this.hideSkinsModal();
             }
         });
+        
+        document.getElementById('kpModal').addEventListener('click', (e) => {
+            if (e.target.id === 'kpModal') {
+                this.hideKPModal();
+            }
+        });
+        
+        document.getElementById('snakeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'snakeModal') {
+                this.hideSnakeModal();
+            }
+        });
     }
 
     showPage(pageName) {
         // Hide all pages
-        const pages = ['gameNavigation', 'murphPage', 'skinsPage', 'combinedPage', 'finalResults'];
+        const pages = ['gameNavigation', 'murphPage', 'skinsPage', 'kpPage', 'snakePage', 'combinedPage', 'finalResults'];
         pages.forEach(page => {
             document.getElementById(page).style.display = 'none';
         });
@@ -75,9 +107,33 @@ class SavageGolf {
         if (pageName === 'navigation') {
             document.getElementById('gameNavigation').style.display = 'block';
         } else if (pageName === 'murph') {
-            document.getElementById('murphPage').style.display = 'block';
+            if (this.gameConfigs.murph?.enabled) {
+                document.getElementById('murphPage').style.display = 'block';
+            } else {
+                this.showNotification('Murph game is not enabled for this round.', 'error');
+                return;
+            }
         } else if (pageName === 'skins') {
-            document.getElementById('skinsPage').style.display = 'block';
+            if (this.gameConfigs.skins?.enabled) {
+                document.getElementById('skinsPage').style.display = 'block';
+            } else {
+                this.showNotification('Skins game is not enabled for this round.', 'error');
+                return;
+            }
+        } else if (pageName === 'kp') {
+            if (this.gameConfigs.kp?.enabled) {
+                document.getElementById('kpPage').style.display = 'block';
+            } else {
+                this.showNotification('KP game is not enabled for this round.', 'error');
+                return;
+            }
+        } else if (pageName === 'snake') {
+            if (this.gameConfigs.snake?.enabled) {
+                document.getElementById('snakePage').style.display = 'block';
+            } else {
+                this.showNotification('Snake game is not enabled for this round.', 'error');
+                return;
+            }
         } else if (pageName === 'combined') {
             document.getElementById('combinedPage').style.display = 'block';
         } else if (pageName === 'finalResults') {
@@ -91,6 +147,10 @@ class SavageGolf {
             this.updateMurphPage();
         } else if (pageName === 'skins') {
             this.updateSkinsPage();
+        } else if (pageName === 'kp') {
+            this.updateKPPage();
+        } else if (pageName === 'snake') {
+            this.updateSnakePage();
         } else if (pageName === 'combined') {
             this.updateCombinedPage();
         } else if (pageName === 'finalResults') {
@@ -108,6 +168,16 @@ class SavageGolf {
         this.updateSkinsSummary();
     }
 
+    updateKPPage() {
+        this.updateKPActionsList();
+        this.updateKPSummary();
+    }
+
+    updateSnakePage() {
+        this.updateSnakeActionsList();
+        this.updateSnakeSummary();
+    }
+
     updateCombinedPage() {
         this.updateCombinedSummary();
         this.updateGameBreakdowns();
@@ -117,15 +187,75 @@ class SavageGolf {
         // Set up game selection checkboxes
         const murphCheckbox = document.getElementById('gameMurph');
         const skinsCheckbox = document.getElementById('gameSkins');
+        const kpCheckbox = document.getElementById('gameKP');
+        const snakeCheckbox = document.getElementById('gameSnake');
         
         murphCheckbox.addEventListener('change', () => this.toggleGameSection('murph'));
         skinsCheckbox.addEventListener('change', () => this.toggleGameSection('skins'));
+        kpCheckbox.addEventListener('change', () => this.toggleGameSection('kp'));
+        snakeCheckbox.addEventListener('change', () => this.toggleGameSection('snake'));
         
-        // Initialize with Murph checked
-        this.toggleGameSection('murph');
+        // Set initial navigation button visibility
+        this.updateGameNavigationVisibility();
+        
+        // Don't call toggleGameSection initially since no games are checked
+        // The bet amount fields will be shown/hidden when checkboxes are changed
         
         // Set up player input listeners to populate team selects when players are entered
         this.setupPlayerInputListeners();
+    }
+
+    setupPlayerCountSelector() {
+        const playerCountSelect = document.getElementById('playerCount');
+        if (playerCountSelect) {
+            playerCountSelect.addEventListener('change', (e) => {
+                const playerCount = parseInt(e.target.value);
+                
+                this.updatePlayerInputs(playerCount);
+                this.updateTeamSelections();
+                
+                // Show player input fields when a count is selected
+                const playerInputsContainer = document.getElementById('playerInputs');
+                if (playerInputsContainer) {
+                    playerInputsContainer.style.display = 'block';
+                }
+                
+                // Hide help message when a count is selected
+                const helpMessage = document.querySelector('.player-count-help');
+                if (helpMessage) {
+                    helpMessage.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    updatePlayerInputs(playerCount) {
+        this.requiredPlayers = playerCount;
+        
+        // Show/hide player inputs based on count
+        const playerInputs = ['player1Input', 'player2Input', 'player3Input', 'player4Input'];
+        playerInputs.forEach((inputId, index) => {
+            const inputDiv = document.getElementById(inputId);
+            if (inputDiv) {
+                if (index < playerCount) {
+                    inputDiv.classList.remove('hidden');
+                    const input = inputDiv.querySelector('input');
+                    if (input) input.required = true;
+                } else {
+                    inputDiv.classList.add('hidden');
+                    const input = inputDiv.querySelector('input');
+                    if (input) input.required = false;
+                }
+            }
+        });
+        
+        // Also ensure the container is visible when we have a valid player count
+        if (playerCount > 0) {
+            const playerInputsContainer = document.getElementById('playerInputs');
+            if (playerInputsContainer) {
+                playerInputsContainer.style.display = 'block';
+            }
+        }
     }
 
     setupPlayerInputListeners() {
@@ -133,7 +263,7 @@ class SavageGolf {
         const playerInputs = document.querySelectorAll('.player-input input');
         playerInputs.forEach(input => {
             input.addEventListener('input', () => {
-                console.log('Player input changed, updating team selects...');
+
                 this.updateTeamSelects();
             });
         });
@@ -145,7 +275,7 @@ class SavageGolf {
             .map(input => input.value.trim())
             .filter(name => name.length > 0);
         
-        // Only populate if we have exactly 4 players
+        // Only populate team selects if we have exactly 4 players
         if (playerNames.length === 4) {
             this.populateTeamSelects();
         } else {
@@ -160,11 +290,10 @@ class SavageGolf {
             .map(input => input.value.trim())
             .filter(name => name.length > 0);
         
-        console.log('Populating team selects with players:', playerNames);
+
         
         // Only proceed if we have exactly 4 players
         if (playerNames.length !== 4) {
-            console.log('Not enough players, clearing team selects');
             this.clearTeamSelections();
             return;
         }
@@ -185,9 +314,9 @@ class SavageGolf {
                     option.textContent = player;
                     select.appendChild(option);
                 });
-                console.log(`Populated ${selectId} with ${playerNames.length} players`);
+
             } else {
-                console.error(`Could not find select element: ${selectId}`);
+
             }
         });
         
@@ -287,24 +416,42 @@ class SavageGolf {
             if (select) {
                 select.value = '';
                 select.innerHTML = '<option value="">Select player...</option>';
-                console.log(`Cleared ${selectId}`);
-            } else {
-                console.error(`Could not find select element to clear: ${selectId}`);
             }
         });
     }
 
     toggleGameSection(gameType) {
-        const checkbox = document.getElementById(`game${gameType.charAt(0).toUpperCase() + gameType.slice(1)}`);
+        // Handle special case for KP (since it's already uppercase in HTML)
+        let checkboxId;
+        if (gameType === 'kp') {
+            checkboxId = 'gameKP';
+        } else {
+            checkboxId = `game${gameType.charAt(0).toUpperCase() + gameType.slice(1)}`;
+        }
+        
+        const checkbox = document.getElementById(checkboxId);
         const betAmount = document.getElementById(`${gameType}BetAmount`);
+        
+        if (!checkbox) {
+            return;
+        }
+        
+        if (!betAmount) {
+            return;
+        }
         
         if (gameType === 'skins') {
             const teamSelection = document.getElementById('skinsTeamSelection');
             if (checkbox.checked) {
                 betAmount.style.display = 'block';
-                teamSelection.style.display = 'block';
-                // Populate team selects if we have 4 players
-                this.updateTeamSelects();
+                // Only show team selection for 4 players
+                if (this.requiredPlayers === 4) {
+                    teamSelection.style.display = 'block';
+                    // Populate team selects if we have 4 players
+                    this.updateTeamSelects();
+                } else {
+                    teamSelection.style.display = 'none';
+                }
             } else {
                 betAmount.style.display = 'none';
                 teamSelection.style.display = 'none';
@@ -318,21 +465,63 @@ class SavageGolf {
                 betAmount.style.display = 'none';
             }
         }
+        
+        // Update the game navigation buttons based on what's selected
+        this.updateGameNavigationVisibility();
+    }
+
+    updateGameNavigationVisibility() {
+        // Only show navigation buttons for games that are selected
+        const murphChecked = document.getElementById('gameMurph').checked;
+        const skinsChecked = document.getElementById('gameSkins').checked;
+        const kpChecked = document.getElementById('gameKP').checked;
+        const snakeChecked = document.getElementById('gameSnake').checked;
+        
+        // Show/hide Murph button
+        const navMurph = document.getElementById('navMurph');
+        if (navMurph) {
+            navMurph.style.display = murphChecked ? 'flex' : 'none';
+        }
+        
+        // Show/hide Skins button
+        const navSkins = document.getElementById('navSkins');
+        if (navSkins) {
+            navSkins.style.display = skinsChecked ? 'flex' : 'none';
+        }
+        
+        // Show/hide KP button
+        const navKP = document.getElementById('navKP');
+        if (navKP) {
+            navKP.style.display = kpChecked ? 'flex' : 'none';
+        }
+        
+        // Show/hide Snake button
+        const navSnake = document.getElementById('navSnake');
+        if (navSnake) {
+            navSnake.style.display = snakeChecked ? 'flex' : 'none';
+        }
     }
 
     startGame() {
         // Validate inputs
         if (!this.validateGameSetup()) return;
         
-        // Get player names
+        // Get player count
+        const playerCountSelect = document.getElementById('playerCount');
+        this.requiredPlayers = parseInt(playerCountSelect.value);
+        
+        // Get player names (only the required number)
         this.players = Array.from(document.querySelectorAll('.player-input input'))
             .map(input => input.value.trim())
-            .filter(name => name.length > 0);
+            .filter(name => name.length > 0)
+            .slice(0, this.requiredPlayers);
         
         // Get game configurations
         this.gameConfigs = {};
         const murphChecked = document.getElementById('gameMurph').checked;
         const skinsChecked = document.getElementById('gameSkins').checked;
+        const kpChecked = document.getElementById('gameKP').checked;
+        const snakeChecked = document.getElementById('gameSnake').checked;
         
         if (murphChecked) {
             this.gameConfigs.murph = {
@@ -342,29 +531,48 @@ class SavageGolf {
         }
         
         if (skinsChecked) {
-            // Validate team selection
-            if (!this.validateTeamSelection()) {
-                this.showNotification('Please select 4 different players for the two teams.', 'error');
-                return;
-            }
-            
-            const team1Player1 = document.getElementById('team1Player1').value;
-            const team1Player2 = document.getElementById('team1Player2').value;
-            const team2Player1 = document.getElementById('team2Player1').value;
-            const team2Player2 = document.getElementById('team2Player2').value;
-            
             this.gameConfigs.skins = {
                 betAmount: parseFloat(document.getElementById('skinsBet').value),
                 enabled: true,
-                teams: {
-                    team1: [team1Player1, team1Player2],
-                    team2: [team2Player1, team2Player2]
-                },
-                teamNames: {
+                teams: [],
+                carryoverCount: 1 // Start with 1 skin
+            };
+            
+            // Only set up teams if we have 4 players
+            if (this.requiredPlayers === 4) {
+                // Validate team selection
+                if (!this.validateTeamSelection()) {
+                    this.showNotification('Please select 4 different players for the two teams.', 'error');
+                    return;
+                }
+                
+                const team1Player1 = document.getElementById('team1Player1').value;
+                const team1Player2 = document.getElementById('team1Player2').value;
+                const team2Player1 = document.getElementById('team2Player1').value;
+                const team2Player2 = document.getElementById('team2Player2').value;
+                
+                this.gameConfigs.skins.teams = [
+                    [team1Player1, team1Player2],
+                    [team2Player1, team2Player2]
+                ];
+                this.gameConfigs.skins.teamNames = {
                     team1: `${team1Player1} & ${team1Player2}`,
                     team2: `${team2Player1} & ${team2Player2}`
-                },
-                carryoverCount: 1 // Start with 1 skin
+                };
+            }
+        }
+        
+        if (kpChecked) {
+            this.gameConfigs.kp = {
+                betAmount: parseFloat(document.getElementById('kpBet').value),
+                enabled: true
+            };
+        }
+        
+        if (snakeChecked) {
+            this.gameConfigs.snake = {
+                betAmount: parseFloat(document.getElementById('snakeBet').value),
+                enabled: true
             };
         }
         
@@ -380,6 +588,9 @@ class SavageGolf {
         // Initialize game state
         this.updateGameDisplay();
         
+        // Update navigation button visibility for selected games
+        this.updateGameNavigationVisibility();
+        
         // Show success message
         this.showNotification('Game started! Good luck!', 'success');
     }
@@ -388,8 +599,10 @@ class SavageGolf {
         // Check if at least one game is selected
         const murphChecked = document.getElementById('gameMurph').checked;
         const skinsChecked = document.getElementById('gameSkins').checked;
+        const kpChecked = document.getElementById('gameKP').checked;
+        const snakeChecked = document.getElementById('gameSnake').checked;
         
-        if (!murphChecked && !skinsChecked) {
+        if (!murphChecked && !skinsChecked && !kpChecked && !snakeChecked) {
             this.showNotification('Please select at least one game to play.', 'error');
             return false;
         }
@@ -425,6 +638,32 @@ class SavageGolf {
             const skinsBet = parseFloat(document.getElementById('skinsBet').value);
             if (isNaN(skinsBet) || skinsBet <= 0) {
                 this.showNotification('Please enter a valid bet amount for Skins.', 'error');
+                return false;
+            }
+            
+            // Only validate team selection for 4 players
+            if (this.requiredPlayers === 4) {
+                if (!this.validateTeamSelection()) {
+                    this.showNotification('Please select 4 different players for the two teams.', 'error');
+                    return false;
+                }
+            }
+        }
+        
+
+        
+        if (kpChecked) {
+            const kpBet = parseFloat(document.getElementById('kpBet').value);
+            if (isNaN(kpBet) || kpBet <= 0) {
+                this.showNotification('Please enter a valid bet amount for KP.', 'error');
+                return false;
+            }
+        }
+        
+        if (snakeChecked) {
+            const snakeBet = parseFloat(document.getElementById('snakeBet').value);
+            if (isNaN(snakeBet) || snakeBet <= 0) {
+                this.showNotification('Please enter a valid bet amount for Snake.', 'error');
                 return false;
             }
         }
@@ -505,6 +744,14 @@ class SavageGolf {
         
         if (this.gameConfigs.skins?.enabled && this.gameActions.skins.length > 0) {
             finalResultsHTML += this.generateSkinsFinalSummary();
+        }
+        
+        if (this.gameConfigs.kp?.enabled && this.gameActions.kp.length > 0) {
+            finalResultsHTML += this.generateKPFinalSummary();
+        }
+        
+        if (this.gameConfigs.snake?.enabled && this.gameActions.snake.length > 0) {
+            finalResultsHTML += this.generateSnakeFinalSummary();
         }
         
         // Combined Final Summary
@@ -593,6 +840,80 @@ class SavageGolf {
         return html;
     }
 
+    generateKPFinalSummary() {
+        const kpSummary = this.calculateKPSummary();
+        const totalKPs = this.gameActions.kp.length;
+        
+        let html = `
+            <div class="final-game-section">
+                <h3>🎯 KP Game Results</h3>
+                <div class="final-game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total KPs:</span>
+                        <span class="stat-value">${totalKPs}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bet Amount:</span>
+                        <span class="stat-value">$${this.gameConfigs.kp.betAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="final-game-summary">
+        `;
+        
+        Object.entries(kpSummary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            html += `
+                <div class="final-summary-item">
+                    <span class="final-summary-player">${player}</span>
+                    <span class="final-summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    generateSnakeFinalSummary() {
+        const snakeSummary = this.calculateSnakeSummary();
+        const totalSnakes = this.gameActions.snake.length;
+        
+        let html = `
+            <div class="final-game-section">
+                <h3>🐍 Snake Game Results</h3>
+                <div class="final-game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Snakes:</span>
+                        <span class="stat-value">${totalSnakes}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bet Amount:</span>
+                        <span class="stat-value">$${this.gameConfigs.snake.betAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="final-game-summary">
+        `;
+        
+        Object.entries(snakeSummary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            html += `
+                <div class="final-summary-item">
+                    <span class="final-summary-player">${player}</span>
+                    <span class="final-summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+        return html;
+    }
+
     generateCombinedFinalSummary() {
         const gameSummaries = {};
         
@@ -602,6 +923,14 @@ class SavageGolf {
         
         if (this.gameConfigs.skins?.enabled) {
             gameSummaries.skins = this.calculateSkinsSummary();
+        }
+        
+        if (this.gameConfigs.kp?.enabled) {
+            gameSummaries.kp = this.calculateKPSummary();
+        }
+        
+        if (this.gameConfigs.snake?.enabled) {
+            gameSummaries.snake = this.calculateSnakeSummary();
         }
         
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
@@ -638,6 +967,14 @@ class SavageGolf {
         
         if (this.gameConfigs.skins?.enabled) {
             gameSummaries.skins = this.calculateSkinsSummary();
+        }
+        
+        if (this.gameConfigs.kp?.enabled) {
+            gameSummaries.kp = this.calculateKPSummary();
+        }
+        
+        if (this.gameConfigs.snake?.enabled) {
+            gameSummaries.snake = this.calculateSnakeSummary();
         }
         
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
@@ -758,13 +1095,51 @@ class SavageGolf {
         // Set current hole
         holeInput.value = this.currentHole;
         
-        // Update team options with actual team names
-        if (this.gameConfigs.skins?.teamNames) {
-            const team1Option = document.getElementById('team1Option');
-            const team2Option = document.getElementById('team2Option');
+        // Handle different player counts
+        console.log('showSkinsModal - requiredPlayers:', this.requiredPlayers);
+        console.log('showSkinsModal - gameConfigs.skins:', this.gameConfigs.skins);
+        console.log('showSkinsModal - teamNames:', this.gameConfigs.skins?.teamNames);
+        
+        if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+            // 4 players: Show team options
+            console.log('Showing team options for 4 players');
+            const winnerSelect = document.getElementById('skinsWinner');
+            winnerSelect.innerHTML = '<option value="">Select result...</option>';
             
+            // Add team options
+            const team1Option = document.createElement('option');
+            team1Option.value = 'team1';
             team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+            winnerSelect.appendChild(team1Option);
+            
+            const team2Option = document.createElement('option');
+            team2Option.value = 'team2';
             team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
+            winnerSelect.appendChild(team2Option);
+            
+            // Add carryover option
+            const carryoverOption = document.createElement('option');
+            carryoverOption.value = 'carryover';
+            carryoverOption.textContent = 'Carryover (No Winner)';
+            winnerSelect.appendChild(carryoverOption);
+        } else {
+            console.log('Showing individual player options for', this.requiredPlayers, 'players');
+            // 2-3 players: Show individual player options
+            const winnerSelect = document.getElementById('skinsWinner');
+            winnerSelect.innerHTML = '<option value="">Select winner...</option>';
+            
+            this.players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                winnerSelect.appendChild(option);
+            });
+            
+            // Add carryover option
+            const carryoverOption = document.createElement('option');
+            carryoverOption.value = 'carryover';
+            carryoverOption.textContent = 'No Winner (Carryover)';
+            winnerSelect.appendChild(carryoverOption);
         }
         
         // Update carryover count
@@ -822,36 +1197,218 @@ class SavageGolf {
         if (winner === 'carryover') {
             this.showNotification(`Hole ${hole}: No winner - ${this.gameConfigs.skins.carryoverCount} skins now carrying over`, 'info');
         } else {
-            const winningTeam = winner === 'team1' ? this.gameConfigs.skins.teamNames.team1 : this.gameConfigs.skins.teamNames.team2;
-            this.showNotification(`${winningTeam} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
+            if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (winner === 'team1' || winner === 'team2')) {
+                // 4 players: Show team names
+                const winningTeam = winner === 'team1' ? this.gameConfigs.skins.teamNames.team1 : this.gameConfigs.skins.teamNames.team2;
+                this.showNotification(`${winningTeam} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
+            } else {
+                // 2-3 players: Show individual player name
+                this.showNotification(`${winner} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
+            }
         }
+    }
+
+    // KP Game Methods
+    showKPModal() {
+        const modal = document.getElementById('kpModal');
+        const playerSelect = document.getElementById('kpWinner');
+        const holeInput = document.getElementById('kpHole');
+        
+        // Populate player select
+        playerSelect.innerHTML = '<option value="">Select player...</option>';
+        this.players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player;
+            option.textContent = player;
+            playerSelect.appendChild(option);
+        });
+        
+        // Set current hole
+        holeInput.value = this.currentHole;
+        
+        modal.style.display = 'flex';
+    }
+
+    hideKPModal() {
+        document.getElementById('kpModal').style.display = 'none';
+    }
+
+    saveKPAction() {
+        const hole = parseInt(document.getElementById('kpHole').value);
+        const winner = document.getElementById('kpWinner').value;
+        
+        if (!hole || !winner) {
+            this.showNotification('Please fill in all fields.', 'error');
+            return;
+        }
+        
+        // Create KP action
+        const kpAction = {
+            id: Date.now(),
+            hole: hole,
+            winner: winner,
+            timestamp: new Date()
+        };
+        
+        this.gameActions.kp.push(kpAction);
+        
+        // Hide modal and update display
+        this.hideKPModal();
+        this.updateGameDisplay();
+        
+        // Show result message
+        this.showNotification(`${winner} got closest to the pin on hole ${hole}!`, 'success');
+    }
+
+    // Snake Game Methods
+    showSnakeModal() {
+        const modal = document.getElementById('snakeModal');
+        const playerSelect = document.getElementById('snakePlayer');
+        const holeInput = document.getElementById('snakeHole');
+        
+        // Populate player select
+        playerSelect.innerHTML = '<option value="">Select player...</option>';
+        this.players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player;
+            option.textContent = player;
+            playerSelect.appendChild(option);
+        });
+        
+        // Set current hole
+        holeInput.value = this.currentHole;
+        
+        modal.style.display = 'flex';
+    }
+
+    hideSnakeModal() {
+        document.getElementById('snakeModal').style.display = 'none';
+    }
+
+    saveSnakeAction() {
+        const hole = parseInt(document.getElementById('snakeHole').value);
+        const player = document.getElementById('snakePlayer').value;
+        
+        if (!hole || !player) {
+            this.showNotification('Please fill in all fields.', 'error');
+            return;
+        }
+        
+        // Create snake action
+        const snakeAction = {
+            id: Date.now(),
+            hole: hole,
+            player: player,
+            timestamp: new Date()
+        };
+        
+        this.gameActions.snake.push(snakeAction);
+        
+        // Hide modal and update display
+        this.hideSnakeModal();
+        this.updateGameDisplay();
+        
+        // Show result message
+        this.showNotification(`${player} got a snake on hole ${hole}!`, 'success');
     }
 
     updateGameDisplay() {
         // Update navigation status
         this.updateNavigationStatus();
         
-        // Update current page if it's visible
-        if (this.currentPage === 'murph') {
+        // Update current page if it's visible and the game is enabled
+        if (this.currentPage === 'murph' && this.gameConfigs.murph?.enabled) {
             this.updateMurphPage();
-        } else if (this.currentPage === 'skins') {
+        } else if (this.currentPage === 'skins' && this.gameConfigs.skins?.enabled) {
             this.updateSkinsPage();
+        } else if (this.currentPage === 'kp' && this.gameConfigs.kp?.enabled) {
+            this.updateKPPage();
+        } else if (this.currentPage === 'snake' && this.gameConfigs.snake?.enabled) {
+            this.updateSnakePage();
         } else if (this.currentPage === 'combined') {
             this.updateCombinedPage();
         }
     }
 
     updateNavigationStatus() {
-        // Update Murph status
+        // Update Murph status and styling
         if (this.gameConfigs.murph?.enabled) {
             const murphCount = this.gameActions.murph.length;
-            document.getElementById('murphStatus').textContent = `${murphCount} call${murphCount !== 1 ? 's' : ''}`;
+            const murphStatus = document.getElementById('murphStatus');
+            if (murphStatus) {
+                murphStatus.textContent = `${murphCount} call${murphCount !== 1 ? 's' : ''}`;
+            }
+            // Add selected class to Murph button
+            const murphBtn = document.getElementById('navMurph');
+            if (murphBtn) {
+                murphBtn.classList.add('selected');
+            }
+        } else {
+            // Remove selected class from Murph button
+            const murphBtn = document.getElementById('navMurph');
+            if (murphBtn) {
+                murphBtn.classList.remove('selected');
+            }
         }
         
-        // Update Skins status
+        // Update Skins status and styling
         if (this.gameConfigs.skins?.enabled) {
             const skinsCount = this.gameActions.skins.length;
-            document.getElementById('skinsStatus').textContent = `${skinsCount} skin${skinsCount !== 1 ? 's' : ''}`;
+            const skinsStatus = document.getElementById('skinsStatus');
+            if (skinsStatus) {
+                skinsStatus.textContent = `${skinsCount} skin${skinsCount !== 1 ? 's' : ''}`;
+            }
+            // Add selected class to Skins button
+            const skinsBtn = document.getElementById('navSkins');
+            if (skinsBtn) {
+                skinsBtn.classList.add('selected');
+            }
+        } else {
+            // Remove selected class from Skins button
+            const skinsBtn = document.getElementById('navSkins');
+            if (skinsBtn) {
+                skinsBtn.classList.remove('selected');
+            }
+        }
+        
+        // Update KP status and styling
+        if (this.gameConfigs.kp?.enabled) {
+            const kpCount = this.gameActions.kp.length;
+            const kpStatus = document.getElementById('kpStatus');
+            if (kpStatus) {
+                kpStatus.textContent = `${kpCount} KP${kpCount !== 1 ? 's' : ''}`;
+            }
+            // Add selected class to KP button
+            const kpBtn = document.getElementById('navKP');
+            if (kpBtn) {
+                kpBtn.classList.add('selected');
+            }
+        } else {
+            // Remove selected class from KP button
+            const kpBtn = document.getElementById('navKP');
+            if (kpBtn) {
+                kpBtn.classList.remove('selected');
+            }
+        }
+        
+        // Update Snake status and styling
+        if (this.gameConfigs.snake?.enabled) {
+            const snakeCount = this.gameActions.snake.length;
+            const snakeStatus = document.getElementById('snakeStatus');
+            if (snakeStatus) {
+                snakeStatus.textContent = `${snakeCount} snake${snakeCount !== 1 ? 's' : ''}`;
+            }
+            // Add selected class to Snake button
+            const snakeBtn = document.getElementById('navSnake');
+            if (snakeBtn) {
+                snakeBtn.classList.add('selected');
+            }
+        } else {
+            // Remove selected class from Snake button
+            const snakeBtn = document.getElementById('navSnake');
+            if (snakeBtn) {
+                snakeBtn.classList.remove('selected');
+            }
         }
     }
 
@@ -930,12 +1487,18 @@ class SavageGolf {
                 skinDiv.className = `game-action-item ${skin.winner === 'carryover' ? 'neutral' : 'success'}`;
                 
                 let resultText = '';
-                if (skin.winner === 'team1') {
-                    resultText = `${this.gameConfigs.skins.teamNames.team1} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
-                } else if (skin.winner === 'team2') {
-                    resultText = `${this.gameConfigs.skins.teamNames.team2} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
-                } else {
+                if (skin.winner === 'carryover') {
                     resultText = `Carryover - ${skin.carryoverCount} skin${skin.carryoverCount > 1 ? 's' : ''} at stake`;
+                } else if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (skin.winner === 'team1' || skin.winner === 'team2')) {
+                    // 4 players: Show team names
+                    if (skin.winner === 'team1') {
+                        resultText = `${this.gameConfigs.skins.teamNames.team1} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                    } else {
+                        resultText = `${this.gameConfigs.skins.teamNames.team2} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                    }
+                } else {
+                    // 2-3 players: Show individual player name
+                    resultText = `${skin.winner} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                 }
                 
                 skinDiv.innerHTML = `
@@ -951,6 +1514,100 @@ class SavageGolf {
                     </div>
                 `;
                 holeDiv.appendChild(skinDiv);
+            });
+            
+            container.appendChild(holeDiv);
+        });
+    }
+
+    updateKPActionsList() {
+        const container = document.getElementById('kpActionsList');
+        container.innerHTML = '';
+        
+        if (this.gameActions.kp.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No KPs recorded yet</p>';
+            return;
+        }
+        
+        // Group by hole
+        const kpsByHole = {};
+        this.gameActions.kp.forEach(kp => {
+            if (!kpsByHole[kp.hole]) {
+                kpsByHole[kp.hole] = [];
+            }
+            kpsByHole[kp.hole].push(kp);
+        });
+        
+        // Display by hole
+        Object.keys(kpsByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
+            const holeDiv = document.createElement('div');
+            holeDiv.className = 'hole-group';
+            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            kpsByHole[hole].forEach(kp => {
+                const kpDiv = document.createElement('div');
+                kpDiv.className = 'game-action-item success';
+                
+                kpDiv.innerHTML = `
+                    <div class="game-action-header">
+                        <span class="game-action-player">${kp.winner}</span>
+                        <span class="game-action-hole">Hole ${kp.hole}</span>
+                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteKPAction(${kp.id})" title="Delete this KP action">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="game-action-result success">
+                        🎯 Closest to the Pin
+                    </div>
+                `;
+                holeDiv.appendChild(kpDiv);
+            });
+            
+            container.appendChild(holeDiv);
+        });
+    }
+
+    updateSnakeActionsList() {
+        const container = document.getElementById('snakeActionsList');
+        container.innerHTML = '';
+        
+        if (this.gameActions.snake.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No snakes recorded yet</p>';
+            return;
+        }
+        
+        // Group by hole
+        const snakesByHole = {};
+        this.gameActions.snake.forEach(snake => {
+            if (!snakesByHole[snake.hole]) {
+                snakesByHole[snake.hole] = [];
+            }
+            snakesByHole[snake.hole].push(snake);
+        });
+        
+        // Display by hole
+        Object.keys(snakesByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
+            const holeDiv = document.createElement('div');
+            holeDiv.className = 'hole-group';
+            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            snakesByHole[hole].forEach(snake => {
+                const snakeDiv = document.createElement('div');
+                snakeDiv.className = 'game-action-item error';
+                
+                snakeDiv.innerHTML = `
+                    <div class="game-action-header">
+                        <span class="game-action-player">${snake.player}</span>
+                        <span class="game-action-hole">Hole ${snake.hole}</span>
+                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteSnakeAction(${snake.id})" title="Delete this Snake action">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="game-action-result error">
+                        🐍 Snake
+                    </div>
+                `;
+                holeDiv.appendChild(snakeDiv);
             });
             
             container.appendChild(holeDiv);
@@ -981,10 +1638,34 @@ class SavageGolf {
         this.displaySummary(container, summary);
     }
 
+    updateKPSummary() {
+        const container = document.getElementById('kpSummary');
+        
+        if (this.gameActions.kp.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No KPs recorded yet</p>';
+            return;
+        }
+        
+        const summary = this.calculateKPSummary();
+        this.displaySummary(container, summary);
+    }
+
+    updateSnakeSummary() {
+        const container = document.getElementById('snakeSummary');
+        
+        if (this.gameActions.snake.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No snakes recorded yet</p>';
+            return;
+        }
+        
+        const summary = this.calculateSnakeSummary();
+        this.displaySummary(container, summary);
+    }
+
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
-        if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0) {
+        if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No activity yet</p>';
             return;
         }
@@ -1000,23 +1681,85 @@ class SavageGolf {
             gameSummaries.skins = this.calculateSkinsSummary();
         }
         
+        if (this.gameConfigs.kp?.enabled) {
+            gameSummaries.kp = this.calculateKPSummary();
+        }
+        
+        if (this.gameConfigs.snake?.enabled) {
+            gameSummaries.snake = this.calculateSnakeSummary();
+        }
+        
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
         this.displaySummary(container, combinedSummary);
     }
 
     updateGameBreakdowns() {
         // Update Murph breakdown
+        const murphBreakdownSection = document.getElementById('murphBreakdownSection');
         if (this.gameConfigs.murph?.enabled) {
+            if (murphBreakdownSection) {
+                murphBreakdownSection.style.display = 'block';
+            }
             const murphBreakdown = document.getElementById('murphBreakdown');
-            const summary = this.calculateMurphSummary();
-            this.displaySummary(murphBreakdown, summary);
+            if (murphBreakdown) {
+                const summary = this.calculateMurphSummary();
+                this.displaySummary(murphBreakdown, summary);
+            }
+        } else {
+            if (murphBreakdownSection) {
+                murphBreakdownSection.style.display = 'none';
+            }
         }
         
         // Update Skins breakdown
+        const skinsBreakdownSection = document.getElementById('skinsBreakdownSection');
         if (this.gameConfigs.skins?.enabled) {
+            if (skinsBreakdownSection) {
+                skinsBreakdownSection.style.display = 'block';
+            }
             const skinsBreakdown = document.getElementById('skinsBreakdown');
-            const summary = this.calculateSkinsSummary();
-            this.displaySummary(skinsBreakdown, summary);
+            if (skinsBreakdown) {
+                const summary = this.calculateSkinsSummary();
+                this.displaySummary(skinsBreakdown, summary);
+            }
+        } else {
+            if (skinsBreakdownSection) {
+                skinsBreakdownSection.style.display = 'none';
+            }
+        }
+        
+        // Update KP breakdown
+        const kpBreakdownSection = document.getElementById('kpBreakdownSection');
+        if (this.gameConfigs.kp?.enabled) {
+            if (kpBreakdownSection) {
+                kpBreakdownSection.style.display = 'block';
+            }
+            const kpBreakdown = document.getElementById('kpBreakdown');
+            if (kpBreakdown) {
+                const summary = this.calculateKPSummary();
+                this.displaySummary(kpBreakdown, summary);
+            }
+        } else {
+            if (kpBreakdownSection) {
+                kpBreakdownSection.style.display = 'none';
+            }
+        }
+        
+        // Update Snake breakdown
+        const snakeBreakdownSection = document.getElementById('snakeBreakdownSection');
+        if (this.gameConfigs.snake?.enabled) {
+            if (snakeBreakdownSection) {
+                snakeBreakdownSection.style.display = 'block';
+            }
+            const snakeBreakdown = document.getElementById('snakeBreakdown');
+            if (snakeBreakdown) {
+                const summary = this.calculateSnakeSummary();
+                this.displaySummary(snakeBreakdown, summary);
+            }
+        } else {
+            if (snakeBreakdownSection) {
+                snakeBreakdownSection.style.display = 'none';
+            }
         }
     }
 
@@ -1083,35 +1826,124 @@ class SavageGolf {
             const betAmount = this.gameConfigs.skins.betAmount;
             const skinsWon = skin.skinsWon;
             
-            if (skin.winner === 'team1') {
-                // Team 1 players get paid by Team 2 players
-                const team1Players = this.gameConfigs.skins.teams.team1;
-                const team2Players = this.gameConfigs.skins.teams.team2;
+            if (this.requiredPlayers === 4 && this.gameConfigs.skins.teams && this.gameConfigs.skins.teams.length > 0) {
+                // 4 players: Handle team-based skins
+                if (skin.winner === 'team1') {
+                    // Team 1 players get paid by Team 2 players
+                    const team1Players = this.gameConfigs.skins.teams[0];
+                    const team2Players = this.gameConfigs.skins.teams[1];
+                    
+                    team1Players.forEach(player => {
+                        playerBalances[player] += betAmount * skinsWon;
+                    });
+                    
+                    team2Players.forEach(player => {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    });
+                } else if (skin.winner === 'team2') {
+                    // Team 2 players get paid by Team 1 players
+                    const team1Players = this.gameConfigs.skins.teams[0];
+                    const team2Players = this.gameConfigs.skins.teams[1];
+                    
+                    team1Players.forEach(player => {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    });
+                    
+                    team2Players.forEach(player => {
+                        playerBalances[player] += betAmount * skinsWon;
+                    });
+                }
+            } else {
+                // 2-3 players: Handle individual player skins
+                const winner = skin.winner;
                 
-                team1Players.forEach(player => {
-                    playerBalances[player] += betAmount * skinsWon;
-                });
-                
-                team2Players.forEach(player => {
-                    playerBalances[player] -= betAmount * skinsWon;
-                });
-            } else if (skin.winner === 'team2') {
-                // Team 2 players get paid by Team 1 players
-                const team1Players = this.gameConfigs.skins.teams.team1;
-                const team2Players = this.gameConfigs.skins.teams.team2;
-                
-                team1Players.forEach(player => {
-                    playerBalances[player] -= betAmount * skinsWon;
-                });
-                
-                team2Players.forEach(player => {
-                    playerBalances[player] += betAmount * skinsWon;
+                // Winner gets paid by all other players
+                this.players.forEach(player => {
+                    if (player === winner) {
+                        playerBalances[player] += betAmount * skinsWon * (this.players.length - 1);
+                    } else {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    }
                 });
             }
         });
         
         return playerBalances;
     }
+
+    calculateKPSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        this.gameActions.kp.forEach(kp => {
+            const betAmount = this.gameConfigs.kp.betAmount;
+            
+            // KP winner gets paid by all other players
+            this.players.forEach(player => {
+                if (player !== kp.winner) {
+                    playerBalances[player] -= betAmount;
+                }
+            });
+            playerBalances[kp.winner] += (this.players.length - 1) * betAmount;
+        });
+        
+        return playerBalances;
+    }
+
+    calculateSnakeSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        if (this.gameActions.snake.length === 0) {
+            return playerBalances;
+        }
+        
+        const betAmount = this.gameConfigs.snake.betAmount;
+        const totalSnakes = this.gameActions.snake.length;
+        const snakePot = totalSnakes * betAmount;
+        
+        // Each snake increases the pot (no individual penalties)
+        // The last snake player owes the entire accumulated pot to the other 3 players
+        
+        if (totalSnakes === 1) {
+            // Special case: Only 1 snake - that player owes the pot to the other 3
+            const singleSnake = this.gameActions.snake[0];
+            playerBalances[singleSnake.player] -= snakePot;
+            
+            // The other 3 players each get paid the pot amount divided by 3
+            const paymentPerPlayer = snakePot / 3;
+            
+            this.players.forEach(player => {
+                if (player !== singleSnake.player) {
+                    playerBalances[player] += paymentPerPlayer;
+                }
+            });
+        } else {
+            // Multiple snakes: Each increases pot, last snake owes entire pot
+            // Each snake player does NOT pay individually - they just increase the pot
+            
+            // The last player to get a snake owes the entire pot to the other 3 players
+            const lastSnake = this.gameActions.snake[this.gameActions.snake.length - 1];
+            playerBalances[lastSnake.player] -= snakePot;
+            
+            // The other 3 players each get paid the pot amount divided by 3
+            const paymentPerPlayer = snakePot / 3;
+            
+            this.players.forEach(player => {
+                if (player !== lastSnake.player) {
+                    playerBalances[player] += paymentPerPlayer;
+                }
+            });
+        }
+        
+        return playerBalances;
+    }
+
+
 
     calculateCombinedSummary(gameSummaries) {
         const combinedBalances = {};
@@ -1182,7 +2014,9 @@ class SavageGolf {
         this.currentHole = 1;
         this.gameActions = {
             murph: [],
-            skins: []
+            skins: [],
+            kp: [],
+            snake: []
         };
         this.gameStarted = false;
         this.currentPage = 'navigation';
@@ -1190,9 +2024,32 @@ class SavageGolf {
         // Reset form inputs
         document.getElementById('murphBet').value = '1.00';
         document.getElementById('skinsBet').value = '1.00';
-        document.getElementById('gameMurph').checked = true;
+        document.getElementById('kpBet').value = '1.00';
+        document.getElementById('snakeBet').value = '1.00';
+        document.getElementById('gameMurph').checked = false;
         document.getElementById('gameSkins').checked = false;
+        document.getElementById('gameKP').checked = false;
+        document.getElementById('gameSnake').checked = false;
         document.querySelectorAll('.player-input input').forEach(input => input.value = '');
+        
+        // Reset player count to 4 and hide player inputs
+        const playerCountSelect = document.getElementById('playerCount');
+        if (playerCountSelect) {
+            playerCountSelect.value = '4';
+            this.updatePlayerInputs(4);
+        }
+        
+        // Hide player input fields
+        const playerInputsContainer = document.getElementById('playerInputs');
+        if (playerInputsContainer) {
+            playerInputsContainer.style.display = 'none';
+        }
+        
+        // Show help message again
+        const helpMessage = document.querySelector('.player-count-help');
+        if (helpMessage) {
+            helpMessage.style.display = 'block';
+        }
         
         // Reset team selection dropdowns
         const teamSelects = ['team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'];
@@ -1205,23 +2062,45 @@ class SavageGolf {
         document.getElementById('currentHole').textContent = '1';
         document.getElementById('murphActionsList').innerHTML = '';
         document.getElementById('skinsActionsList').innerHTML = '';
+        document.getElementById('kpActionsList').innerHTML = '';
+        document.getElementById('snakeActionsList').innerHTML = '';
         document.getElementById('murphSummary').innerHTML = '';
         document.getElementById('skinsSummary').innerHTML = '';
+        document.getElementById('kpSummary').innerHTML = '';
+        document.getElementById('snakeSummary').innerHTML = '';
         document.getElementById('combinedSummary').innerHTML = '';
         document.getElementById('murphBreakdown').innerHTML = '';
         document.getElementById('skinsBreakdown').innerHTML = '';
+        document.getElementById('kpBreakdown').innerHTML = '';
+        document.getElementById('snakeBreakdown').innerHTML = '';
+        
+        // Reset breakdown section visibility
+        const breakdownSections = ['murphBreakdownSection', 'skinsBreakdownSection', 'kpBreakdownSection', 'snakeBreakdownSection'];
+        breakdownSections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.style.display = 'none';
+            }
+        });
         
         // Show setup, hide all game pages
         document.getElementById('gameSetup').style.display = 'block';
         document.getElementById('gameNavigation').style.display = 'none';
         document.getElementById('murphPage').style.display = 'none';
         document.getElementById('skinsPage').style.display = 'none';
+        document.getElementById('kpPage').style.display = 'none';
+        document.getElementById('snakePage').style.display = 'none';
         document.getElementById('combinedPage').style.display = 'none';
         document.getElementById('finalResults').style.display = 'none';
         
         // Reset game sections
         this.toggleGameSection('murph');
         this.toggleGameSection('skins');
+        this.toggleGameSection('kp');
+        this.toggleGameSection('snake');
+        
+        // Set initial navigation button visibility
+        this.updateGameNavigationVisibility();
         
         // Reset previous hole button state
         this.updatePreviousHoleButton();
@@ -1286,6 +2165,52 @@ class SavageGolf {
             
             // Show success message
             this.showNotification(`Deleted Skins action for Hole ${action.hole}`, 'success');
+        }
+    }
+
+    deleteKPAction(actionId) {
+        // Find the action to delete
+        const actionIndex = this.gameActions.kp.findIndex(action => action.id === actionId);
+        if (actionIndex === -1) {
+            this.showNotification('KP action not found.', 'error');
+            return;
+        }
+        
+        const action = this.gameActions.kp[actionIndex];
+        
+        // Show confirmation dialog
+        if (confirm(`Are you sure you want to delete this KP action?\n\n${action.winner} got closest to the pin on Hole ${action.hole}`)) {
+            // Remove the action
+            this.gameActions.kp.splice(actionIndex, 1);
+            
+            // Update display
+            this.updateGameDisplay();
+            
+            // Show success message
+            this.showNotification(`Deleted KP action for ${action.winner} on Hole ${action.hole}`, 'success');
+        }
+    }
+
+    deleteSnakeAction(actionId) {
+        // Find the action to delete
+        const actionIndex = this.gameActions.snake.findIndex(action => action.id === actionId);
+        if (actionIndex === -1) {
+            this.showNotification('Snake action not found.', 'error');
+            return;
+        }
+        
+        const action = this.gameActions.snake[actionIndex];
+        
+        // Show confirmation dialog
+        if (confirm(`Are you sure you want to delete this Snake action?\n\n${action.player} got a snake on Hole ${action.hole}`)) {
+            // Remove the action
+            this.gameActions.snake.splice(actionIndex, 1);
+            
+            // Update display
+            this.updateGameDisplay();
+            
+            // Show success message
+            this.showNotification(`Deleted Snake action for ${action.player} on Hole ${action.hole}`, 'success');
         }
     }
 

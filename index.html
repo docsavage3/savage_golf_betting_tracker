@@ -13,25 +13,35 @@
     <div class="container">
         <header>
             <h1>🏌️ Savage Golf</h1>
-            <p class="subtitle">Track your side games and bets</p>
+            <p class="subtitle">The app to track your $$$ bets, not your scores, you have a scorecard and a small pencil for that!</p>
         </header>
 
         <!-- Game Setup Section -->
         <section id="gameSetup" class="card">
             <h2>Game Setup</h2>
             <div class="players-section">
-                <h3>Players (4 required)</h3>
-                <div class="player-inputs">
-                    <div class="player-input">
+                <h3>Players (2-4 required)</h3>
+                <div class="player-count">
+                    <label for="playerCount">Number of Players:</label>
+                    <select id="playerCount" required>
+                        <option value="">Select number of players...</option>
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                    <small class="player-count-help">Select the number of players to continue</small>
+                </div>
+                <div class="player-inputs" id="playerInputs" style="display: none;">
+                    <div class="player-input" id="player1Input">
                         <input type="text" id="player1" placeholder="Player 1" required>
                     </div>
-                    <div class="player-input">
+                    <div class="player-input" id="player2Input">
                         <input type="text" id="player2" placeholder="Player 2" required>
                     </div>
-                    <div class="player-input">
+                    <div class="player-input" id="player3Input">
                         <input type="text" id="player3" placeholder="Player 3" required>
                     </div>
-                    <div class="player-input">
+                    <div class="player-input" id="player4Input">
                         <input type="text" id="player4" placeholder="Player 4" required>
                     </div>
                 </div>
@@ -41,22 +51,34 @@
                 <h3>Select Games to Play</h3>
                 <div class="game-selection">
                     <div class="game-option">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="gameMurph" value="murph" checked>
-                            <span class="checkmark"></span>
-                            Murph
-                        </label>
-                        <div class="bet-amount" id="murphBetAmount" style="display: block;">
+                        <div class="game-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gameMurph" value="murph">
+                                <span class="checkmark"></span>
+                                Murph
+                            </label>
+                        </div>
+                        <div class="game-description">
+                            <p><strong>How to play:</strong> A player calls "Murph" before hitting their shot on a specific hole.</p>
+                            <p><strong>Betting logic:</strong> If they make it within 2 shots, all other players pay them the bet amount. If they fail, they pay all other players the bet amount.</p>
+                        </div>
+                        <div class="bet-amount" id="murphBetAmount" style="display: none;">
                             <label for="murphBet">Bet Amount ($):</label>
                             <input type="number" id="murphBet" min="0.01" step="0.01" value="1.00">
                         </div>
                     </div>
                     <div class="game-option">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="gameSkins" value="skins">
-                            <span class="checkmark"></span>
-                            Skins
-                        </label>
+                        <div class="game-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gameSkins" value="skins">
+                                <span class="checkmark"></span>
+                                Skins
+                            </label>
+                        </div>
+                        <div class="game-description">
+                            <p><strong>How to play:</strong> With 4 players: Teams compete on each hole. With 2-3 players: Individual players compete. The best score wins the skin(s).</p>
+                            <p><strong>Betting logic:</strong> Each skin is worth the bet amount. If no one wins a hole, skins carry over to the next hole. Winner gets paid by all other players.</p>
+                        </div>
                         <div class="bet-amount" id="skinsBetAmount" style="display: none;">
                             <label for="skinsBet">Bet Amount ($):</label>
                             <input type="number" id="skinsBet" min="0.01" step="0.01" value="1.00">
@@ -91,6 +113,42 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="game-option">
+                        <div class="game-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gameKP" value="kp">
+                                <span class="checkmark"></span>
+                                Closest to the Pin (KP)
+                            </label>
+                        </div>
+                        <div class="game-description">
+                            <p><strong>How to play:</strong> Player who is closest to the pin on the Par 3 holes. Ball has to be on the green</p>
+                            <p><strong>Betting logic:</strong> The KP player gets paid the bet amount by all other players if they win the KP on that hole.</p>
+                        </div>
+                        <div class="bet-amount" id="kpBetAmount" style="display: none;">
+                            <label for="kpBet">Bet Amount ($):</label>
+                            <input type="number" id="kpBet" min="0.01" step="0.01" value="1.00">
+                        </div>
+                    </div>
+                    
+                    <div class="game-option">
+                        <div class="game-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gameSnake" value="snake">
+                                <span class="checkmark"></span>
+                                Snake
+                            </label>
+                        </div>
+                        <div class="game-description">
+                            <p><strong>How to play:</strong> Snake tracks players who make a 3 putt.</p>
+                            <p><strong>Betting logic:</strong> Each snake increases the pot. The last player to get a snake owes the entire accumulated pot to the other 3 players.</p>
+                        </div>
+                        <div class="bet-amount" id="snakeBetAmount" style="display: none;">
+                            <label for="snakeBet">Bet Amount ($):</label>
+                            <input type="number" id="snakeBet" min="0.01" step="0.01" value="1.00">
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -119,6 +177,18 @@
                     <span class="game-status" id="skinsStatus">0 skins</span>
                 </button>
                 
+                <button type="button" id="navKP" class="btn btn-info game-nav-btn">
+                    <span class="game-icon">🎯</span>
+                    <span class="game-name">KP</span>
+                    <span class="game-status" id="kpStatus">0 KPs</span>
+                </button>
+                
+                <button type="button" id="navSnake" class="btn btn-danger game-nav-btn">
+                    <span class="game-icon">🐍</span>
+                    <span class="game-name">Snake</span>
+                    <span class="game-status" id="snakeStatus">0 snakes</span>
+                </button>
+                
                 <button type="button" id="navCombined" class="btn btn-success game-nav-btn">
                     <span class="game-icon">💰</span>
                     <span class="game-name">Combined Total</span>
@@ -137,7 +207,7 @@
             <div class="game-actions">
                 <button type="button" id="callMurph" class="btn btn-warning btn-large">
                     <span class="btn-icon">📞</span>
-                    Call Murph
+                    Record Murph
                 </button>
             </div>
             
@@ -177,6 +247,56 @@
             </div>
         </section>
 
+        <!-- KP Game Page -->
+        <section id="kpPage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🎯 Closest to the Pin (KP)</h2>
+                <button type="button" id="backToNavKP" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div class="game-actions">
+                <button type="button" id="recordKP" class="btn btn-info btn-large">
+                    <span class="btn-icon">🎯</span>
+                    Record KP
+                </button>
+            </div>
+            
+            <div class="game-history">
+                <h3>KP History</h3>
+                <div id="kpActionsList"></div>
+            </div>
+            
+            <div class="game-summary">
+                <h3>KP Financial Summary</h3>
+                <div id="kpSummary"></div>
+            </div>
+        </section>
+
+        <!-- Snake Game Page -->
+        <section id="snakePage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🐍 Snake Game</h2>
+                <button type="button" id="backToNavSnake" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div class="game-actions">
+                <button type="button" id="recordSnake" class="btn btn-danger btn-large">
+                    <span class="btn-icon">🐍</span>
+                    Record Snake
+                </button>
+            </div>
+            
+            <div class="game-history">
+                <h3>Snake History</h3>
+                <div id="snakeActionsList"></div>
+            </div>
+            
+            <div class="game-summary">
+                <h3>Snake Financial Summary</h3>
+                <div id="snakeSummary"></div>
+            </div>
+        </section>
+
         <!-- Combined Total Page -->
         <section id="combinedPage" class="card game-page" style="display: none;">
             <div class="page-header">
@@ -190,14 +310,24 @@
             </div>
             
             <div class="game-breakdown">
-                <div class="breakdown-section">
+                <div class="breakdown-section" id="murphBreakdownSection" style="display: none;">
                     <h4>Murph Breakdown</h4>
                     <div id="murphBreakdown"></div>
                 </div>
                 
-                <div class="breakdown-section">
+                <div class="breakdown-section" id="skinsBreakdownSection" style="display: none;">
                     <h4>Skins Breakdown</h4>
                     <div id="skinsBreakdown"></div>
+                </div>
+                
+                <div class="breakdown-section" id="kpBreakdownSection" style="display: none;">
+                    <h4>KP Breakdown</h4>
+                    <div id="kpBreakdown"></div>
+                </div>
+                
+                <div class="breakdown-section" id="snakeBreakdownSection" style="display: none;">
+                    <h4>Snake Breakdown</h4>
+                    <div id="snakeBreakdown"></div>
                 </div>
             </div>
         </section>
@@ -270,6 +400,48 @@
                 <div class="modal-buttons">
                     <button type="button" id="saveSkins" class="btn btn-primary">Save</button>
                     <button type="button" id="cancelSkins" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KP Modal -->
+        <div id="kpModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Record Closest to the Pin (KP)</h3>
+                <div class="form-group">
+                    <label for="kpHole">Hole:</label>
+                    <input type="number" id="kpHole" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="kpWinner">KP Winner:</label>
+                    <select id="kpWinner" required>
+                        <option value="">Select player...</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="saveKP" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelKP" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Snake Modal -->
+        <div id="snakeModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Record Snake</h3>
+                <div class="form-group">
+                    <label for="snakeHole">Hole:</label>
+                    <input type="number" id="snakeHole" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="snakePlayer">Snake Player:</label>
+                    <select id="snakePlayer" required>
+                        <option value="">Select player...</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="saveSnake" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelSnake" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
