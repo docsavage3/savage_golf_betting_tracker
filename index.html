@@ -13,7 +13,7 @@
     <div class="container">
         <header>
             <h1>🏌️ Savage Side Bets</h1>
-            <p class="subtitle">Track your golf bets, not your birdies. You’ve already got a tiny pencil for that!!</p>
+            <p class="subtitle">Track your golf bets, not your birdies & bogeys</p>
         </header>
 
         <!-- Game Setup Section -->
@@ -162,6 +162,7 @@
                 <button type="button" id="previousHole" class="btn btn-secondary" disabled>← Previous Hole</button>
                 <span class="hole-display">Hole: <span id="currentHole">1</span></span>
                 <button type="button" id="nextHole" class="btn btn-secondary">Next Hole →</button>
+                <button type="button" id="completeGame" class="btn btn-success" style="display: none;">Complete Game</button>
             </div>
             
             <div class="game-buttons">
@@ -308,6 +309,7 @@
                 <h3>Overall Financial Summary</h3>
                 <div id="combinedSummary"></div>
             </div>
+            <div id="paymentInstructionsCombined"></div>
             
             <div class="game-breakdown">
                 <div class="breakdown-section" id="murphBreakdownSection" style="display: none;">

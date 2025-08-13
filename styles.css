@@ -597,6 +597,23 @@ header h1 {
     font-weight: 600;
 }
 
+.hole-navigation #completeGame {
+    background: var(--success-color, #28a745);
+    border-color: var(--success-color, #28a745);
+    color: white;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+
+.hole-navigation #completeGame:hover {
+    background: var(--success-hover, #218838);
+    border-color: var(--success-hover, #218838);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
 .hole-navigation button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -975,11 +992,17 @@ header h1 {
         flex-direction: column;
         gap: 16px;
         text-align: center;
+        flex-wrap: wrap;
     }
     
     .hole-navigation button {
         min-width: auto;
         width: 100%;
+    }
+    
+    .hole-navigation #completeGame {
+        order: 3;
+        margin-top: 10px;
     }
     
     .modal-content {

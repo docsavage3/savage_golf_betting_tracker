@@ -28,6 +28,12 @@ class SavageGolf {
         document.getElementById('previousHole').addEventListener('click', () => this.previousHole());
         document.getElementById('nextHole').addEventListener('click', () => this.nextHole());
         
+        // Complete Game button (appears on hole 18)
+        const completeBtn = document.getElementById('completeGame');
+        if (completeBtn) {
+            completeBtn.addEventListener('click', () => this.completeGameFlow());
+        }
+        
         // Navigation buttons
         document.getElementById('navMurph').addEventListener('click', () => this.showPage('murph'));
         document.getElementById('navSkins').addEventListener('click', () => this.showPage('skins'));
@@ -181,6 +187,10 @@ class SavageGolf {
     updateCombinedPage() {
         this.updateCombinedSummary();
         this.updateGameBreakdowns();
+        const target = document.getElementById('paymentInstructionsCombined');
+        if (target) {
+            target.innerHTML = this.generatePaymentInstructions();
+        }
     }
 
     setupGameCheckboxes() {
@@ -698,18 +708,27 @@ class SavageGolf {
     updatePreviousHoleButton() {
         const previousButton = document.getElementById('previousHole');
         const nextButton = document.getElementById('nextHole');
+        const completeBtn = document.getElementById('completeGame');
         
         previousButton.disabled = this.currentHole <= 1;
         
-        // Disable next button on hole 18
-        if (nextButton) {
-            nextButton.disabled = this.currentHole >= 18;
-            if (this.currentHole >= 18) {
-                nextButton.textContent = 'Game Complete';
-                nextButton.style.opacity = '0.6';
-            } else {
-                nextButton.textContent = 'Next Hole →';
+        if (this.currentHole >= 18) {
+            // On hole 18: hide Next Hole, show Complete Game
+            if (nextButton) {
+                nextButton.style.display = 'none';
+            }
+            if (completeBtn) {
+                completeBtn.style.display = 'inline-block';
+            }
+        } else {
+            // On holes 1-17: show Next Hole, hide Complete Game
+            if (nextButton) {
+                nextButton.style.display = 'inline-block';
+                nextButton.disabled = false;
                 nextButton.style.opacity = '1';
+            }
+            if (completeBtn) {
+                completeBtn.style.display = 'none';
             }
         }
     }
@@ -720,6 +739,42 @@ class SavageGolf {
         
         // Update final results content
         this.updateFinalResults();
+    }
+
+    // Complete game flow from navigation at hole 18
+    completeGameFlow() {
+        // Show warning and get confirmation
+        const confirmed = window.confirm('⚠️ WARNING: Completing the game will lock all results and prevent further edits.\n\nAre you sure you want to complete the game and view the final financial summary?');
+        if (!confirmed) return;
+        
+        // Lock: disable all record buttons and navigation except Combined
+        this.lockEdits();
+        
+        // Navigate to Combined page and render summary + payment instructions
+        this.showPage('combined');
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        const target = document.getElementById('paymentInstructionsCombined');
+        if (target) {
+            target.innerHTML = this.generatePaymentInstructions();
+        }
+        
+        // Show notification that game is complete
+        this.showNotification('Game complete! Results are locked. View Combined Total for payment instructions.', 'success');
+    }
+
+    lockEdits() {
+        // disable game record buttons
+        const ids = ['recordSkins', 'recordKP', 'recordSnake', 'callMurph'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.disabled = true;
+                el.classList.add('disabled');
+            }
+        });
+        // prevent opening modals
+        // No-op since buttons are disabled; could also remove listeners if needed
     }
 
     updateFinalResults() {
@@ -959,74 +1014,88 @@ class SavageGolf {
     }
 
     generatePaymentInstructions() {
-        const gameSummaries = {};
-        
-        if (this.gameConfigs.murph?.enabled) {
-            gameSummaries.murph = this.calculateMurphSummary();
-        }
-        
-        if (this.gameConfigs.skins?.enabled) {
-            gameSummaries.skins = this.calculateSkinsSummary();
-        }
-        
-        if (this.gameConfigs.kp?.enabled) {
-            gameSummaries.kp = this.calculateKPSummary();
-        }
-        
-        if (this.gameConfigs.snake?.enabled) {
-            gameSummaries.snake = this.calculateSnakeSummary();
-        }
-        
-        const combinedSummary = this.calculateCombinedSummary(gameSummaries);
-        
-        // Separate winners and losers
-        const winners = Object.entries(combinedSummary).filter(([player, balance]) => balance > 0);
-        const losers = Object.entries(combinedSummary).filter(([player, balance]) => balance < 0);
-        
-        let html = `
-            <div class="final-game-section payment-instructions">
-                <h3>💳 Payment Instructions</h3>
-        `;
-        
-        if (winners.length === 0 && losers.length === 0) {
-            html += '<p class="no-payments">No payments needed - all players are even!</p>';
-        } else {
-            html += '<div class="payment-list">';
-            
-            // Generate payment instructions
-            winners.forEach(([winner, amount]) => {
-                const paymentAmount = Math.abs(amount);
-                html += `
-                    <div class="payment-item">
-                        <div class="payment-header">
-                            <span class="payment-recipient">${winner} receives $${paymentAmount.toFixed(2)}</span>
-                        </div>
-                        <div class="payment-breakdown">
-                `;
-                
-                // Show who pays this winner
-                losers.forEach(([loser, lossAmount]) => {
-                    if (Math.abs(lossAmount) > 0) {
-                        const payment = Math.min(paymentAmount, Math.abs(lossAmount));
-                        html += `
-                            <div class="payment-detail">
-                                <span class="payment-from">${loser}</span>
-                                <span class="payment-arrow">→</span>
-                                <span class="payment-to">${winner}</span>
-                                <span class="payment-amount">$${payment.toFixed(2)}</span>
-                            </div>
-                        `;
-                    }
-                });
-                
-                html += '</div></div>';
-            });
-            
-            html += '</div>';
-        }
-        
-        html += '</div>';
-        return html;
+		const gameSummaries = {};
+		
+		if (this.gameConfigs.murph?.enabled) {
+			gameSummaries.murph = this.calculateMurphSummary();
+		}
+		
+		if (this.gameConfigs.skins?.enabled) {
+			gameSummaries.skins = this.calculateSkinsSummary();
+		}
+		
+		if (this.gameConfigs.kp?.enabled) {
+			gameSummaries.kp = this.calculateKPSummary();
+		}
+		
+		if (this.gameConfigs.snake?.enabled) {
+			gameSummaries.snake = this.calculateSnakeSummary();
+		}
+		
+		const combinedSummary = this.calculateCombinedSummary(gameSummaries);
+		
+		// Build settlement transfers so totals add up exactly
+		const winners = Object.entries(combinedSummary)
+			.filter(([_, balance]) => balance > 0)
+			.map(([name, balance]) => ({ name, amount: balance }))
+			.sort((a, b) => b.amount - a.amount);
+		const losers = Object.entries(combinedSummary)
+			.filter(([_, balance]) => balance < 0)
+			.map(([name, balance]) => ({ name, amount: Math.abs(balance) }))
+			.sort((a, b) => b.amount - a.amount); // largest debtor first
+		
+		// Greedy settlement: match largest winner with largest debtor
+		const transfersByWinner = new Map();
+		let wi = 0, li = 0;
+		while (wi < winners.length && li < losers.length) {
+			const w = winners[wi];
+			const l = losers[li];
+			const pay = Math.min(w.amount, l.amount);
+			if (pay > 0) {
+				if (!transfersByWinner.has(w.name)) transfersByWinner.set(w.name, []);
+				transfersByWinner.get(w.name).push({ from: l.name, amount: pay });
+				w.amount -= pay;
+				l.amount -= pay;
+			}
+			if (w.amount <= 0.000001) wi++;
+			if (l.amount <= 0.000001) li++;
+		}
+		
+		let html = `
+			<div class="final-game-section payment-instructions">
+				<h3>💳 Payment Instructions</h3>
+		`;
+		
+		if (winners.length === 0 || losers.length === 0 || transfersByWinner.size === 0) {
+			html += '<p class="no-payments">No payments needed - all players are even!</p>';
+		} else {
+			html += '<div class="payment-list">';
+			for (const [winner, transfers] of transfersByWinner.entries()) {
+				const totalReceive = transfers.reduce((s, t) => s + t.amount, 0);
+				html += `
+					<div class="payment-item">
+						<div class="payment-header">
+							<span class="payment-recipient">${winner} receives $${totalReceive.toFixed(2)}</span>
+						</div>
+						<div class="payment-breakdown">
+				`;
+				transfers.forEach(t => {
+					html += `
+							<div class="payment-detail">
+								<span class="payment-from">${t.from}</span>
+								<span class="payment-arrow">→</span>
+								<span class="payment-to">${winner}</span>
+								<span class="payment-amount">$${t.amount.toFixed(2)}</span>
+							</div>
+					`;
+				});
+				html += '</div></div>';
+			}
+			html += '</div>';
+		}
+		
+		html += '</div>';
+		return html;
     }
 
     // Murph Game Methods
