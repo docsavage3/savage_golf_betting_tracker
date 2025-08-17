@@ -53,38 +53,43 @@
             <div class="games-section">
                 <h3>Select Games to Play</h3>
                 <div class="game-selection">
-                    <div class="game-option">
+                    <div class="game-option compact">
                         <div class="game-header">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="gameMurph" value="murph">
                                 <span class="checkmark"></span>
-                                Murph
+                                <span class="game-title">🎯 Murph</span>
                             </label>
+                            <div class="game-bet-input" id="murphBetAmount" style="display: none;">
+                                <input type="number" id="murphBet" min="0.01" step="0.01" value="1.00" placeholder="$">
+                            </div>
                         </div>
-                        <div class="game-description">
-                            <p><strong>How to play:</strong> A player calls "Murph" before hitting their shot on a specific hole.</p>
-                            <p><strong>Betting logic:</strong> If they hole the ball within 2 shots, all other players pay them the bet amount. If they fail, they pay all other players the bet amount.</p>
-                        </div>
-                        <div class="bet-amount" id="murphBetAmount" style="display: none;">
-                            <label for="murphBet">Bet Amount ($):</label>
-                            <input type="number" id="murphBet" min="0.01" step="0.01" value="1.00">
+                        <div class="game-description-collapsible">
+                            <details>
+                                <summary>How to play & betting logic</summary>
+                                <p><strong>How to play:</strong> A player calls "Murph" before hitting their shot on a specific hole.</p>
+                                <p><strong>Betting logic:</strong> If they hole the ball within 2 shots, all other players pay them the bet amount. If they fail, they pay all other players the bet amount.</p>
+                            </details>
                         </div>
                     </div>
-                    <div class="game-option">
+                    
+                    <div class="game-option compact">
                         <div class="game-header">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="gameSkins" value="skins">
                                 <span class="checkmark"></span>
-                                Skins
+                                <span class="game-title">🏆 Skins</span>
                             </label>
+                            <div class="game-bet-input" id="skinsBetAmount" style="display: none;">
+                                <input type="number" id="skinsBet" min="0.01" step="0.01" value="1.00" placeholder="$">
+                            </div>
                         </div>
-                        <div class="game-description">
-                            <p><strong>How to play:</strong> With 4 players: Teams compete on each hole. With 2-3 players: Individual players compete. The best score wins the skin(s).</p>
-                            <p><strong>Betting logic:</strong> Each skin is worth the bet amount. If no one wins a hole, skins carry over to the next hole. Winner gets paid by all other players.</p>
-                        </div>
-                        <div class="bet-amount" id="skinsBetAmount" style="display: none;">
-                            <label for="skinsBet">Bet Amount ($):</label>
-                            <input type="number" id="skinsBet" min="0.01" step="0.01" value="1.00">
+                        <div class="game-description-collapsible">
+                            <details>
+                                <summary>How to play & betting logic</summary>
+                                <p><strong>How to play:</strong> With 4 players: Teams compete on each hole. With 2-3 players: Individual players compete. The best score wins the skin(s).</p>
+                                <p><strong>Betting logic:</strong> Each skin is worth the bet amount. If no one wins a hole, skins carry over to the next hole. Winner gets paid by all other players.</p>
+                            </details>
                         </div>
                         <div class="team-selection" id="skinsTeamSelection" style="display: none;">
                             <label>Team Selection:</label>
@@ -117,57 +122,63 @@
                         </div>
                     </div>
                     
-                    <div class="game-option">
+                    <div class="game-option compact">
                         <div class="game-header">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="gameKP" value="kp">
                                 <span class="checkmark"></span>
-                                Closest to the Pin (KP)
+                                <span class="game-title">🎯 KP</span>
                             </label>
+                            <div class="game-bet-input" id="kpBetAmount" style="display: none;">
+                                <input type="number" id="kpBet" min="0.01" step="0.01" value="1.00" placeholder="$">
+                            </div>
                         </div>
-                        <div class="game-description">
-                            <p><strong>How to play:</strong> Player who is closest to the pin on the Par 3 holes. Ball has to be on the green</p>
-                            <p><strong>Betting logic:</strong> The KP player gets paid the bet amount by all other players if they win the KP on that hole.</p>
-                        </div>
-                        <div class="bet-amount" id="kpBetAmount" style="display: none;">
-                            <label for="kpBet">Bet Amount ($):</label>
-                            <input type="number" id="kpBet" min="0.01" step="0.01" value="1.00">
+                        <div class="game-description-collapsible">
+                            <details>
+                                <summary>How to play & betting logic</summary>
+                                <p><strong>How to play:</strong> Player who is closest to the pin on the Par 3 holes. Ball has to be on the green</p>
+                                <p><strong>Betting logic:</strong> The KP player gets paid the bet amount by all other players if they win the KP on that hole.</p>
+                            </details>
                         </div>
                     </div>
                     
-                    <div class="game-option">
+                    <div class="game-option compact">
                         <div class="game-header">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="gameSnake" value="snake">
                                 <span class="checkmark"></span>
-                                Snake
+                                <span class="game-title">🐍 Snake</span>
                             </label>
+                            <div class="game-bet-input" id="snakeBetAmount" style="display: none;">
+                                <input type="number" id="snakeBet" min="0.01" step="0.01" value="1.00" placeholder="$">
+                            </div>
                         </div>
-                        <div class="game-description">
-                            <p><strong>How to play:</strong> Snake tracks players who make a 3 putt.</p>
-                            <p><strong>Betting logic:</strong> Each snake increases the pot. The last player to get a snake owes the entire accumulated pot to the other 3 players.</p>
-                        </div>
-                        <div class="bet-amount" id="snakeBetAmount" style="display: none;">
-                            <label for="snakeBet">Bet Amount ($):</label>
-                            <input type="number" id="snakeBet" min="0.01" step="0.01" value="1.00">
+                        <div class="game-description-collapsible">
+                            <details>
+                                <summary>How to play & betting logic</summary>
+                                <p><strong>How to play:</strong> Snake tracks players who make a 3 putt.</p>
+                                <p><strong>Betting logic:</strong> Each snake increases the pot. The last player to get a snake owes the entire accumulated pot to the other 3 players.</p>
+                            </details>
                         </div>
                     </div>
                     
-                    <div class="game-option">
+                    <div class="game-option compact">
                         <div class="game-header">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="gameWolf" value="wolf">
                                 <span class="checkmark"></span>
-                                Wolf
+                                <span class="game-title">🐺 Wolf</span>
                             </label>
+                            <div class="game-bet-input" id="wolfBetAmount" style="display: none;">
+                                <input type="number" id="wolfBet" min="0.01" step="0.01" value="1.00" placeholder="$">
+                            </div>
                         </div>
-                        <div class="game-description">
-                            <p><strong>How to play:</strong> Wolf is a 4-player team game where players rotate being the "Wolf" every 4 holes.</p>
-                            <p><strong>Betting logic:</strong> Wolf can go Lone Wolf (4x payout) or pick a partner (2x payout each). Others pay the winners.</p>
-                        </div>
-                        <div class="bet-amount" id="wolfBetAmount" style="display: none;">
-                            <label for="wolfBet">Bet Amount ($):</label>
-                            <input type="number" id="wolfBet" min="0.01" step="0.01" value="1.00">
+                        <div class="game-description-collapsible">
+                            <details>
+                                <summary>How to play & betting logic</summary>
+                                <p><strong>How to play:</strong> Wolf is a 4-player team game where players rotate being the "Wolf" every 4 holes.</p>
+                                <p><strong>Betting logic:</strong> Wolf can go Lone Wolf (4x payout) or pick a partner (2x payout each). Others pay the winners.</p>
+                            </details>
                         </div>
                     </div>
                 </div>
@@ -184,13 +195,110 @@
         <section id="gameNavigation" class="card" style="display: none;">
             <h2>Game Navigation</h2>
             
-
-            
             <div class="hole-navigation">
                 <button type="button" id="previousHole" class="btn btn-secondary" disabled>← Previous Hole</button>
                 <span class="hole-display">Hole: <span id="holeDisplay">1</span></span>
                 <button type="button" id="nextHole" class="btn btn-secondary">Next Hole →</button>
                 <button type="button" id="completeGame" class="btn btn-success" style="display: none;">Complete Game</button>
+            </div>
+            
+            <!-- Quick Actions Dashboard -->
+            <div class="quick-actions-dashboard">
+                <h3>🎯 Quick Actions - Hole <span id="quickHoleDisplay">1</span></h3>
+                <div class="quick-actions-grid">
+                    <!-- Murph Quick Action -->
+                    <div class="quick-action-card" id="quickMurphCard" style="display: none;">
+                        <div class="quick-action-header">
+                            <span class="game-icon">🎯</span>
+                            <span class="game-name">Murph</span>
+                            <span class="game-status" id="quickMurphStatus">0 calls</span>
+                        </div>
+                        <div class="quick-action-form">
+                            <select id="quickMurphPlayer" class="quick-select">
+                                <option value="">Select player...</option>
+                            </select>
+                            <select id="quickMurphResult" class="quick-select">
+                                <option value="">Result...</option>
+                                <option value="made">✅ Made it</option>
+                                <option value="failed">❌ Failed</option>
+                            </select>
+                            <button type="button" id="quickMurphSave" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Skins Quick Action -->
+                    <div class="quick-action-card" id="quickSkinsCard" style="display: none;">
+                        <div class="quick-action-header">
+                            <span class="game-icon">🏆</span>
+                            <span class="game-name">Skins</span>
+                            <span class="game-status" id="quickSkinsStatus">0 skins</span>
+                        </div>
+                        <div class="quick-action-form">
+                            <select id="quickSkinsWinner" class="quick-select">
+                                <option value="">Winner...</option>
+                            </select>
+                            <button type="button" id="quickSkinsSave" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </div>
+                    
+                    <!-- KP Quick Action -->
+                    <div class="quick-action-card" id="quickKPCard" style="display: none;">
+                        <div class="quick-action-header">
+                            <span class="game-icon">🎯</span>
+                            <span class="game-name">KP</span>
+                            <span class="game-status" id="quickKPStatus">0 KPs</span>
+                        </div>
+                        <div class="quick-action-form">
+                            <select id="quickKPPlayer" class="quick-select">
+                                <option value="">Select player...</option>
+                            </select>
+                            <button type="button" id="quickKPSave" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Snake Quick Action -->
+                    <div class="quick-action-card" id="quickSnakeCard" style="display: none;">
+                        <div class="quick-action-header">
+                            <span class="game-icon">🐍</span>
+                            <span class="game-name">Snake</span>
+                            <span class="game-status" id="quickSnakeStatus">0 snakes</span>
+                        </div>
+                        <div class="quick-action-form">
+                            <select id="quickSnakePlayer" class="quick-select">
+                                <option value="">Select player...</option>
+                            </select>
+                            <button type="button" id="quickSnakeSave" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Wolf Quick Action -->
+                    <div class="quick-action-card" id="quickWolfCard" style="display: none;">
+                        <div class="quick-action-header">
+                            <span class="game-icon">🐺</span>
+                            <span class="game-name">Wolf</span>
+                            <span class="game-status" id="quickWolfStatus">0 holes</span>
+                        </div>
+                        <div class="quick-action-form">
+                            <select id="quickWolfPlayer" class="quick-select">
+                                <option value="">Wolf...</option>
+                            </select>
+                            <select id="quickWolfChoice" class="quick-select">
+                                <option value="">Choice...</option>
+                                <option value="lone_wolf">🐺 Lone Wolf</option>
+                                <option value="partner">🤝 Partner</option>
+                            </select>
+                            <select id="quickWolfPartner" class="quick-select" style="display: none;">
+                                <option value="">Partner...</option>
+                            </select>
+                            <select id="quickWolfResult" class="quick-select">
+                                <option value="">Result...</option>
+                                <option value="wolf_wins">🐺 Wolf Wins</option>
+                                <option value="partners_win">🐺 Wolf Loses</option>
+                            </select>
+                            <button type="button" id="quickWolfSave" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="game-buttons">
