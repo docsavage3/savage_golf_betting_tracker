@@ -182,8 +182,15 @@ export class GameManager {
                 console.log(`Attempting to add action to ${gameType} game instance:`, action);
                 console.log(`Game instance players:`, this.gameInstances[gameType].players);
                 console.log(`Game instance config:`, this.gameInstances[gameType].config);
+                console.log(`Action player: "${action.player}"`);
+                console.log(`Player exists check:`, this.gameInstances[gameType].players.includes(action.player));
+                console.log(`Player names comparison:`, this.gameInstances[gameType].players.map(p => `"${p}"`));
                 console.log(`Game instance type:`, typeof this.gameInstances[gameType]);
                 console.log(`Game instance addAction method:`, typeof this.gameInstances[gameType].addAction);
+                
+                console.log(`About to call addAction on ${gameType} instance...`);
+                console.log(`Game instance prototype chain:`, Object.getPrototypeOf(this.gameInstances[gameType]));
+                console.log(`Game instance constructor:`, this.gameInstances[gameType].constructor.name);
                 
                 const success = this.gameInstances[gameType].addAction(action);
                 console.log(`addAction returned:`, success);
