@@ -22,7 +22,8 @@ describe('ValidationManager', () => {
         murph: true,
         skins: false,
         kp: false,
-        snake: false
+        snake: false,
+        wolf: false
       });
       
       const result = validator.validateGameSelection();
@@ -37,7 +38,8 @@ describe('ValidationManager', () => {
         murph: false,
         skins: false,
         kp: false,
-        snake: false
+        snake: false,
+        wolf: false
       });
       
       const result = validator.validateGameSelection();
@@ -64,7 +66,8 @@ describe('ValidationManager', () => {
         murph: true,
         skins: false,
         kp: false,
-        snake: false
+        snake: false,
+        wolf: false
       });
 
       // Mock validateSelectedGameBets to return success
@@ -112,7 +115,8 @@ describe('ValidationManager', () => {
         murph: true,
         skins: false,
         kp: false,
-        snake: false
+        snake: false,
+        wolf: false
       });
 
       // Mock validateSelectedGameBets to return failure with specific error
@@ -155,6 +159,15 @@ describe('ValidationManager', () => {
       const result = validator.validateGameBetAmount('murph');
       expect(result.success).toBe(false);
     });
+
+    test('should validate wolf game bet amounts', () => {
+      // Mock DOM elements for bet validation
+      const mockBetInput = { value: '3.00' };
+      document.getElementById = jest.fn().mockReturnValue(mockBetInput);
+      
+      const result = validator.validateGameBetAmount('wolf');
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Hole Number Validation', () => {
@@ -194,6 +207,16 @@ describe('ValidationManager', () => {
       
       const result = mockPlayerManager.validateTeamSelection();
       expect(result).toBe(false);
+    });
+  });
+
+  describe('Game Display Names', () => {
+    test('should return correct display names for all games', () => {
+      expect(validator.getGameDisplayName('murph')).toBe('Murph');
+      expect(validator.getGameDisplayName('skins')).toBe('Skins');
+      expect(validator.getGameDisplayName('kp')).toBe('KP');
+      expect(validator.getGameDisplayName('snake')).toBe('Snake');
+      expect(validator.getGameDisplayName('wolf')).toBe('Wolf');
     });
   });
 

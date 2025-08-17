@@ -16,8 +16,10 @@ const mockDOM = {
   player4: { value: 'Tom' },
   gameMurph: { checked: true },
   gameSkins: { checked: true },
+  gameWolf: { checked: true },
   murphBet: { value: '5.00' },
   skinsBet: { value: '2.00' },
+  wolfBet: { value: '3.00' },
   startGame: { style: { display: 'block' } }
 };
 
@@ -65,6 +67,7 @@ describe('Game Workflow Integration', () => {
     mockDOM.player4.value = 'Tom';
     mockDOM.murphBet.value = '5.00';
     mockDOM.skinsBet.value = '2.00';
+    mockDOM.wolfBet.value = '3.00';
   });
 
   describe('Game Setup Workflow', () => {
@@ -81,10 +84,12 @@ describe('Game Workflow Integration', () => {
       // Simulate user selecting games
       mockDOM.gameMurph.checked = true;
       mockDOM.gameSkins.checked = true;
+      mockDOM.gameWolf.checked = true;
       
       // Simulate user setting bet amounts
       mockDOM.murphBet.value = '5.00';
       mockDOM.skinsBet.value = '2.00';
+      mockDOM.wolfBet.value = '3.00';
       
       // All required fields should be filled
       expect(mockDOM.playerCount.value).toBe('4');
@@ -94,8 +99,10 @@ describe('Game Workflow Integration', () => {
       expect(mockDOM.player4.value).toBe('Tom');
       expect(mockDOM.gameMurph.checked).toBe(true);
       expect(mockDOM.gameSkins.checked).toBe(true);
+      expect(mockDOM.gameWolf.checked).toBe(true);
       expect(mockDOM.murphBet.value).toBe('5.00');
       expect(mockDOM.skinsBet.value).toBe('2.00');
+      expect(mockDOM.wolfBet.value).toBe('3.00');
     });
 
     test('should reject incomplete game setup', () => {
@@ -295,6 +302,44 @@ describe('Game Workflow Integration', () => {
       // Each player on team 2 should pay $1
       const team2PlayerPayout = -betAmount / 2;
       expect(team2PlayerPayout).toBe(-1);
+    });
+
+    test('should calculate wolf payouts correctly', () => {
+      // 4 players, $3 bet
+      const players = ['John', 'Mike', 'Sarah', 'Tom'];
+      const betAmount = 3;
+      
+      // John (wolf) + Mike (partner) win on hole 1
+      // John and Mike each get $3, Sarah and Tom each lose $3
+      const wolfPayout = betAmount;
+      const partnerPayout = betAmount;
+      const otherPlayerPayout = -betAmount;
+      
+      expect(wolfPayout).toBe(3);
+      expect(partnerPayout).toBe(3);
+      expect(otherPlayerPayout).toBe(-3);
+      
+      // Total payout should be $0 (balanced)
+      const totalPayout = wolfPayout + partnerPayout + (otherPlayerPayout * 2);
+      expect(totalPayout).toBe(0);
+    });
+
+    test('should calculate lone wolf payouts correctly', () => {
+      // 4 players, $3 bet
+      const players = ['John', 'Mike', 'Sarah', 'Tom'];
+      const betAmount = 3;
+      
+      // John (lone wolf) wins on hole 1
+      // John gets 3x bet from others = $9, others each lose $3
+      const loneWolfPayout = betAmount * 3;
+      const otherPlayerPayout = -betAmount;
+      
+      expect(loneWolfPayout).toBe(9);
+      expect(otherPlayerPayout).toBe(-3);
+      
+      // Total payout should be $0 (balanced)
+      const totalPayout = loneWolfPayout + (otherPlayerPayout * 3);
+      expect(totalPayout).toBe(0);
     });
   });
 
