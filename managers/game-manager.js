@@ -567,17 +567,17 @@ export class GameManager {
         this.gameActions.wolf.forEach(action => {
             if (action.result === 'wolf_wins') {
                 if (action.wolfChoice === 'lone_wolf') {
-                    // Lone Wolf wins: gets 4 points, others lose 1 each
-                    playerBalances[action.wolf] += betAmount * 4;
+                    // Lone Wolf wins: gets 3x bet from others
+                    playerBalances[action.wolf] += betAmount * 3;
                     this.players.forEach(player => {
                         if (player !== action.wolf) {
                             playerBalances[player] -= betAmount;
                         }
                     });
                 } else {
-                    // Wolf + Partner win: each get 2 points, others lose 1 each
-                    playerBalances[action.wolf] += betAmount * 2;
-                    playerBalances[action.partner] += betAmount * 2;
+                    // Wolf + Partner win: each get 1x bet, others lose 1x bet each
+                    playerBalances[action.wolf] += betAmount;
+                    playerBalances[action.partner] += betAmount;
                     this.players.forEach(player => {
                         if (player !== action.wolf && player !== action.partner) {
                             playerBalances[player] -= betAmount;
@@ -585,9 +585,9 @@ export class GameManager {
                     });
                 }
             } else {
-                // Partners win: each get 1 point, Wolf loses 3
+                // Wolf loses: others get 1x bet each, Wolf loses 3x bet
                 if (action.wolfChoice === 'lone_wolf') {
-                    // Lone Wolf loses: others get 1 point each
+                    // Lone Wolf loses: others get 1x bet each
                     playerBalances[action.wolf] -= betAmount * 3;
                     this.players.forEach(player => {
                         if (player !== action.wolf) {
@@ -595,7 +595,7 @@ export class GameManager {
                         }
                     });
                 } else {
-                    // Wolf + Partner lose: others get 1 point each
+                    // Wolf + Partner lose: others get 1x bet each
                     playerBalances[action.wolf] -= betAmount * 3;
                     playerBalances[action.partner] -= betAmount * 3;
                     this.players.forEach(player => {
