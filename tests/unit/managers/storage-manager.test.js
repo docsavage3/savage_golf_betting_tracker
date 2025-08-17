@@ -34,7 +34,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike', 'Sarah', 'Tom'],
         currentHole: 3,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       const result = storageManager.saveGameState(gameState);
@@ -71,7 +71,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 1,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       const result = storageManager.saveGameState(gameState);
@@ -87,7 +87,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike', 'Sarah', 'Tom'],
         currentHole: 3,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock localStorage.getItem to return saved state
@@ -136,7 +136,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike', 'Sarah', 'Tom'],
         currentHole: 3,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       const result = storageManager.validateGameState(validGameState);
@@ -206,7 +206,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 1,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock existing backups - first call is for getBackups(), second is for the backup key
@@ -242,7 +242,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 2,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock backup retrieval - backups are stored as array with state property
@@ -267,7 +267,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 1,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock document.createElement to return a proper mock element
@@ -290,7 +290,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 1,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock File object with content property for FileReader
@@ -323,7 +323,7 @@ describe('StorageManager', () => {
         players: ['John', 'Mike'],
         currentHole: 1,
         gameStarted: true,
-        gameActions: { murph: [], skins: [], kp: [], snake: [] }
+        gameActions: { murph: [], skins: [], kp: [], snake: [], wolf: [] }
       };
 
       // Mock saved state and backups with sufficient data size

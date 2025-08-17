@@ -50,6 +50,7 @@ export const ELEMENT_IDS = {
     SKINS_PAGE: 'skinsPage',
     KP_PAGE: 'kpPage',
     SNAKE_PAGE: 'snakePage',
+    WOLF_PAGE: 'wolfPage',
     COMBINED_PAGE: 'combinedPage',
     FINAL_RESULTS: 'finalResults',
     
@@ -58,6 +59,7 @@ export const ELEMENT_IDS = {
     NAV_SKINS: 'navSkins',
     NAV_KP: 'navKP',
     NAV_SNAKE: 'navSnake',
+    NAV_WOLF: 'navWolf',
     NAV_COMBINED: 'navCombined',
     
     // Back navigation
@@ -65,6 +67,7 @@ export const ELEMENT_IDS = {
     BACK_TO_NAV_2: 'backToNav2',
     BACK_TO_NAV_KP: 'backToNavKP',
     BACK_TO_NAV_SNAKE: 'backToNavSnake',
+    BACK_TO_NAV_WOLF: 'backToNavWolf',
     BACK_TO_NAV_3: 'backToNav3',
     BACK_TO_NAV_4: 'backToNav4',
     
@@ -73,24 +76,28 @@ export const ELEMENT_IDS = {
     GAME_SKINS: 'gameSkins',
     GAME_KP: 'gameKP',
     GAME_SNAKE: 'gameSnake',
+    GAME_WOLF: 'gameWolf',
     
     // Bet amounts
     MURPH_BET_AMOUNT: 'murphBetAmount',
     SKINS_BET_AMOUNT: 'skinsBetAmount',
     KP_BET_AMOUNT: 'kpBetAmount',
     SNAKE_BET_AMOUNT: 'snakeBetAmount',
+    WOLF_BET_AMOUNT: 'wolfBetAmount',
     
     // Game action buttons
     CALL_MURPH: 'callMurph',
     RECORD_SKINS: 'recordSkins',
     RECORD_KP: 'recordKP',
     RECORD_SNAKE: 'recordSnake',
+    RECORD_WOLF: 'recordWolf',
     
     // Modals
     MURPH_MODAL: 'murphModal',
     SKINS_MODAL: 'skinsModal',
     KP_MODAL: 'kpModal',
     SNAKE_MODAL: 'snakeModal',
+    WOLF_MODAL: 'wolfModal',
     
     // Modal actions
     SAVE_MURPH: 'saveMurph',
@@ -101,12 +108,18 @@ export const ELEMENT_IDS = {
     CANCEL_KP: 'cancelKP',
     SAVE_SNAKE: 'saveSnake',
     CANCEL_SNAKE: 'cancelSnake',
+    SAVE_WOLF: 'saveWolf',
+    CANCEL_WOLF: 'cancelWolf',
     
     // Game selectors in modals
     MURPH_PLAYER: 'murphPlayer',
     SKINS_WINNER: 'skinsWinner',
     KP_WINNER: 'kpWinner',
     SNAKE_PLAYER: 'snakePlayer',
+    WOLF_PLAYER: 'wolfPlayer',
+    WOLF_CHOICE: 'wolfChoice',
+    WOLF_PARTNER: 'wolfPartner',
+    WOLF_RESULT: 'wolfResult',
     
     // Display areas
     PAYMENT_INSTRUCTIONS_COMBINED: 'paymentInstructionsCombined'
@@ -120,14 +133,16 @@ export const GAME_TYPES = {
     MURPH: 'murph',
     SKINS: 'skins',
     KP: 'kp',
-    SNAKE: 'snake'
+    SNAKE: 'snake',
+    WOLF: 'wolf'
 };
 
 export const GAME_NAMES = {
     [GAME_TYPES.MURPH]: 'Murph',
     [GAME_TYPES.SKINS]: 'Skins',
     [GAME_TYPES.KP]: 'KP',
-    [GAME_TYPES.SNAKE]: 'Snake'
+    [GAME_TYPES.SNAKE]: 'Snake',
+    [GAME_TYPES.WOLF]: 'Wolf'
 };
 
 export const PAGE_NAMES = {
@@ -137,6 +152,7 @@ export const PAGE_NAMES = {
     SKINS: 'skins',
     KP: 'kp',
     SNAKE: 'snake',
+    WOLF: 'wolf',
     COMBINED: 'combined',
     FINAL: 'final'
 };
@@ -196,6 +212,7 @@ export const MESSAGES = {
         SKINS_RECORDED: 'Skins result recorded!',
         KP_RECORDED: 'KP result recorded!',
         SNAKE_RECORDED: 'Snake recorded!',
+        WOLF_RECORDED: 'Wolf hole recorded!',
         GAME_COMPLETED: 'Game completed! Results are now locked.',
         GAME_RESET: 'New game started!'
     },
@@ -239,6 +256,21 @@ export const SKINS_CONFIG = {
     TEAM_2_VALUE: 'team2',
     CARRYOVER_VALUE: 'carryover',
     CARRYOVER_TEXT: 'Carryover (No Winner)'
+};
+
+// =============================================================================
+// WOLF GAME CONFIGURATION
+// =============================================================================
+
+export const WOLF_CONFIG = {
+    LONE_WOLF_VALUE: 'lone_wolf',
+    LONE_WOLF_TEXT: 'Lone Wolf',
+    PARTNER_VALUE: 'partner',
+    PARTNER_TEXT: 'Partner',
+    WOLF_WINS: 'wolf_wins',
+    PARTNERS_WIN: 'partners_win',
+    WOLF_ROTATION: [1, 2, 3, 4], // Which player is wolf on holes 1-4, 5-8, 9-12, 13-16
+    HOLES_PER_WOLF: 4
 };
 
 // =============================================================================

@@ -23,7 +23,8 @@ export class GameManager {
             [GAME_TYPES.MURPH]: [],
             [GAME_TYPES.SKINS]: [],
             [GAME_TYPES.KP]: [],
-            [GAME_TYPES.SNAKE]: []
+            [GAME_TYPES.SNAKE]: [],
+            [GAME_TYPES.WOLF]: []
         };
         
         this.gameStarted = false;
@@ -75,7 +76,8 @@ export class GameManager {
             [GAME_TYPES.MURPH]: [],
             [GAME_TYPES.SKINS]: [],
             [GAME_TYPES.KP]: [],
-            [GAME_TYPES.SNAKE]: []
+            [GAME_TYPES.SNAKE]: [],
+            [GAME_TYPES.WOLF]: []
         };
         this.gameConfigs = {};
         this.players = [];
@@ -102,7 +104,8 @@ export class GameManager {
                 [GAME_TYPES.MURPH]: [],
                 [GAME_TYPES.SKINS]: [],
                 [GAME_TYPES.KP]: [],
-                [GAME_TYPES.SNAKE]: []
+                [GAME_TYPES.SNAKE]: [],
+                [GAME_TYPES.WOLF]: []
             };
 
             // Reinitialize game instances with restored data
@@ -258,6 +261,8 @@ export class GameManager {
                 return this.calculateLegacyKPSummary();
             case GAME_TYPES.SNAKE:
                 return this.calculateLegacySnakeSummary();
+            case GAME_TYPES.WOLF:
+                return this.calculateLegacyWolfSummary();
             default:
                 return {};
         }
@@ -539,6 +544,68 @@ export class GameManager {
                 }
             });
         }
+        
+        return playerBalances;
+    }
+
+    /**
+     * Legacy Wolf calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacyWolfSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        if (this.gameActions.wolf.length === 0) {
+            return playerBalances;
+        }
+        
+        const betAmount = this.gameConfigs.wolf.betAmount;
+        
+        this.gameActions.wolf.forEach(action => {
+            if (action.result === 'wolf_wins') {
+                if (action.wolfChoice === 'lone_wolf') {
+                    // Lone Wolf wins: gets 4 points, others lose 1 each
+                    playerBalances[action.wolf] += betAmount * 4;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf) {
+                            playerBalances[player] -= betAmount;
+                        }
+                    });
+                } else {
+                    // Wolf + Partner win: each get 2 points, others lose 1 each
+                    playerBalances[action.wolf] += betAmount * 2;
+                    playerBalances[action.partner] += betAmount * 2;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf && player !== action.partner) {
+                            playerBalances[player] -= betAmount;
+                        }
+                    });
+                }
+            } else {
+                // Partners win: each get 1 point, Wolf loses 3
+                if (action.wolfChoice === 'lone_wolf') {
+                    // Lone Wolf loses: others get 1 point each
+                    playerBalances[action.wolf] -= betAmount * 3;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf) {
+                            playerBalances[player] += betAmount;
+                        }
+                    });
+                } else {
+                    // Wolf + Partner lose: others get 1 point each
+                    playerBalances[action.wolf] -= betAmount * 3;
+                    playerBalances[action.partner] -= betAmount * 3;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf && player !== action.partner) {
+                            playerBalances[player] += betAmount;
+                        }
+                    });
+                }
+            }
+        });
         
         return playerBalances;
     }

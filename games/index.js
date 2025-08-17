@@ -8,6 +8,7 @@ export { MurphGame } from './murph-game.js';
 export { SkinsGame } from './skins-game.js';
 export { KPGame } from './kp-game.js';
 export { SnakeGame } from './snake-game.js';
+export { WolfGame } from './wolf-game.js';
 
 // Game factory function
 import { GAME_TYPES } from '../constants.js';
@@ -15,6 +16,7 @@ import { MurphGame } from './murph-game.js';
 import { SkinsGame } from './skins-game.js';
 import { KPGame } from './kp-game.js';
 import { SnakeGame } from './snake-game.js';
+import { WolfGame } from './wolf-game.js';
 
 /**
  * Create a game instance of the specified type
@@ -33,6 +35,8 @@ export function createGame(gameType, players, config = {}) {
             return new KPGame(players, config);
         case GAME_TYPES.SNAKE:
             return new SnakeGame(players, config);
+        case GAME_TYPES.WOLF:
+            return new WolfGame(players, config);
         default:
             throw new Error(`Unknown game type: ${gameType}`);
     }

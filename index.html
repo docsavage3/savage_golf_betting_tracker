@@ -152,6 +152,24 @@
                             <input type="number" id="snakeBet" min="0.01" step="0.01" value="1.00">
                         </div>
                     </div>
+                    
+                    <div class="game-option">
+                        <div class="game-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gameWolf" value="wolf">
+                                <span class="checkmark"></span>
+                                Wolf
+                            </label>
+                        </div>
+                        <div class="game-description">
+                            <p><strong>How to play:</strong> Wolf is a 4-player team game where players rotate being the "Wolf" every 4 holes.</p>
+                            <p><strong>Betting logic:</strong> Wolf can go Lone Wolf (4x payout) or pick a partner (2x payout each). Others pay the winners.</p>
+                        </div>
+                        <div class="bet-amount" id="wolfBetAmount" style="display: none;">
+                            <label for="wolfBet">Bet Amount ($):</label>
+                            <input type="number" id="wolfBet" min="0.01" step="0.01" value="2.00">
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -198,6 +216,12 @@
                     <span class="game-icon">🐍</span>
                     <span class="game-name">Snake</span>
                     <span class="game-status" id="snakeStatus">0 snakes</span>
+                </button>
+                
+                <button type="button" id="navWolf" class="btn btn-purple game-nav-btn">
+                    <span class="game-icon">🐺</span>
+                    <span class="game-name">Wolf</span>
+                    <span class="game-status" id="wolfStatus">0 holes</span>
                 </button>
                 
                 <button type="button" id="navCombined" class="btn btn-success game-nav-btn">
@@ -308,6 +332,36 @@
             </div>
         </section>
 
+        <!-- Wolf Game Page -->
+        <section id="wolfPage" class="card game-page" style="display: none;">
+            <div class="page-header">
+                <h2>🐺 Wolf Game</h2>
+                <button type="button" id="backToNavWolf" class="btn btn-secondary">← Back to Navigation</button>
+            </div>
+            
+            <div class="wolf-info">
+                <h3>Current Wolf</h3>
+                <div id="currentWolfInfo"></div>
+            </div>
+            
+            <div class="game-actions">
+                <button type="button" id="recordWolf" class="btn btn-purple btn-large">
+                    <span class="btn-icon">🐺</span>
+                    Record Wolf Hole
+                </button>
+            </div>
+            
+            <div class="game-history">
+                <h3>Wolf History</h3>
+                <div id="wolfActionsList"></div>
+            </div>
+            
+            <div class="game-summary">
+                <h3>Wolf Financial Summary</h3>
+                <div id="wolfSummary"></div>
+            </div>
+        </section>
+
         <!-- Combined Total Page -->
         <section id="combinedPage" class="card game-page" style="display: none;">
             <div class="page-header">
@@ -340,6 +394,11 @@
                 <div class="breakdown-section" id="snakeBreakdownSection" style="display: none;">
                     <h4>Snake Breakdown</h4>
                     <div id="snakeBreakdown"></div>
+                </div>
+                
+                <div class="breakdown-section" id="wolfBreakdownSection" style="display: none;">
+                    <h4>Wolf Breakdown</h4>
+                    <div id="wolfBreakdown"></div>
                 </div>
             </div>
         </section>
@@ -454,6 +513,49 @@
                 <div class="modal-buttons">
                     <button type="button" id="saveSnake" class="btn btn-primary">Save</button>
                     <button type="button" id="cancelSnake" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wolf Modal -->
+        <div id="wolfModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Record Wolf Hole</h3>
+                <div class="form-group">
+                    <label for="wolfHole">Hole:</label>
+                    <input type="number" id="wolfHole" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="wolfPlayer">Wolf Player:</label>
+                    <select id="wolfPlayer" required>
+                        <option value="">Select player...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="wolfChoice">Wolf Choice:</label>
+                    <select id="wolfChoice" required>
+                        <option value="">Select choice...</option>
+                        <option value="lone_wolf">🐺 Lone Wolf</option>
+                        <option value="partner">🤝 Pick Partner</option>
+                    </select>
+                </div>
+                <div class="form-group" id="wolfPartnerGroup" style="display: none;">
+                    <label for="wolfPartner">Partner:</label>
+                    <select id="wolfPartner" required>
+                        <option value="">Select partner...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="wolfResult">Result:</label>
+                    <select id="wolfResult" required>
+                        <option value="">Select result...</option>
+                        <option value="wolf_wins">🐺 Wolf Wins</option>
+                        <option value="partners_win">🤝 Partners Win</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="saveWolf" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelWolf" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
