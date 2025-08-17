@@ -479,27 +479,89 @@ export class PlayerManager {
     }
 
     /**
+     * Update player count display and show/hide player inputs
+     * @param {number} playerCount - Number of players
+     */
+    updatePlayerCountDisplay(playerCount = null) {
+        const count = playerCount || this.requiredPlayers;
+        const playerInputs = document.getElementById(ELEMENT_IDS.PLAYER_INPUTS);
+        const helpMessage = document.querySelector('.player-count-help');
+        
+        if (!playerInputs) return;
+        
+        if (count >= 2 && count <= 4) {
+            // Show player inputs
+            playerInputs.style.display = 'block';
+            
+            // Hide help message
+            if (helpMessage) {
+                helpMessage.style.display = 'none';
+            }
+            
+            // Show/hide individual player inputs based on count
+            for (let i = 1; i <= 4; i++) {
+                const input = document.getElementById(`player${i}`);
+                if (input) {
+                    input.style.display = i <= count ? 'block' : 'none';
+                }
+            }
+        } else {
+            // Hide player inputs
+            playerInputs.style.display = 'none';
+            
+            // Show help message
+            if (helpMessage) {
+                helpMessage.style.display = 'block';
+            }
+        }
+    }
+
+    /**
      * Restore player inputs from saved data
      * @param {Array} players - Array of player names
      */
     restorePlayerInputs(players) {
-        if (!Array.isArray(players) || players.length === 0) return;
+        console.log('PlayerManager.restorePlayerInputs called with:', players);
+        
+        if (!Array.isArray(players) || players.length === 0) {
+            console.log('No valid players array provided');
+            return;
+        }
 
         // Update player count
         this.requiredPlayers = players.length;
-        this.updatePlayerCountDisplay();
+        console.log('Updated requiredPlayers to:', this.requiredPlayers);
+        
+        // Update player count selector
+        const playerCountSelect = document.getElementById(ELEMENT_IDS.PLAYER_COUNT);
+        if (playerCountSelect) {
+            playerCountSelect.value = players.length.toString();
+            console.log('Updated player count selector to:', players.length);
+        } else {
+            console.warn('Player count selector not found');
+        }
+        
+        // Update display
+        console.log('Calling updatePlayerCountDisplay with:', players.length);
+        this.updatePlayerCountDisplay(players.length);
 
         // Restore player names
         players.forEach((playerName, index) => {
             const playerInput = document.getElementById(`player${index + 1}`);
             if (playerInput) {
                 playerInput.value = playerName;
+                console.log(`Restored player ${index + 1}: ${playerName}`);
+            } else {
+                console.warn(`Player input ${index + 1} not found`);
             }
         });
 
         // Update team selections if needed
         if (this.requiredPlayers === 4) {
+            console.log('4 players detected, updating team selections');
             this.updateTeamSelections();
         }
+        
+        console.log('PlayerManager.restorePlayerInputs completed');
     }
 }

@@ -33,6 +33,7 @@ export class UIManager {
     showPage(pageName, gameConfigs = {}) {
         // Hide all pages
         const pages = [
+            ELEMENT_IDS.GAME_SETUP,
             ELEMENT_IDS.GAME_NAVIGATION, 
             ELEMENT_IDS.MURPH_PAGE, 
             ELEMENT_IDS.SKINS_PAGE, 
@@ -51,7 +52,12 @@ export class UIManager {
         
         // Show the requested page
         switch (pageName) {
+            case 'gameSetup':
+            case 'setup':
+                this.showElement(ELEMENT_IDS.GAME_SETUP);
+                break;
             case PAGE_NAMES.NAVIGATION:
+            case 'navigation':
                 this.showElement(ELEMENT_IDS.GAME_NAVIGATION);
                 break;
             case PAGE_NAMES.MURPH:

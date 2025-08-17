@@ -153,6 +153,21 @@
                 </div>
             </div>
             
+            <!-- Resume Game Section (shows when there's a saved game) -->
+            <div id="resumeGameSection" class="resume-section" style="display: none;">
+                <h3>🔄 Resume Previous Game</h3>
+                <div class="resume-info">
+                    <p>You have a saved game that you can resume from where you left off.</p>
+                    <div class="resume-details">
+                        <span id="resumeGameDetails">Loading...</span>
+                    </div>
+                </div>
+                <div class="resume-controls">
+                    <button id="resumeGame" class="btn btn-success btn-large">🔄 Resume Game</button>
+                    <button id="startNewGame" class="btn btn-primary btn-large">🆕 Start New Game</button>
+                </div>
+            </div>
+            
             <button type="button" id="startGame" class="btn btn-primary">Start Game</button>
             
             <!-- Storage Management Section -->
@@ -174,9 +189,22 @@
         <!-- Game Navigation Section -->
         <section id="gameNavigation" class="card" style="display: none;">
             <h2>Game Navigation</h2>
+            
+            <!-- Game Status and Save Controls -->
+            <div class="game-status-bar">
+                <div class="game-info">
+                    <span class="game-status-text">Game in progress</span>
+                    <span class="current-hole-text">Hole <span id="currentHole">1</span> of 18</span>
+                </div>
+                <div class="game-controls">
+                    <button id="saveGameNow" class="btn btn-secondary">💾 Save Game</button>
+                    <button id="showStorageInfo" class="btn btn-info">📊 Storage Info</button>
+                </div>
+            </div>
+            
             <div class="hole-navigation">
                 <button type="button" id="previousHole" class="btn btn-secondary" disabled>← Previous Hole</button>
-                <span class="hole-display">Hole: <span id="currentHole">1</span></span>
+                <span class="hole-display">Hole: <span id="holeDisplay">1</span></span>
                 <button type="button" id="nextHole" class="btn btn-secondary">Next Hole →</button>
                 <button type="button" id="completeGame" class="btn btn-success" style="display: none;">Complete Game</button>
             </div>

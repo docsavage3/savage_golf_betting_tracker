@@ -28,11 +28,15 @@ export class StorageManager {
      */
     saveGameState(gameState) {
         try {
+            console.log('StorageManager.saveGameState called with:', gameState);
+            
             const stateToSave = {
                 ...gameState,
                 lastSaved: new Date().toISOString(),
                 version: '1.0.0'
             };
+
+            console.log('State to save:', stateToSave);
 
             // Create backup before saving
             this.createBackup();
@@ -40,7 +44,13 @@ export class StorageManager {
             // Save current state
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
             
-            console.log('Game state saved successfully');
+            console.log('Game state saved successfully to localStorage');
+            console.log('Storage key used:', this.STORAGE_KEY);
+            
+            // Verify save by reading it back
+            const savedData = localStorage.getItem(this.STORAGE_KEY);
+            console.log('Verification - saved data:', savedData);
+            
             return true;
         } catch (error) {
             console.error('Failed to save game state:', error);
@@ -54,17 +64,23 @@ export class StorageManager {
      */
     loadGameState() {
         try {
+            console.log('StorageManager.loadGameState called');
+            console.log('Looking for storage key:', this.STORAGE_KEY);
+            
             const savedState = localStorage.getItem(this.STORAGE_KEY);
+            console.log('Raw saved state from localStorage:', savedState);
+            
             if (!savedState) {
                 console.log('No saved game state found');
                 return null;
             }
 
             const gameState = JSON.parse(savedState);
+            console.log('Parsed game state:', gameState);
             
             // Validate state structure
             if (this.validateGameState(gameState)) {
-                console.log('Game state loaded successfully');
+                console.log('Game state loaded successfully and validated');
                 return gameState;
             } else {
                 console.warn('Invalid game state found, clearing corrupted data');
@@ -255,7 +271,10 @@ export class StorageManager {
      * @returns {boolean} True if valid
      */
     validateGameState(gameState) {
+        console.log('Validating game state:', gameState);
+        
         if (!gameState || typeof gameState !== 'object') {
+            console.warn('Game state is not an object');
             return false;
         }
 
@@ -268,8 +287,11 @@ export class StorageManager {
             }
         }
 
+        console.log('All required properties present');
+
         // Validate game actions structure
         if (!this.validateGameActions(gameState.gameActions)) {
+            console.warn('Game actions validation failed');
             return false;
         }
 
@@ -279,6 +301,7 @@ export class StorageManager {
             return false;
         }
 
+        console.log('Game state validation passed');
         return true;
     }
 
@@ -288,7 +311,10 @@ export class StorageManager {
      * @returns {boolean} True if valid
      */
     validateGameActions(gameActions) {
+        console.log('Validating game actions:', gameActions);
+        
         if (!gameActions || typeof gameActions !== 'object') {
+            console.warn('Game actions is not an object');
             return false;
         }
 
@@ -305,6 +331,7 @@ export class StorageManager {
             }
         }
 
+        console.log('Game actions validation passed');
         return true;
     }
 
@@ -314,14 +341,20 @@ export class StorageManager {
      */
     getStorageInfo() {
         try {
+            console.log('Getting storage info...');
+            console.log('Storage key:', this.STORAGE_KEY);
+            
             const currentState = localStorage.getItem(this.STORAGE_KEY);
             const backups = localStorage.getItem(this.BACKUP_KEY);
+            
+            console.log('Current state from localStorage:', currentState);
+            console.log('Backups from localStorage:', backups);
             
             const currentSize = currentState ? new Blob([currentState]).size : 0;
             const backupSize = backups ? new Blob([backups]).size : 0;
             const totalSize = currentSize + backupSize;
             
-            return {
+            const info = {
                 currentStateSize: currentSize,
                 backupSize: backupSize,
                 totalSize: totalSize,
@@ -329,6 +362,9 @@ export class StorageManager {
                 hasCurrentState: !!currentState,
                 backupCount: this.getBackups().length
             };
+            
+            console.log('Storage info:', info);
+            return info;
         } catch (error) {
             console.error('Failed to get storage info:', error);
             return null;
@@ -350,6 +386,28 @@ export class StorageManager {
             console.log(`Cleaned up backups, keeping ${keepCount} most recent`);
         } catch (error) {
             console.error('Failed to cleanup backups:', error);
+        }
+    }
+
+    /**
+     * Test localStorage functionality
+     * @returns {boolean} True if localStorage is working
+     */
+    testLocalStorage() {
+        try {
+            const testKey = 'testKey';
+            const testValue = 'testValue';
+            
+            localStorage.setItem(testKey, testValue);
+            const retrievedValue = localStorage.getItem(testKey);
+            localStorage.removeItem(testKey);
+            
+            const isWorking = retrievedValue === testValue;
+            console.log('localStorage test:', isWorking ? 'PASSED' : 'FAILED');
+            return isWorking;
+        } catch (error) {
+            console.error('localStorage test failed:', error);
+            return false;
         }
     }
 }

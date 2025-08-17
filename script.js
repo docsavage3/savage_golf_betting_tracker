@@ -53,6 +53,9 @@ class SavageGolf {
         this.initializeEventListeners();
         this.setupGameCheckboxes();
         
+        // Test localStorage functionality
+        this.storage.testLocalStorage();
+        
         // Try to load saved game state
         this.loadSavedGame();
         
@@ -98,6 +101,14 @@ class SavageGolf {
         document.getElementById('exportGame').addEventListener('click', () => this.exportGameState());
         document.getElementById('importGame').addEventListener('click', () => this.importGameState());
         document.getElementById('clearGame').addEventListener('click', () => this.clearGameState());
+        
+        // Game navigation controls
+        document.getElementById('saveGameNow').addEventListener('click', () => this.saveGameState());
+        document.getElementById('showStorageInfo').addEventListener('click', () => this.showStorageModal());
+        
+        // Resume game controls
+        document.getElementById('resumeGame').addEventListener('click', () => this.resumeSavedGame());
+        document.getElementById('startNewGame').addEventListener('click', () => this.startNewGame());
         
         // Murph game
         document.getElementById('callMurph').addEventListener('click', () => this.showMurphModal());
@@ -228,8 +239,174 @@ class SavageGolf {
     loadSavedGame() {
         const savedState = this.storage.loadGameState();
         if (savedState) {
-            this.restoreGameState(savedState);
+            this.showResumeGameSection(savedState);
         }
+        return savedState;
+    }
+
+    /**
+     * Show resume game section with saved game details
+     * @param {Object} savedState - Saved game state
+     */
+    showResumeGameSection(savedState) {
+        const resumeSection = document.getElementById('resumeGameSection');
+        const resumeDetails = document.getElementById('resumeGameDetails');
+        const startGameBtn = document.getElementById('startGame');
+        
+        if (!resumeSection || !resumeDetails || !startGameBtn) return;
+        
+        // Show resume section, hide start game button
+        resumeSection.style.display = 'block';
+        startGameBtn.style.display = 'none';
+        
+        // Populate resume details
+        const gameCount = Object.values(savedState.gameConfigs).filter(config => config.enabled).length;
+        const playerCount = savedState.players.length;
+        const currentHole = savedState.currentHole;
+        const lastSaved = new Date(savedState.lastSaved || Date.now()).toLocaleString();
+        
+        resumeDetails.innerHTML = `
+            <div class="resume-detail-item">
+                <strong>Games:</strong> ${gameCount} game${gameCount !== 1 ? 's' : ''} selected
+            </div>
+            <div class="resume-detail-item">
+                <strong>Players:</strong> ${playerCount} player${playerCount !== 1 ? 's' : ''}
+            </div>
+            <div class="resume-detail-item">
+                <strong>Progress:</strong> Hole ${currentHole} of 18
+            </div>
+            <div class="resume-detail-item">
+                <strong>Last Saved:</strong> ${lastSaved}
+            </div>
+        `;
+    }
+
+    /**
+     * Resume a saved game
+     */
+    resumeSavedGame() {
+        console.log('Resume game called');
+        const savedState = this.storage.loadGameState();
+        console.log('Loaded saved state:', savedState);
+        
+        if (savedState) {
+            console.log('Restoring game state...');
+            this.restoreGameState(savedState);
+            
+            console.log('After restore - currentHole:', this.currentHole);
+            console.log('After restore - gameActions:', this.gameActions);
+            console.log('After restore - gameConfigs:', this.gameConfigs);
+            
+            // Check if game actions are properly restored
+            console.log('Murph actions count:', this.gameActions.murph?.length || 0);
+            console.log('Skins actions count:', this.gameActions.skins?.length || 0);
+            console.log('KP actions count:', this.gameActions.kp?.length || 0);
+            console.log('Snake actions count:', this.gameActions.snake?.length || 0);
+            
+            // Check if game instances are properly restored
+            console.log('Game instances:', this.gameInstances);
+            if (this.gameInstances.murph) {
+                console.log('Murph game instance actions:', this.gameInstances.murph.actions?.length || 0);
+            }
+            if (this.gameInstances.skins) {
+                console.log('Skins game instance actions:', this.gameInstances.skins.actions?.length || 0);
+            }
+            if (this.gameInstances.kp) {
+                console.log('KP game instance actions:', this.gameInstances.kp.actions?.length || 0);
+            }
+            if (this.gameInstances.snake) {
+                console.log('Snake game instance actions:', this.gameInstances.snake.actions?.length || 0);
+            }
+            
+            // Navigate to the game navigation page to continue playing
+            this.showPage('navigation');
+            
+            // Update the current hole display (both elements)
+            const currentHoleElement = document.getElementById('currentHole');
+            const holeDisplayElement = document.getElementById('holeDisplay');
+            
+            if (currentHoleElement) {
+                console.log('Found currentHole element, updating from', currentHoleElement.textContent, 'to', this.currentHole);
+                currentHoleElement.textContent = this.currentHole;
+                console.log('Updated currentHole element to:', this.currentHole);
+            } else {
+                console.warn('currentHole element not found!');
+            }
+            
+            if (holeDisplayElement) {
+                console.log('Found holeDisplay element, updating from', holeDisplayElement.textContent, 'to', this.currentHole);
+                holeDisplayElement.textContent = this.currentHole;
+                console.log('Updated holeDisplay element to:', this.currentHole);
+            } else {
+                console.warn('holeDisplay element not found!');
+            }
+            
+            // Update the game status bar
+            this.updateGameStatusBar();
+            
+            // Update the game display to show current state
+            console.log('Calling updateGameDisplay...');
+            this.updateGameDisplay();
+            
+            // Update hole navigation button states
+            console.log('Calling updatePreviousHoleButton...');
+            this.updatePreviousHoleButton();
+            
+            // Update game navigation visibility
+            console.log('Calling updateGameNavigationVisibility...');
+            this.updateGameNavigationVisibility();
+            
+            // Update game breakdowns
+            console.log('Calling updateGameBreakdowns...');
+            this.updateGameBreakdowns();
+            
+            // Update all game pages to show restored data
+            console.log('Updating individual game pages...');
+            if (this.gameConfigs.murph?.enabled) {
+                console.log('Updating Murph page...');
+                this.updateMurphPage();
+            }
+            if (this.gameConfigs.skins?.enabled) {
+                console.log('Updating Skins page...');
+                this.updateSkinsPage();
+            }
+            if (this.gameConfigs.kp?.enabled) {
+                console.log('Updating KP page...');
+                this.updateKPPage();
+            }
+            if (this.gameConfigs.snake?.enabled) {
+                console.log('Updating Snake page...');
+                this.updateSnakePage();
+            }
+            
+            this.ui.showNotification(`Game resumed! You're back on hole ${this.currentHole}`, 'success');
+        } else {
+            this.ui.showNotification('No saved game found to resume', 'error');
+        }
+    }
+
+    /**
+     * Start a new game (clear saved state)
+     */
+    startNewGame() {
+        const confirmed = window.confirm('This will start a fresh game and clear any saved progress. Are you sure?');
+        if (!confirmed) return;
+        
+        this.storage.clearGameState();
+        this.resetGame();
+        this.hideResumeGameSection();
+        this.ui.showNotification('Starting new game...', 'info');
+    }
+
+    /**
+     * Hide resume game section and show start game button
+     */
+    hideResumeGameSection() {
+        const resumeSection = document.getElementById('resumeGameSection');
+        const startGameBtn = document.getElementById('startGame');
+        
+        if (resumeSection) resumeSection.style.display = 'none';
+        if (startGameBtn) startGameBtn.style.display = 'block';
     }
 
     /**
@@ -249,9 +426,15 @@ class SavageGolf {
             currentPage: this.currentPage
         };
 
+        console.log('Saving game state:', gameState);
+        console.log('Current hole when saving:', this.currentHole);
+        console.log('Game actions when saving:', this.gameActions);
+
         const success = this.storage.saveGameState(gameState);
         if (success) {
             this.ui.showNotification('Game progress saved!', 'success');
+            // Update storage info display
+            this.updateStorageInfo();
         } else {
             this.ui.showNotification('Failed to save game progress', 'error');
         }
@@ -263,6 +446,8 @@ class SavageGolf {
      */
     restoreGameState(savedState) {
         try {
+            console.log('Starting game state restoration...', savedState);
+            
             // Restore basic game configuration
             this.gameConfigs = savedState.gameConfigs || {};
             this.players = savedState.players || [];
@@ -271,8 +456,26 @@ class SavageGolf {
             this.gameStarted = savedState.gameStarted || false;
             this.currentPage = savedState.currentPage || PAGE_NAMES.NAVIGATION;
 
+            console.log('Basic config restored:', {
+                gameConfigs: this.gameConfigs,
+                players: this.players,
+                requiredPlayers: this.requiredPlayers,
+                currentHole: this.currentHole,
+                gameStarted: this.gameStarted
+            });
+
             // Restore game manager state
             this.gameManager.restoreGameState(savedState);
+            
+            // Update legacy properties for backwards compatibility
+            this.gameConfigs = this.gameManager.gameConfigs;
+            this.gameActions = this.gameManager.gameActions;
+            this.gameInstances = this.gameManager.gameInstances;
+            this.gameStarted = this.gameManager.gameStarted;
+            this.players = this.gameManager.players;
+            this.requiredPlayers = this.gameManager.requiredPlayers;
+
+            console.log('Game manager restored, legacy properties updated');
 
             // Restore UI state
             this.restoreUIState(savedState);
@@ -296,7 +499,14 @@ class SavageGolf {
     restoreUIState(savedState) {
         // Restore game checkboxes
         Object.entries(savedState.gameConfigs).forEach(([gameType, config]) => {
-            const checkbox = document.querySelector(`input[data-game="${gameType}"]`);
+            let checkboxId;
+            if (gameType === 'kp') {
+                checkboxId = 'gameKP';
+            } else {
+                checkboxId = `game${gameType.charAt(0).toUpperCase() + gameType.slice(1)}`;
+            }
+            
+            const checkbox = document.getElementById(checkboxId);
             if (checkbox) {
                 checkbox.checked = config.enabled;
                 this.toggleGameSection(gameType, config.enabled);
@@ -311,10 +521,8 @@ class SavageGolf {
         // Restore bet amounts
         this.restoreBetAmounts(savedState.gameConfigs);
 
-        // Show appropriate page
-        if (this.gameStarted) {
-            this.showPage(savedState.currentPage);
-        }
+        // Don't automatically show a page here - let the resume method handle navigation
+        // The resume method will navigate to the game navigation page
     }
 
     /**
@@ -324,7 +532,14 @@ class SavageGolf {
     restoreBetAmounts(gameConfigs) {
         Object.entries(gameConfigs).forEach(([gameType, config]) => {
             if (config.enabled && config.betAmount) {
-                const betInput = document.querySelector(`#${gameType}BetAmount`);
+                let betInputId;
+                if (gameType === 'kp') {
+                    betInputId = 'kpBet';
+                } else {
+                    betInputId = `${gameType}Bet`;
+                }
+                
+                const betInput = document.getElementById(betInputId);
                 if (betInput) {
                     betInput.value = config.betAmount;
                 }
@@ -393,6 +608,27 @@ class SavageGolf {
     }
 
     /**
+     * Update game status bar with current game information
+     */
+    updateGameStatusBar() {
+        const gameStatusText = document.querySelector('.game-status-text');
+        const currentHoleText = document.querySelector('.current-hole-text');
+        
+        if (gameStatusText) {
+            if (this.gameStarted) {
+                const enabledGames = Object.values(this.gameConfigs).filter(config => config.enabled).length;
+                gameStatusText.textContent = `Game in progress - ${enabledGames} game${enabledGames !== 1 ? 's' : ''} active`;
+            } else {
+                gameStatusText.textContent = 'No active game';
+            }
+        }
+        
+        if (currentHoleText) {
+            currentHoleText.textContent = `Hole ${this.currentHole} of 18`;
+        }
+    }
+
+    /**
      * Update storage info display
      */
     updateStorageInfo() {
@@ -415,6 +651,35 @@ class SavageGolf {
         } else {
             storageInfo.innerHTML = '<p>No saved game found</p>';
         }
+    }
+
+    /**
+     * Show storage information modal
+     */
+    showStorageModal() {
+        const info = this.storage.getStorageInfo();
+        if (!info) {
+            this.ui.showNotification('Storage info unavailable', 'error');
+            return;
+        }
+
+        let modalContent = '<h3>💾 Storage Information</h3>';
+        
+        if (info.hasCurrentState) {
+            modalContent += `
+                <div class="storage-modal-content">
+                    <p><strong>✅ Game Status:</strong> Saved</p>
+                    <p><strong>📊 Storage Used:</strong> ${info.totalSizeMB} MB</p>
+                    <p><strong>💾 Backup Count:</strong> ${info.backupCount}</p>
+                    <p><strong>🕒 Last Saved:</strong> ${new Date(info.lastSaved || Date.now()).toLocaleString()}</p>
+                </div>
+            `;
+        } else {
+            modalContent += '<p>No saved game found</p>';
+        }
+
+        // Show as alert for now (could be enhanced to a proper modal)
+        alert(modalContent);
     }
 
 
@@ -584,8 +849,14 @@ class SavageGolf {
         // Update navigation button visibility for selected games
         this.updateGameNavigationVisibility();
         
+        // Update game status bar
+        this.updateGameStatusBar();
+        
         // Auto-save game state
         this.saveGameState();
+        
+        // Hide resume section since we're starting a new game
+        this.hideResumeGameSection();
         
         // Show success message
         this.ui.showNotification('Game started! Good luck!', 'success');
@@ -609,7 +880,29 @@ class SavageGolf {
     previousHole() {
         if (this.currentHole > 1) {
             this.currentHole--;
-            document.getElementById('currentHole').textContent = this.currentHole;
+            
+            // Update both hole display elements (with null checks)
+            const currentHoleElement = document.getElementById('currentHole');
+            const holeDisplayElement = document.getElementById('holeDisplay');
+            
+                    console.log('previousHole - currentHole element found:', !!currentHoleElement);
+            console.log('previousHole - holeDisplay element found:', !!holeDisplayElement);
+            console.log('previousHole - current page:', this.currentPage);
+            console.log('previousHole - gameNavigation visible:', document.getElementById('gameNavigation').style.display);
+            console.log('previousHole - holeDisplay parent visible:', holeDisplayElement?.parentElement?.style.display);
+            
+            if (currentHoleElement) {
+                currentHoleElement.textContent = this.currentHole;
+            } else {
+                console.warn('currentHole element not found in previousHole');
+            }
+            
+            if (holeDisplayElement) {
+                holeDisplayElement.textContent = this.currentHole;
+            } else {
+                console.warn('holeDisplay element not found in previousHole');
+            }
+            
             this.updatePreviousHoleButton();
             this.updateGameDisplay();
             
@@ -628,7 +921,29 @@ class SavageGolf {
         }
         
         this.currentHole++;
-        document.getElementById('currentHole').textContent = this.currentHole;
+        
+        // Update both hole display elements (with null checks)
+        const currentHoleElement = document.getElementById('currentHole');
+        const holeDisplayElement = document.getElementById('holeDisplay');
+        
+        console.log('nextHole - currentHole element found:', !!currentHoleElement);
+        console.log('nextHole - holeDisplay element found:', !!holeDisplayElement);
+        console.log('nextHole - current page:', this.currentPage);
+        console.log('nextHole - gameNavigation visible:', document.getElementById('gameNavigation').style.display);
+        console.log('nextHole - holeDisplay parent visible:', holeDisplayElement?.parentElement?.style.display);
+        
+        if (currentHoleElement) {
+            currentHoleElement.textContent = this.currentHole;
+        } else {
+            console.warn('currentHole element not found in nextHole');
+        }
+        
+        if (holeDisplayElement) {
+            holeDisplayElement.textContent = this.currentHole;
+        } else {
+            console.warn('holeDisplay element not found in nextHole');
+        }
+        
         this.updatePreviousHoleButton();
         this.updateGameDisplay();
         
@@ -1261,30 +1576,49 @@ class SavageGolf {
     }
 
     updateGameDisplay() {
+        console.log('updateGameDisplay called');
+        console.log('Current page:', this.currentPage);
+        console.log('Game configs:', this.gameConfigs);
+        
         // Update navigation status
+        console.log('Updating navigation status...');
         this.updateNavigationStatus();
         
         // Update current page if it's visible and the game is enabled
         if (this.currentPage === 'murph' && this.gameConfigs.murph?.enabled) {
+            console.log('Updating Murph page (current page)');
             this.updateMurphPage();
         } else if (this.currentPage === 'skins' && this.gameConfigs.skins?.enabled) {
+            console.log('Updating Skins page (current page)');
             this.updateSkinsPage();
         } else if (this.currentPage === 'kp' && this.gameConfigs.kp?.enabled) {
+            console.log('Updating KP page (current page)');
             this.updateKPPage();
         } else if (this.currentPage === 'snake' && this.gameConfigs.snake?.enabled) {
+            console.log('Updating Snake page (current page)');
             this.updateSnakePage();
         } else if (this.currentPage === 'combined') {
+            console.log('Updating Combined page (current page)');
             this.updateCombinedPage();
+        } else {
+            console.log('No specific page update needed for current page:', this.currentPage);
         }
     }
 
     updateNavigationStatus() {
+        console.log('updateNavigationStatus called');
+        console.log('Game actions:', this.gameActions);
+        
         // Update Murph status and styling
         if (this.gameConfigs.murph?.enabled) {
             const murphCount = this.gameActions.murph.length;
+            console.log('Murph count:', murphCount);
             const murphStatus = document.getElementById('murphStatus');
             if (murphStatus) {
                 murphStatus.textContent = `${murphCount} call${murphCount !== 1 ? 's' : ''}`;
+                console.log('Updated Murph status to:', murphStatus.textContent);
+            } else {
+                console.warn('Murph status element not found');
             }
             // Add selected class to Murph button
             const murphBtn = document.getElementById('navMurph');
@@ -1803,36 +2137,85 @@ class SavageGolf {
         this.currentHole = 1;
         this.currentPage = 'navigation';
         
-        // Reset form inputs
-        document.getElementById('murphBet').value = '1.00';
-        document.getElementById('skinsBet').value = '1.00';
-        document.getElementById('kpBet').value = '1.00';
-        document.getElementById('snakeBet').value = '1.00';
-        document.getElementById('gameMurph').checked = false;
-        document.getElementById('gameSkins').checked = false;
-        document.getElementById('gameKP').checked = false;
-        document.getElementById('gameSnake').checked = false;
-        document.querySelectorAll('.player-input input').forEach(input => input.value = '');
+        // Reset form inputs (with null checks)
+        const betInputs = [
+            { id: 'murphBet', value: '1.00' },
+            { id: 'skinsBet', value: '1.00' },
+            { id: 'kpBet', value: '1.00' },
+            { id: 'snakeBet', value: '1.00' }
+        ];
+        
+        betInputs.forEach(({ id, value }) => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.value = value;
+            }
+        });
+        
+        const gameCheckboxes = [
+            'gameMurph', 'gameSkins', 'gameKP', 'gameSnake'
+        ];
+        
+        gameCheckboxes.forEach(checkboxId => {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        });
+        
+        // Reset player inputs
+        const playerInputs = document.querySelectorAll('.player-input input');
+        if (playerInputs.length > 0) {
+            playerInputs.forEach(input => input.value = '');
+        }
         
         // PlayerManager.reset() already handles player-related cleanup
         
         // PlayerManager.reset() already handles team selection cleanup
         
-        // Reset display
-        document.getElementById('currentHole').textContent = '1';
-        document.getElementById('murphActionsList').innerHTML = '';
-        document.getElementById('skinsActionsList').innerHTML = '';
-        document.getElementById('kpActionsList').innerHTML = '';
-        document.getElementById('snakeActionsList').innerHTML = '';
-        document.getElementById('murphSummary').innerHTML = '';
-        document.getElementById('skinsSummary').innerHTML = '';
-        document.getElementById('kpSummary').innerHTML = '';
-        document.getElementById('snakeSummary').innerHTML = '';
-        document.getElementById('combinedSummary').innerHTML = '';
-        document.getElementById('murphBreakdown').innerHTML = '';
-        document.getElementById('skinsBreakdown').innerHTML = '';
-        document.getElementById('kpBreakdown').innerHTML = '';
-        document.getElementById('snakeBreakdown').innerHTML = '';
+        // Reset display (with null checks)
+        const currentHoleElement = document.getElementById('currentHole');
+        const holeDisplayElement = document.getElementById('holeDisplay');
+        
+        if (currentHoleElement) {
+            currentHoleElement.textContent = '1';
+        }
+        if (holeDisplayElement) {
+            holeDisplayElement.textContent = '1';
+        }
+        
+        // Reset action lists (with null checks)
+        const actionListElements = [
+            'murphActionsList', 'skinsActionsList', 'kpActionsList', 'snakeActionsList'
+        ];
+        actionListElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = '';
+            }
+        });
+        
+        // Reset summary elements (with null checks)
+        const summaryElements = [
+            'murphSummary', 'skinsSummary', 'kpSummary', 'snakeSummary', 'combinedSummary'
+        ];
+        summaryElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = '';
+            }
+        });
+        
+        // Reset breakdown elements (with null checks)
+        const breakdownElements = [
+            'murphBreakdown', 'skinsBreakdown', 'kpBreakdown', 'snakeBreakdown'
+        ];
+        breakdownElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = '';
+            }
+        });
         
         // Reset breakdown section visibility
         const breakdownSections = ['murphBreakdownSection', 'skinsBreakdownSection', 'kpBreakdownSection', 'snakeBreakdownSection'];
@@ -1843,15 +2226,26 @@ class SavageGolf {
             }
         });
         
-        // Show setup, hide all game pages
-        document.getElementById('gameSetup').style.display = 'block';
-        document.getElementById('gameNavigation').style.display = 'none';
-        document.getElementById('murphPage').style.display = 'none';
-        document.getElementById('skinsPage').style.display = 'none';
-        document.getElementById('kpPage').style.display = 'none';
-        document.getElementById('snakePage').style.display = 'none';
-        document.getElementById('combinedPage').style.display = 'none';
-        document.getElementById('finalResults').style.display = 'none';
+        // Show setup, hide all game pages (with null checks)
+        const gameSetupElement = document.getElementById('gameSetup');
+        const gameNavigationElement = document.getElementById('gameNavigation');
+        const gamePageElements = [
+            'murphPage', 'skinsPage', 'kpPage', 'snakePage', 'combinedPage', 'finalResults'
+        ];
+        
+        if (gameSetupElement) {
+            gameSetupElement.style.display = 'block';
+        }
+        if (gameNavigationElement) {
+            gameNavigationElement.style.display = 'none';
+        }
+        
+        gamePageElements.forEach(pageId => {
+            const pageElement = document.getElementById(pageId);
+            if (pageElement) {
+                pageElement.style.display = 'none';
+            }
+        });
         
         // Reset game sections
         this.toggleGameSection('murph');
@@ -1864,6 +2258,9 @@ class SavageGolf {
         
         // Reset previous hole button state
         this.updatePreviousHoleButton();
+        
+        // Hide resume section and show start game button
+        this.hideResumeGameSection();
         
         this.ui.showNotification('Game reset! Ready for a new round.', 'info');
     }
