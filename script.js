@@ -2748,6 +2748,10 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('murph', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
         
@@ -2770,6 +2774,10 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('skins', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
         
@@ -2791,6 +2799,10 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('kp', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
         
@@ -2812,6 +2824,10 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('snake', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
         
@@ -2844,6 +2860,10 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('wolf', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
         
