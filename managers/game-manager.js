@@ -168,19 +168,13 @@ export class GameManager {
      * @returns {boolean} True if action was added successfully
      */
     addGameAction(gameType, action) {
-        console.log(`addGameAction called for ${gameType}:`, action);
-        
         // Always add to legacy system for backwards compatibility
         if (!this.gameActions[gameType]) {
             this.gameActions[gameType] = [];
         }
         
-        console.log(`Before adding - ${gameType} actions:`, this.gameActions[gameType]);
-        
         // Add to legacy actions first
         this.gameActions[gameType].push(action);
-        
-        console.log(`After adding - ${gameType} actions:`, this.gameActions[gameType]);
         
         // Try to add to game instance if available
         if (this.gameInstances[gameType]) {

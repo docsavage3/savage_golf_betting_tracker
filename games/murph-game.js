@@ -22,7 +22,10 @@ export class MurphGame extends BaseGame {
             const betAmount = this.getBetAmount();
             const numOtherPlayers = this.players.length - 1;
             
-            if (call.result === 'success') {
+            // Handle both 'success'/'fail' and 'made'/'failed' result formats
+            const isSuccess = call.result === 'success' || call.result === 'made';
+            
+            if (isSuccess) {
                 // Caller gets paid by all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
@@ -66,7 +69,7 @@ export class MurphGame extends BaseGame {
         }
 
         // Validate result
-        if (!['success', 'fail'].includes(action.result)) {
+        if (!['success', 'fail', 'made', 'failed'].includes(action.result)) {
             return false;
         }
 
@@ -79,8 +82,8 @@ export class MurphGame extends BaseGame {
      */
     getStats() {
         const baseStats = super.getStats();
-        const successfulCalls = this.actions.filter(action => action.result === 'success').length;
-        const failedCalls = this.actions.filter(action => action.result === 'fail').length;
+        const successfulCalls = this.actions.filter(action => action.result === 'success' || action.result === 'made').length;
+        const failedCalls = this.actions.filter(action => action.result === 'fail' || action.result === 'failed').length;
         
         return {
             ...baseStats,
@@ -108,7 +111,7 @@ export class MurphGame extends BaseGame {
         const playerActions = this.getPlayerActions(playerName);
         if (playerActions.length === 0) return 0;
         
-        const successes = playerActions.filter(action => action.result === 'success').length;
+        const successes = playerActions.filter(action => action.result === 'success' || action.result === 'made').length;
         return (successes / playerActions.length * 100);
     }
 }

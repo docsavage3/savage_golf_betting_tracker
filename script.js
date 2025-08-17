@@ -2764,22 +2764,10 @@ class SavageGolf {
             result: result === 'made' ? 'made' : 'failed'
         };
         
-        console.log('Quick Murph - Before addGameAction:', {
-            action,
-            currentGameActions: this.gameActions.murph,
-            gameManagerActions: this.gameManager.gameActions.murph
-        });
-        
         this.gameManager.addGameAction('murph', action);
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
-        
-        console.log('Quick Murph - After addGameAction:', {
-            action,
-            currentGameActions: this.gameActions.murph,
-            gameManagerActions: this.gameManager.gameActions.murph
-        });
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -2827,22 +2815,10 @@ class SavageGolf {
             player: player
         };
         
-        console.log('Quick KP - Before addGameAction:', {
-            action,
-            currentGameActions: this.gameActions.kp,
-            gameManagerActions: this.gameManager.gameActions.kp
-        });
-        
         this.gameManager.addGameAction('kp', action);
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
-        
-        console.log('Quick KP - After addGameAction:', {
-            action,
-            currentGameActions: this.gameActions.kp,
-            gameManagerActions: this.gameManager.gameActions.kp
-        });
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
