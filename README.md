@@ -46,6 +46,21 @@ A mobile-friendly web application to track golf side games and bets. Perfect for
   - Last player to get a snake owes the entire pot to other players
   - Pot is split equally among non-snake players
 
+### **Wolf Game**
+- **Players**: 4 players only
+- **Objective**: Rotate being the "Wolf" and choose to play alone or with a partner
+- **Betting**: Agreed amount per hole
+- **Rules**: 
+  - **Wolf Rotation**: Players rotate being Wolf every 4 holes (holes 1-4, 5-8, 9-12, 13-16)
+  - **Wolf Choice**: Each Wolf can choose to be "Lone Wolf" or pick a "Partner"
+  - **Lone Wolf**: Plays alone against all other players
+  - **Partner**: Teams up with chosen player against other 2 players
+  - **Scoring**: 
+    - **Wolf + Partner Win**: Each gets 1x bet, others lose 1x bet each
+    - **Lone Wolf Wins**: Gets 3x bet from others, others lose 1x bet each
+    - **Wolf + Partner Lose**: Each loses 3x bet, others get 1x bet each
+    - **Lone Wolf Loses**: Loses 3x bet, others get 1x bet each
+
 ## 📱 Features
 
 - **Mobile-first design** - Optimized for phone use on the course
@@ -112,6 +127,17 @@ Once the game starts, you'll see a central navigation page with:
 5. View **Snake History** organized by hole
 6. See **Snake Financial Summary** for current standings
 
+### **Wolf Game Page:**
+1. Click **"Record Wolf Hole"** button
+2. Enter the hole number
+3. Select the current Wolf (automatically determined by rotation)
+4. Choose Wolf's decision: **"Lone Wolf"** or **"Partner"**
+5. If choosing Partner: Select the partner player
+6. Select the result: **"Wolf Wins"** or **"Wolf Loses"**
+7. Save the result
+8. View **Wolf History** organized by hole
+9. See **Wolf Financial Summary** for current standings
+
 ### **Combined Total Page:**
 - **Overall Financial Summary** - Combined totals across all games
 - **Game Breakdowns** - Individual summaries for each game type
@@ -140,7 +166,7 @@ Once the game starts, you'll see a central navigation page with:
 ### **Game Completion:**
 - **18-hole limit** - Game automatically ends after completing hole 18
 - **Final Results Page** - Comprehensive summary of all games played
-- **Individual game breakdowns** - See results for Murph, Skins, KP, and Snake separately
+- **Individual game breakdowns** - See results for Murph, Skins, KP, Snake, and Wolf separately
 - **Combined totals** - Overall financial standings across all games
 - **Payment instructions** - Clear breakdown of who needs to pay whom
 - **Easy restart** - Start a new game directly from final results
@@ -156,17 +182,19 @@ Once the game starts, you'll see a central navigation page with:
   - 🟠 Orange for carryovers (Skins)
   - 🎯 Blue for KP wins
   - 🐍 Purple for Snake penalties
+  - 🐺 Gray for Wolf actions
 
 ## 💰 Financial Tracking
 
 The app automatically calculates:
-- **Individual game totals** - See standings for each game separately (Murph, Skins, KP, Snake)
+- **Individual game totals** - See standings for each game separately (Murph, Skins, KP, Snake, Wolf)
 - **Combined totals** - Overall financial standings across all games
 - **Running totals** throughout the game
 - **Clear visual indicators** (green for positive, red for negative, orange for neutral)
 - **Team-based calculations** for Skins game (4 players)
 - **Carryover multipliers** - Multiple skins can be won on a single hole
 - **Snake pot management** - Automatic calculation of snake penalties and payouts
+- **Wolf rotation tracking** - Automatic Wolf assignment based on hole number
 
 ## 🔄 Starting a New Game
 
@@ -196,8 +224,8 @@ Click **"🔄 New Game"** to reset everything and start fresh with new players o
 - **Local storage** - Game data persists during the session
 - **Responsive design** - Works on all devices
 - **Progressive Web App** ready
-- **4 game types supported** - Murph, Skins, KP, and Snake
-- **Flexible player support** - 2-4 players with adaptive game logic
+- **5 game types supported** - Murph, Skins, KP, Snake, and Wolf
+- **Flexible player support** - 2-4 players with adaptive game logic (Wolf requires exactly 4 players)
 
 ## 💡 Tips for Best Experience
 
