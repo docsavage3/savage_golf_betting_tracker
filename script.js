@@ -57,10 +57,20 @@ class SavageGolf {
         this.storage.testLocalStorage();
         
         // Try to load saved game state
-        this.loadSavedGame();
+        const savedState = this.loadSavedGame();
         
-        // Update storage info display
-        this.updateStorageInfo();
+        // Auto-navigate based on saved game state
+        if (savedState) {
+            // Auto-resume saved game and go directly to navigation
+            console.log('Saved game found, auto-resuming...');
+            this.autoResumeGame(savedState);
+        } else {
+            // No saved game, stay on setup page
+            console.log('No saved game found, staying on setup page');
+            this.showPage('setup');
+        }
+        
+
     }
 
     initializeEventListeners() {
@@ -95,20 +105,12 @@ class SavageGolf {
         // New game from final results
         document.getElementById('newGameFromFinal').addEventListener('click', () => this.resetGame());
         
-        // Storage management buttons
-        document.getElementById('saveGame').addEventListener('click', () => this.saveGameState());
-        document.getElementById('loadGame').addEventListener('click', () => this.loadSavedGame());
-        document.getElementById('exportGame').addEventListener('click', () => this.exportGameState());
-        document.getElementById('importGame').addEventListener('click', () => this.importGameState());
-        document.getElementById('clearGame').addEventListener('click', () => this.clearGameState());
+
         
         // Game navigation controls
-        document.getElementById('saveGameNow').addEventListener('click', () => this.saveGameState());
-        document.getElementById('showStorageInfo').addEventListener('click', () => this.showStorageModal());
+        // Removed startNewGameFromNav event listener - using bottom New Game button instead
         
-        // Resume game controls
-        document.getElementById('resumeGame').addEventListener('click', () => this.resumeSavedGame());
-        document.getElementById('startNewGame').addEventListener('click', () => this.startNewGame());
+
         
         // Murph game
         document.getElementById('callMurph').addEventListener('click', () => this.showMurphModal());
@@ -238,9 +240,8 @@ class SavageGolf {
      */
     loadSavedGame() {
         const savedState = this.storage.loadGameState();
-        if (savedState) {
-            this.showResumeGameSection(savedState);
-        }
+        // Note: We no longer automatically show the resume section here
+        // It's now handled by the calling code (auto-resume or manual resume)
         return savedState;
     }
 
@@ -248,41 +249,70 @@ class SavageGolf {
      * Show resume game section with saved game details
      * @param {Object} savedState - Saved game state
      */
-    showResumeGameSection(savedState) {
-        const resumeSection = document.getElementById('resumeGameSection');
-        const resumeDetails = document.getElementById('resumeGameDetails');
-        const startGameBtn = document.getElementById('startGame');
+
+
+
+
+    /**
+     * Auto-resume a saved game (called on app startup)
+     * @param {Object} savedState - Saved game state
+     */
+    autoResumeGame(savedState) {
+        console.log('Auto-resuming saved game...');
         
-        if (!resumeSection || !resumeDetails || !startGameBtn) return;
+        // Restore the game state
+        this.restoreGameState(savedState);
         
-        // Show resume section, hide start game button
-        resumeSection.style.display = 'block';
-        startGameBtn.style.display = 'none';
+        // Navigate directly to the game navigation page
+        this.showPage('navigation');
         
-        // Populate resume details
-        const gameCount = Object.values(savedState.gameConfigs).filter(config => config.enabled).length;
-        const playerCount = savedState.players.length;
-        const currentHole = savedState.currentHole;
-        const lastSaved = new Date(savedState.lastSaved || Date.now()).toLocaleString();
+        // Update the current hole display (both elements) - CRITICAL for hole display
+        const currentHoleElement = document.getElementById('currentHole');
+        const holeDisplayElement = document.getElementById('holeDisplay');
         
-        resumeDetails.innerHTML = `
-            <div class="resume-detail-item">
-                <strong>Games:</strong> ${gameCount} game${gameCount !== 1 ? 's' : ''} selected
-            </div>
-            <div class="resume-detail-item">
-                <strong>Players:</strong> ${playerCount} player${playerCount !== 1 ? 's' : ''}
-            </div>
-            <div class="resume-detail-item">
-                <strong>Progress:</strong> Hole ${currentHole} of 18
-            </div>
-            <div class="resume-detail-item">
-                <strong>Last Saved:</strong> ${lastSaved}
-            </div>
-        `;
+        if (currentHoleElement) {
+            console.log('Auto-resume: Found currentHole element, updating from', currentHoleElement.textContent, 'to', this.currentHole);
+            currentHoleElement.textContent = this.currentHole;
+            console.log('Auto-resume: Updated currentHole element to:', this.currentHole);
+        } else {
+            console.warn('Auto-resume: currentHole element not found!');
+        }
+        
+        if (holeDisplayElement) {
+            console.log('Auto-resume: Found holeDisplay element, updating from', holeDisplayElement.textContent, 'to', this.currentHole);
+            holeDisplayElement.textContent = this.currentHole;
+            console.log('Auto-resume: Updated holeDisplay element to:', this.currentHole);
+        } else {
+            console.warn('Auto-resume: holeDisplay element not found!');
+        }
+        
+        // Update all UI elements to reflect the restored state
+        this.updateGameDisplay();
+        this.updateGameStatusBar();
+        this.updatePreviousHoleButton();
+        this.updateGameNavigationVisibility();
+        this.updateGameBreakdowns();
+        
+        // Update individual game pages if enabled
+        if (this.gameConfigs.murph?.enabled) {
+            this.updateMurphPage();
+        }
+        if (this.gameConfigs.skins?.enabled) {
+            this.updateSkinsPage();
+        }
+        if (this.gameConfigs.kp?.enabled) {
+            this.updateKPPage();
+        }
+        if (this.gameConfigs.snake?.enabled) {
+            this.updateSnakePage();
+        }
+        
+        // Show success notification
+        this.ui.showNotification(`Game auto-resumed! You're on hole ${this.currentHole}`, 'success');
     }
 
     /**
-     * Resume a saved game
+     * Resume a saved game (manual resume)
      */
     resumeSavedGame() {
         console.log('Resume game called');
@@ -385,6 +415,8 @@ class SavageGolf {
         }
     }
 
+
+
     /**
      * Start a new game (clear saved state)
      */
@@ -398,16 +430,7 @@ class SavageGolf {
         this.ui.showNotification('Starting new game...', 'info');
     }
 
-    /**
-     * Hide resume game section and show start game button
-     */
-    hideResumeGameSection() {
-        const resumeSection = document.getElementById('resumeGameSection');
-        const startGameBtn = document.getElementById('startGame');
-        
-        if (resumeSection) resumeSection.style.display = 'none';
-        if (startGameBtn) startGameBtn.style.display = 'block';
-    }
+
 
     /**
      * Save current game state
@@ -433,8 +456,7 @@ class SavageGolf {
         const success = this.storage.saveGameState(gameState);
         if (success) {
             this.ui.showNotification('Game progress saved!', 'success');
-            // Update storage info display
-            this.updateStorageInfo();
+            
         } else {
             this.ui.showNotification('Failed to save game progress', 'error');
         }
@@ -631,56 +653,9 @@ class SavageGolf {
     /**
      * Update storage info display
      */
-    updateStorageInfo() {
-        const storageInfo = document.getElementById('storageInfo');
-        if (!storageInfo) return;
 
-        const info = this.storage.getStorageInfo();
-        if (!info) {
-            storageInfo.innerHTML = '<p>Storage info unavailable</p>';
-            return;
-        }
 
-        if (info.hasCurrentState) {
-            storageInfo.innerHTML = `
-                <p>✅ Game saved</p>
-                <p>📊 Storage used: ${info.totalSizeMB} MB</p>
-                <p>💾 Backups: ${info.backupCount}</p>
-                <p>🕒 Last saved: ${new Date(info.lastSaved || Date.now()).toLocaleString()}</p>
-            `;
-        } else {
-            storageInfo.innerHTML = '<p>No saved game found</p>';
-        }
-    }
 
-    /**
-     * Show storage information modal
-     */
-    showStorageModal() {
-        const info = this.storage.getStorageInfo();
-        if (!info) {
-            this.ui.showNotification('Storage info unavailable', 'error');
-            return;
-        }
-
-        let modalContent = '<h3>💾 Storage Information</h3>';
-        
-        if (info.hasCurrentState) {
-            modalContent += `
-                <div class="storage-modal-content">
-                    <p><strong>✅ Game Status:</strong> Saved</p>
-                    <p><strong>📊 Storage Used:</strong> ${info.totalSizeMB} MB</p>
-                    <p><strong>💾 Backup Count:</strong> ${info.backupCount}</p>
-                    <p><strong>🕒 Last Saved:</strong> ${new Date(info.lastSaved || Date.now()).toLocaleString()}</p>
-                </div>
-            `;
-        } else {
-            modalContent += '<p>No saved game found</p>';
-        }
-
-        // Show as alert for now (could be enhanced to a proper modal)
-        alert(modalContent);
-    }
 
 
 
@@ -855,8 +830,7 @@ class SavageGolf {
         // Auto-save game state
         this.saveGameState();
         
-        // Hide resume section since we're starting a new game
-        this.hideResumeGameSection();
+
         
         // Show success message
         this.ui.showNotification('Game started! Good luck!', 'success');
@@ -2125,6 +2099,13 @@ class SavageGolf {
 
 
     resetGame() {
+        // Show confirmation dialog before clearing saved game
+        const confirmed = window.confirm('This will start a fresh game and clear any saved progress. Are you sure?');
+        if (!confirmed) return;
+        
+        // Clear saved game state from localStorage
+        this.storage.clearGameState();
+        
         // Reset using managers
         this.gameManager.resetGames();
         this.playerManager.reset();
@@ -2136,6 +2117,9 @@ class SavageGolf {
         this.gameStarted = this.gameManager.gameStarted;
         this.currentHole = 1;
         this.currentPage = 'navigation';
+        this.requiredPlayers = DEFAULTS.PLAYER_COUNT; // Reset to default 4 players
+        
+        console.log('resetGame: Set requiredPlayers to:', this.requiredPlayers);
         
         // Reset form inputs (with null checks)
         const betInputs = [
@@ -2259,8 +2243,7 @@ class SavageGolf {
         // Reset previous hole button state
         this.updatePreviousHoleButton();
         
-        // Hide resume section and show start game button
-        this.hideResumeGameSection();
+
         
         this.ui.showNotification('Game reset! Ready for a new round.', 'info');
     }

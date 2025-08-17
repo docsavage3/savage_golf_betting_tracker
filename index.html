@@ -153,37 +153,11 @@
                 </div>
             </div>
             
-            <!-- Resume Game Section (shows when there's a saved game) -->
-            <div id="resumeGameSection" class="resume-section" style="display: none;">
-                <h3>🔄 Resume Previous Game</h3>
-                <div class="resume-info">
-                    <p>You have a saved game that you can resume from where you left off.</p>
-                    <div class="resume-details">
-                        <span id="resumeGameDetails">Loading...</span>
-                    </div>
-                </div>
-                <div class="resume-controls">
-                    <button id="resumeGame" class="btn btn-success btn-large">🔄 Resume Game</button>
-                    <button id="startNewGame" class="btn btn-primary btn-large">🆕 Start New Game</button>
-                </div>
-            </div>
+
             
             <button type="button" id="startGame" class="btn btn-primary">Start Game</button>
             
-            <!-- Storage Management Section -->
-            <div class="storage-section">
-                <h3>💾 Game Storage</h3>
-                <div class="storage-controls">
-                    <button id="saveGame" class="btn btn-secondary">💾 Save Game</button>
-                    <button id="loadGame" class="btn btn-secondary">📂 Load Game</button>
-                    <button id="exportGame" class="btn btn-secondary">📤 Export Game</button>
-                    <button id="importGame" class="btn btn-secondary">📥 Import Game</button>
-                    <button id="clearGame" class="btn btn-danger">🗑️ Clear Game</button>
-                </div>
-                <div id="storageInfo" class="storage-info">
-                    <p>No saved game found</p>
-                </div>
-            </div>
+
         </section>
 
         <!-- Game Navigation Section -->
@@ -197,8 +171,7 @@
                     <span class="current-hole-text">Hole <span id="currentHole">1</span> of 18</span>
                 </div>
                 <div class="game-controls">
-                    <button id="saveGameNow" class="btn btn-secondary">💾 Save Game</button>
-                    <button id="showStorageInfo" class="btn btn-info">📊 Storage Info</button>
+                    <!-- Removed duplicate Start New Game button - using bottom New Game button instead -->
                 </div>
             </div>
             

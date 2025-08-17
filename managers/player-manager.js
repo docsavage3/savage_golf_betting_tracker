@@ -426,20 +426,18 @@ export class PlayerManager {
         this.teams = [];
         this.teamNames = {};
         
-        // Reset player count selector
+        // Reset player count selector to default (4 players)
         const playerCountSelect = document.getElementById(ELEMENT_IDS.PLAYER_COUNT);
         if (playerCountSelect) {
-            playerCountSelect.value = '';
+            console.log('PlayerManager.reset: Setting player count selector to:', DEFAULTS.PLAYER_COUNT);
+            playerCountSelect.value = DEFAULTS.PLAYER_COUNT.toString();
+        } else {
+            console.warn('PlayerManager.reset: playerCountSelect element not found');
         }
         
-        // Hide player inputs
-        this.ui.hideElement(ELEMENT_IDS.PLAYER_INPUTS);
-        
-        // Show help message
-        const helpMessage = document.querySelector('.player-count-help');
-        if (helpMessage) {
-            helpMessage.style.display = 'block';
-        }
+        // Update player count display to show 4 player inputs
+        console.log('PlayerManager.reset: Calling updatePlayerCountDisplay with:', DEFAULTS.PLAYER_COUNT);
+        this.updatePlayerCountDisplay(DEFAULTS.PLAYER_COUNT);
         
         // Clear all player inputs
         const playerInputIds = [
