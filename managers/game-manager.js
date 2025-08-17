@@ -179,9 +179,16 @@ export class GameManager {
         // Try to add to game instance if available
         if (this.gameInstances[gameType]) {
             try {
+                console.log(`Attempting to add action to ${gameType} game instance:`, action);
+                console.log(`Game instance players:`, this.gameInstances[gameType].players);
+                console.log(`Game instance config:`, this.gameInstances[gameType].config);
+                
                 const success = this.gameInstances[gameType].addAction(action);
                 if (!success) {
                     console.warn(`Failed to add action to game instance for ${gameType}`);
+                    console.log(`Action validation failed. Action:`, action);
+                } else {
+                    console.log(`Successfully added action to ${gameType} game instance`);
                 }
             } catch (error) {
                 console.warn(`Error adding action to game instance for ${gameType}:`, error);

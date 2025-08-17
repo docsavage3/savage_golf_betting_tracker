@@ -53,26 +53,35 @@ export class MurphGame extends BaseGame {
      * @returns {boolean} True if valid
      */
     validateAction(action) {
+        console.log(`MurphGame validateAction called with:`, action);
+        console.log(`MurphGame players:`, this.players);
+        console.log(`MurphGame config:`, this.config);
+        
         // Required fields
         if (!action.player || !action.hole || !action.result) {
+            console.log(`Validation failed: Missing required fields - player: ${action.player}, hole: ${action.hole}, result: ${action.result}`);
             return false;
         }
 
         // Validate player exists
         if (!this.players.includes(action.player)) {
+            console.log(`Validation failed: Player ${action.player} not found in players list:`, this.players);
             return false;
         }
 
         // Validate hole is valid
         if (action.hole < 1 || action.hole > 18) {
+            console.log(`Validation failed: Invalid hole number ${action.hole}`);
             return false;
         }
 
         // Validate result
         if (!['success', 'fail', 'made', 'failed'].includes(action.result)) {
+            console.log(`Validation failed: Invalid result ${action.result}`);
             return false;
         }
 
+        console.log(`MurphGame validation passed for action:`, action);
         return true;
     }
 
