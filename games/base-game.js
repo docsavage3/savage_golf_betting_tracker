@@ -42,13 +42,19 @@ export class BaseGame {
      * @returns {boolean} True if added successfully
      */
     addAction(action) {
+        console.log(`BaseGame addAction called for ${this.gameType}:`, action);
+        console.log(`BaseGame players:`, this.players);
+        console.log(`BaseGame config:`, this.config);
+        
         if (!this.validateAction(action)) {
+            console.log(`BaseGame validation failed for ${this.gameType}`);
             return false;
         }
 
         action.id = action.id || Date.now();
         action.timestamp = action.timestamp || new Date();
         this.actions.push(action);
+        console.log(`BaseGame action added successfully for ${this.gameType}. Total actions:`, this.actions.length);
         return true;
     }
 
