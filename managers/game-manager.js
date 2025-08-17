@@ -168,20 +168,29 @@ export class GameManager {
      * @returns {boolean} True if action was added successfully
      */
     addGameAction(gameType, action) {
-        if (!this.gameInstances[gameType]) {
-            console.warn(`Game instance not found for ${gameType}`);
-            return false;
-        }
-
-        // Add to game instance if available
-        const success = this.gameInstances[gameType].addAction(action);
-        
-        // Also add to legacy for backwards compatibility
-        if (success) {
-            this.gameActions[gameType].push(action);
+        // Always add to legacy system for backwards compatibility
+        if (!this.gameActions[gameType]) {
+            this.gameActions[gameType] = [];
         }
         
-        return success;
+        // Add to legacy actions first
+        this.gameActions[gameType].push(action);
+        
+        // Try to add to game instance if available
+        if (this.gameInstances[gameType]) {
+            try {
+                const success = this.gameInstances[gameType].addAction(action);
+                if (!success) {
+                    console.warn(`Failed to add action to game instance for ${gameType}`);
+                }
+            } catch (error) {
+                console.warn(`Error adding action to game instance for ${gameType}:`, error);
+            }
+        } else {
+            console.warn(`Game instance not found for ${gameType}, using legacy system only`);
+        }
+        
+        return true;
     }
 
     /**

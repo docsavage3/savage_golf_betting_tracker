@@ -2658,7 +2658,12 @@ class SavageGolf {
         if (gameType === 'murph') {
             this.populateDropdown('quickMurphPlayer', this.players);
         } else if (gameType === 'skins') {
-            this.populateDropdown('quickSkinsWinner', this.players);
+            // For Skins, populate team names if 4 players, otherwise individual players
+            if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+                this.populateSkinsTeamDropdown();
+            } else {
+                this.populateDropdown('quickSkinsWinner', this.players);
+            }
         } else if (gameType === 'kp') {
             this.populateDropdown('quickKPPlayer', this.players);
         } else if (gameType === 'snake') {
@@ -2666,6 +2671,18 @@ class SavageGolf {
         } else if (gameType === 'wolf') {
             this.populateDropdown('quickWolfPlayer', this.players);
             this.populateDropdown('quickWolfPartner', this.players);
+        }
+    }
+    
+    populateSkinsTeamDropdown() {
+        const team1Option = document.getElementById('quickSkinsTeam1');
+        const team2Option = document.getElementById('quickSkinsTeam2');
+        
+        if (team1Option && this.gameConfigs.skins?.teamNames?.team1) {
+            team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+        }
+        if (team2Option && this.gameConfigs.skins?.teamNames?.team2) {
+            team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
         }
     }
     
