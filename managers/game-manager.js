@@ -192,6 +192,16 @@ export class GameManager {
                 console.log(`Game instance prototype chain:`, Object.getPrototypeOf(this.gameInstances[gameType]));
                 console.log(`Game instance constructor:`, this.gameInstances[gameType].constructor.name);
                 
+                // Check if addAction method exists and is callable
+                const addActionMethod = this.gameInstances[gameType].addAction;
+                console.log(`addAction method exists:`, !!addActionMethod);
+                console.log(`addAction method type:`, typeof addActionMethod);
+                console.log(`addAction method toString:`, addActionMethod.toString());
+                
+                // Check if the method is bound to the instance
+                console.log(`addAction method context:`, addActionMethod);
+                console.log(`addAction method prototype:`, addActionMethod.prototype);
+                
                 const success = this.gameInstances[gameType].addAction(action);
                 console.log(`addAction returned:`, success);
                 
