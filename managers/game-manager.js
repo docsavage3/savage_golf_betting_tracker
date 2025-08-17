@@ -179,44 +179,14 @@ export class GameManager {
         // Try to add to game instance if available
         if (this.gameInstances[gameType]) {
             try {
-                console.log(`Attempting to add action to ${gameType} game instance:`, action);
-                console.log(`Game instance players:`, this.gameInstances[gameType].players);
-                console.log(`Game instance config:`, this.gameInstances[gameType].config);
-                console.log(`Action player: "${action.player}"`);
-                console.log(`Player exists check:`, this.gameInstances[gameType].players.includes(action.player));
-                console.log(`Player names comparison:`, this.gameInstances[gameType].players.map(p => `"${p}"`));
-                console.log(`Game instance type:`, typeof this.gameInstances[gameType]);
-                console.log(`Game instance addAction method:`, typeof this.gameInstances[gameType].addAction);
-                
-                console.log(`About to call addAction on ${gameType} instance...`);
-                console.log(`Game instance prototype chain:`, Object.getPrototypeOf(this.gameInstances[gameType]));
-                console.log(`Game instance constructor:`, this.gameInstances[gameType].constructor.name);
-                
-                // Check if addAction method exists and is callable
-                const addActionMethod = this.gameInstances[gameType].addAction;
-                console.log(`addAction method exists:`, !!addActionMethod);
-                console.log(`addAction method type:`, typeof addActionMethod);
-                console.log(`addAction method toString:`, addActionMethod.toString());
-                
-                // Check if the method is bound to the instance
-                console.log(`addAction method context:`, addActionMethod);
-                console.log(`addAction method prototype:`, addActionMethod.prototype);
-                
                 const success = this.gameInstances[gameType].addAction(action);
-                console.log(`addAction returned:`, success);
                 
                 if (!success) {
                     console.warn(`Failed to add action to game instance for ${gameType}`);
-                    console.log(`Action validation failed. Action:`, action);
-                } else {
-                    console.log(`Successfully added action to ${gameType} game instance`);
                 }
             } catch (error) {
                 console.warn(`Error adding action to game instance for ${gameType}:`, error);
-                console.error(`Full error:`, error);
             }
-        } else {
-            console.warn(`Game instance not found for ${gameType}, using legacy system only`);
         }
         
         return true;
@@ -284,23 +254,15 @@ export class GameManager {
      * @returns {Object} Player balances for the game
      */
     calculateGameSummary(gameType) {
-        console.log(`calculateGameSummary called for ${gameType}`);
-        
         // Use new game instance if available, fallback to legacy method
         if (this.gameInstances[gameType]) {
-            console.log(`Using game instance for ${gameType}`);
-            const result = this.gameInstances[gameType].calculateSummary();
-            console.log(`Game instance result:`, result);
-            return result;
+            return this.gameInstances[gameType].calculateSummary();
         }
 
-        console.log(`Using legacy calculation for ${gameType}`);
         // Legacy calculation methods
         switch (gameType) {
             case GAME_TYPES.MURPH:
-                const legacyResult = this.calculateLegacyMurphSummary();
-                console.log(`Legacy Murph result:`, legacyResult);
-                return legacyResult;
+                return this.calculateLegacyMurphSummary();
             case GAME_TYPES.SKINS:
                 return this.calculateLegacySkinsSummary();
             case GAME_TYPES.KP:

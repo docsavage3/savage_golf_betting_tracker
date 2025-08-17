@@ -2138,10 +2138,6 @@ class SavageGolf {
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
-        console.log('updateCombinedSummary called');
-        console.log('Current gameActions:', this.gameActions);
-        console.log('Current gameConfigs:', this.gameConfigs);
-        
         if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0 && this.gameActions.wolf.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No activity yet</p>';
             return;
@@ -2151,9 +2147,7 @@ class SavageGolf {
         const gameSummaries = {};
         
         if (this.gameConfigs.murph?.enabled) {
-            console.log('Calculating Murph summary...');
             gameSummaries.murph = this.calculateMurphSummary();
-            console.log('Murph summary result:', gameSummaries.murph);
         }
         
         if (this.gameConfigs.skins?.enabled) {
@@ -2161,9 +2155,7 @@ class SavageGolf {
         }
         
         if (this.gameConfigs.kp?.enabled) {
-            console.log('Calculating KP summary...');
             gameSummaries.kp = this.calculateKPSummary();
-            console.log('KP summary result:', gameSummaries.kp);
         }
         
         if (this.gameConfigs.snake?.enabled) {
@@ -2174,9 +2166,7 @@ class SavageGolf {
             gameSummaries.wolf = this.calculateWolfSummary();
         }
         
-        console.log('All game summaries:', gameSummaries);
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
-        console.log('Combined summary:', combinedSummary);
         this.displaySummary(container, combinedSummary);
     }
 
@@ -2189,9 +2179,7 @@ class SavageGolf {
             }
             const murphBreakdown = document.getElementById('murphBreakdown');
             if (murphBreakdown) {
-                console.log('Updating Murph breakdown...');
                 const summary = this.calculateMurphSummary();
-                console.log('Murph breakdown summary:', summary);
                 this.displaySummary(murphBreakdown, summary);
             }
         } else {
@@ -2225,9 +2213,7 @@ class SavageGolf {
             }
             const kpBreakdown = document.getElementById('kpBreakdown');
             if (kpBreakdown) {
-                console.log('Updating KP breakdown...');
                 const summary = this.calculateKPSummary();
-                console.log('KP breakdown summary:', summary);
                 this.displaySummary(kpBreakdown, summary);
             }
         } else {
@@ -2778,12 +2764,10 @@ class SavageGolf {
             result: result === 'made' ? 'made' : 'failed'
         };
         
-        console.log('Quick Murph - Adding action:', action);
         this.gameManager.addGameAction('murph', action);
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
-        console.log('Quick Murph - After sync, gameActions.murph:', this.gameActions.murph);
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -2835,12 +2819,10 @@ class SavageGolf {
             player: player
         };
         
-        console.log('Quick KP - Adding action:', action);
         this.gameManager.addGameAction('kp', action);
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
-        console.log('Quick KP - After sync, gameActions.kp:', this.gameActions.kp);
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
