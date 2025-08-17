@@ -2771,6 +2771,8 @@ class SavageGolf {
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
         
         // Clear form
         document.getElementById('quickMurphPlayer').value = '';
@@ -2797,6 +2799,8 @@ class SavageGolf {
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
         
         // Clear form
         document.getElementById('quickSkinsWinner').value = '';
@@ -2822,6 +2826,8 @@ class SavageGolf {
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
         
         // Clear form
         document.getElementById('quickKPPlayer').value = '';
@@ -2847,6 +2853,8 @@ class SavageGolf {
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
         
         // Clear form
         document.getElementById('quickSnakePlayer').value = '';
@@ -2883,6 +2891,8 @@ class SavageGolf {
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
         
         // Clear form
         document.getElementById('quickWolfPlayer').value = '';
