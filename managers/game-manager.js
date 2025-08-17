@@ -182,8 +182,12 @@ export class GameManager {
                 console.log(`Attempting to add action to ${gameType} game instance:`, action);
                 console.log(`Game instance players:`, this.gameInstances[gameType].players);
                 console.log(`Game instance config:`, this.gameInstances[gameType].config);
+                console.log(`Game instance type:`, typeof this.gameInstances[gameType]);
+                console.log(`Game instance addAction method:`, typeof this.gameInstances[gameType].addAction);
                 
                 const success = this.gameInstances[gameType].addAction(action);
+                console.log(`addAction returned:`, success);
+                
                 if (!success) {
                     console.warn(`Failed to add action to game instance for ${gameType}`);
                     console.log(`Action validation failed. Action:`, action);
@@ -192,6 +196,7 @@ export class GameManager {
                 }
             } catch (error) {
                 console.warn(`Error adding action to game instance for ${gameType}:`, error);
+                console.error(`Full error:`, error);
             }
         } else {
             console.warn(`Game instance not found for ${gameType}, using legacy system only`);
@@ -262,15 +267,23 @@ export class GameManager {
      * @returns {Object} Player balances for the game
      */
     calculateGameSummary(gameType) {
+        console.log(`calculateGameSummary called for ${gameType}`);
+        
         // Use new game instance if available, fallback to legacy method
         if (this.gameInstances[gameType]) {
-            return this.gameInstances[gameType].calculateSummary();
+            console.log(`Using game instance for ${gameType}`);
+            const result = this.gameInstances[gameType].calculateSummary();
+            console.log(`Game instance result:`, result);
+            return result;
         }
 
+        console.log(`Using legacy calculation for ${gameType}`);
         // Legacy calculation methods
         switch (gameType) {
             case GAME_TYPES.MURPH:
-                return this.calculateLegacyMurphSummary();
+                const legacyResult = this.calculateLegacyMurphSummary();
+                console.log(`Legacy Murph result:`, legacyResult);
+                return legacyResult;
             case GAME_TYPES.SKINS:
                 return this.calculateLegacySkinsSummary();
             case GAME_TYPES.KP:
