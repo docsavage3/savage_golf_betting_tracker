@@ -60,7 +60,7 @@ export class GameManager {
                 this.gameInstances[gameType] = createGame(gameType, this.players, gameConfig);
                 
                 // Clear legacy actions for fresh start
-                console.log(`Clearing actions for ${gameType} during initialization`);
+        
                 this.gameActions[gameType] = [];
             }
         });
@@ -115,7 +115,7 @@ export class GameManager {
                 // Restore actions to game instances
                 Object.entries(actionsToRestore).forEach(([gameType, actions]) => {
                     if (this.gameInstances[gameType] && Array.isArray(actions)) {
-                        console.log(`Restoring ${actions.length} actions to ${gameType} game instance`);
+                
                         this.gameInstances[gameType].actions = [...actions];
                         // Also restore to legacy actions for backwards compatibility
                         this.gameActions[gameType] = [...actions];
@@ -123,7 +123,7 @@ export class GameManager {
                 });
             }
 
-            console.log('Game manager state restored successfully');
+    
         } catch (error) {
             console.error('Failed to restore game manager state:', error);
         }

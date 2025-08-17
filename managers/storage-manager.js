@@ -28,7 +28,7 @@ export class StorageManager {
      */
     saveGameState(gameState) {
         try {
-            console.log('StorageManager.saveGameState called with:', gameState);
+    
             
             const stateToSave = {
                 ...gameState,
@@ -36,7 +36,7 @@ export class StorageManager {
                 version: '1.0.0'
             };
 
-            console.log('State to save:', stateToSave);
+    
 
             // Create backup before saving
             this.createBackup();
@@ -44,12 +44,11 @@ export class StorageManager {
             // Save current state
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
             
-            console.log('Game state saved successfully to localStorage');
-            console.log('Storage key used:', this.STORAGE_KEY);
+            
             
             // Verify save by reading it back
             const savedData = localStorage.getItem(this.STORAGE_KEY);
-            console.log('Verification - saved data:', savedData);
+    
             
             return true;
         } catch (error) {
@@ -64,23 +63,22 @@ export class StorageManager {
      */
     loadGameState() {
         try {
-            console.log('StorageManager.loadGameState called');
-            console.log('Looking for storage key:', this.STORAGE_KEY);
+            
             
             const savedState = localStorage.getItem(this.STORAGE_KEY);
-            console.log('Raw saved state from localStorage:', savedState);
+    
             
             if (!savedState) {
-                console.log('No saved game state found');
+        
                 return null;
             }
 
             const gameState = JSON.parse(savedState);
-            console.log('Parsed game state:', gameState);
+    
             
             // Validate state structure
             if (this.validateGameState(gameState)) {
-                console.log('Game state loaded successfully and validated');
+        
                 return gameState;
             } else {
                 console.warn('Invalid game state found, clearing corrupted data');
@@ -108,7 +106,7 @@ export class StorageManager {
     clearGameState() {
         try {
             localStorage.removeItem(this.STORAGE_KEY);
-            console.log('Game state cleared');
+    
         } catch (error) {
             console.error('Failed to clear game state:', error);
         }
@@ -181,7 +179,7 @@ export class StorageManager {
             
             if (this.validateGameState(gameState)) {
                 localStorage.setItem(this.STORAGE_KEY, backup.state);
-                console.log('Game state restored from backup');
+        
                 return true;
             } else {
                 console.error('Invalid backup data');
@@ -222,7 +220,7 @@ export class StorageManager {
             document.body.removeChild(link);
             
             URL.revokeObjectURL(url);
-            console.log('Game state exported successfully');
+    
         } catch (error) {
             console.error('Failed to export game state:', error);
         }
@@ -243,7 +241,7 @@ export class StorageManager {
                         const importedState = JSON.parse(event.target.result);
                         
                         if (this.validateGameState(importedState)) {
-                            console.log('Game state imported successfully');
+                    
                             resolve(importedState);
                         } else {
                             reject(new Error('Invalid game state format'));
@@ -271,7 +269,7 @@ export class StorageManager {
      * @returns {boolean} True if valid
      */
     validateGameState(gameState) {
-        console.log('Validating game state:', gameState);
+
         
         if (!gameState || typeof gameState !== 'object') {
             console.warn('Game state is not an object');
@@ -287,7 +285,7 @@ export class StorageManager {
             }
         }
 
-        console.log('All required properties present');
+
 
         // Validate game actions structure
         if (!this.validateGameActions(gameState.gameActions)) {
@@ -301,7 +299,7 @@ export class StorageManager {
             return false;
         }
 
-        console.log('Game state validation passed');
+
         return true;
     }
 
@@ -311,7 +309,7 @@ export class StorageManager {
      * @returns {boolean} True if valid
      */
     validateGameActions(gameActions) {
-        console.log('Validating game actions:', gameActions);
+
         
         if (!gameActions || typeof gameActions !== 'object') {
             console.warn('Game actions is not an object');
@@ -331,7 +329,7 @@ export class StorageManager {
             }
         }
 
-        console.log('Game actions validation passed');
+
         return true;
     }
 
@@ -341,14 +339,12 @@ export class StorageManager {
      */
     getStorageInfo() {
         try {
-            console.log('Getting storage info...');
-            console.log('Storage key:', this.STORAGE_KEY);
+            
             
             const currentState = localStorage.getItem(this.STORAGE_KEY);
             const backups = localStorage.getItem(this.BACKUP_KEY);
             
-            console.log('Current state from localStorage:', currentState);
-            console.log('Backups from localStorage:', backups);
+            
             
             const currentSize = currentState ? new Blob([currentState]).size : 0;
             const backupSize = backups ? new Blob([backups]).size : 0;
@@ -363,7 +359,7 @@ export class StorageManager {
                 backupCount: this.getBackups().length
             };
             
-            console.log('Storage info:', info);
+    
             return info;
         } catch (error) {
             console.error('Failed to get storage info:', error);
@@ -383,7 +379,7 @@ export class StorageManager {
             const backupsToKeep = backups.slice(0, keepCount);
             localStorage.setItem(this.BACKUP_KEY, JSON.stringify(backupsToKeep));
             
-            console.log(`Cleaned up backups, keeping ${keepCount} most recent`);
+    
         } catch (error) {
             console.error('Failed to cleanup backups:', error);
         }
@@ -403,7 +399,7 @@ export class StorageManager {
             localStorage.removeItem(testKey);
             
             const isWorking = retrievedValue === testValue;
-            console.log('localStorage test:', isWorking ? 'PASSED' : 'FAILED');
+    
             return isWorking;
         } catch (error) {
             console.error('localStorage test failed:', error);
