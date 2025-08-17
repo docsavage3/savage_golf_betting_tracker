@@ -57,9 +57,9 @@ A mobile-friendly web application to track golf side games and bets. Perfect for
   - **Partner**: Teams up with chosen player against other 2 players
   - **Scoring**: 
     - **Wolf + Partner Win**: Each gets 1x bet, others lose 1x bet each
-    - **Lone Wolf Wins**: Gets 3x bet from others, others lose 1x bet each
+    - **Lone Wolf Wins**: Gets 3x bet from each other player (9x total), others lose 3x bet each
     - **Wolf + Partner Lose**: Each loses 3x bet, others get 1x bet each
-    - **Lone Wolf Loses**: Loses 3x bet, others get 1x bet each
+    - **Lone Wolf Loses**: Loses 3x bet to each other player (9x total), others get 3x bet each
 
 ## 📱 Features
 

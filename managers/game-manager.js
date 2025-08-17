@@ -567,11 +567,11 @@ export class GameManager {
         this.gameActions.wolf.forEach(action => {
             if (action.result === 'wolf_wins') {
                 if (action.wolfChoice === 'lone_wolf') {
-                    // Lone Wolf wins: gets 3x bet from others
-                    playerBalances[action.wolf] += betAmount * 3;
+                    // Lone Wolf wins: gets 3x bet from each of the 3 other players
+                    playerBalances[action.wolf] += betAmount * 3 * 3; // 9x total
                     this.players.forEach(player => {
                         if (player !== action.wolf) {
-                            playerBalances[player] -= betAmount;
+                            playerBalances[player] -= betAmount * 3; // Each pays 3x
                         }
                     });
                 } else {
@@ -587,11 +587,11 @@ export class GameManager {
             } else {
                 // Wolf loses: others get 1x bet each, Wolf loses 3x bet
                 if (action.wolfChoice === 'lone_wolf') {
-                    // Lone Wolf loses: others get 1x bet each
-                    playerBalances[action.wolf] -= betAmount * 3;
+                    // Lone Wolf loses: pays 3x bet to each of the 3 other players
+                    playerBalances[action.wolf] -= betAmount * 3 * 3; // 9x total
                     this.players.forEach(player => {
                         if (player !== action.wolf) {
-                            playerBalances[player] += betAmount;
+                            playerBalances[player] += betAmount * 3; // Each gets 3x
                         }
                     });
                 } else {
