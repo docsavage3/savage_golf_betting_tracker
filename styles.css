@@ -1,3 +1,25 @@
+/* =============================================================================
+ * Savage Golf Betting Tracker - Main Stylesheet
+ * =============================================================================
+ * 
+ * This stylesheet contains all the styling for the Savage Golf Betting Tracker
+ * application. It's organized into logical sections for easy maintenance.
+ * 
+ * Features:
+ * - Mobile-first responsive design
+ * - Modern CSS with custom properties (variables)
+ * - Golf-themed color scheme
+ * - Smooth animations and transitions
+ * - Professional, clean interface
+ * 
+ * Copyright (c) 2025 Daniel Savage
+ * Licensed under MIT License
+ * 
+ * This software tracks golf side games including Murph, Skins, KP, and Snake.
+ * All rights reserved.
+ * =============================================================================
+ */
+
 * {
     margin: 0;
     padding: 0;
@@ -1280,6 +1302,37 @@ header h1 {
 .final-actions {
     margin-top: 40px;
     text-align: center;
+}
+
+/* Copyright Footer */
+.copyright-footer {
+    margin-top: 60px;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: var(--radius-lg);
+}
+
+.copyright-footer p {
+    margin: 8px 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.copyright-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.copyright-footer a:hover {
+    text-decoration: underline;
+}
+
+.footer-note {
+    font-style: italic;
+    opacity: 0.8;
 }
 
 /* Custom scrollbar */

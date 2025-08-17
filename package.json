@@ -18,9 +18,9 @@
     "type": "git",
     "url": "git+https://github.com/docsavage3/savage_golf_betting_tracker.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["golf", "betting", "side-games", "murph", "skins", "kp", "snake", "tracker"],
+  "author": "Daniel Savage",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/docsavage3/savage_golf_betting_tracker/issues"

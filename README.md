@@ -2,6 +2,8 @@
 
 A mobile-friendly web application to track golf side games and bets. Perfect for foursomes looking to add some excitement to their rounds with multiple side games running simultaneously.
 
+**Copyright (c) 2025 Daniel Savage. Licensed under [MIT License](LICENSE).**
+
 ## 🎮 Games Available
 
 ### **Murph Game**
@@ -164,6 +166,25 @@ Click **"🔄 New Game"** to reset everything and start fresh with new players o
 - **Use the hole navigation** to keep track of progress
 - **Switch between game pages** to focus on specific games
 - **Check combined totals** regularly to see overall standings
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Copyright (c) 2025 Daniel Savage. All rights reserved.**
+
+The MIT License allows others to:
+- Use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software
+- Use the software for commercial purposes
+- Modify the software and distribute modified versions
+
+**However, the MIT License requires that:**
+- The original copyright notice and license must be included in all copies
+- The software is provided "as is" without warranty
+
+This protects your intellectual property while allowing legitimate use and development.
 
 ---
 

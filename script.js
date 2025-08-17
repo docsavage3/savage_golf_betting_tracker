@@ -1,4 +1,15 @@
 
+/**
+ * Savage Golf Betting Tracker
+ * Main application logic and game management
+ * 
+ * Copyright (c) 2025 Daniel Savage
+ * Licensed under MIT License
+ * 
+ * This software tracks golf side games including Murph, Skins, KP, and Snake.
+ * All rights reserved.
+ */
+
 import { 
     ELEMENT_IDS, 
     GAME_TYPES, 

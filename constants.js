@@ -1,6 +1,12 @@
 /**
  * Constants and Configuration for Savage Golf Betting Tracker
  * Extracted to improve maintainability and reduce magic numbers/strings
+ * 
+ * Copyright (c) 2025 Daniel Savage
+ * Licensed under MIT License
+ * 
+ * This software tracks golf side games including Murph, Skins, KP, and Snake.
+ * All rights reserved.
  */
 
 // =============================================================================
