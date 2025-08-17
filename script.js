@@ -266,29 +266,17 @@ class SavageGolf {
         // Navigate directly to the game navigation page
         this.showPage('navigation');
         
-        // Update the current hole display (both elements) - CRITICAL for hole display
-        const currentHoleElement = document.getElementById('currentHole');
+        // Update the current hole display
         const holeDisplayElement = document.getElementById('holeDisplay');
         
-        if (currentHoleElement) {
-
-            currentHoleElement.textContent = this.currentHole;
-
-        } else {
-            console.warn('Auto-resume: currentHole element not found!');
-        }
-        
         if (holeDisplayElement) {
-
             holeDisplayElement.textContent = this.currentHole;
-
         } else {
             console.warn('Auto-resume: holeDisplay element not found!');
         }
         
         // Update all UI elements to reflect the restored state
         this.updateGameDisplay();
-        this.updateGameStatusBar();
         this.updatePreviousHoleButton();
         this.updateGameNavigationVisibility();
         this.updateGameBreakdowns();
@@ -333,15 +321,8 @@ class SavageGolf {
             // Navigate to the game navigation page to continue playing
             this.showPage('navigation');
             
-            // Update the current hole display (both elements)
-            const currentHoleElement = document.getElementById('currentHole');
+            // Update the current hole display
             const holeDisplayElement = document.getElementById('holeDisplay');
-            
-            if (currentHoleElement) {
-                currentHoleElement.textContent = this.currentHole;
-            } else {
-                console.warn('currentHole element not found!');
-            }
             
             if (holeDisplayElement) {
                 holeDisplayElement.textContent = this.currentHole;
@@ -349,8 +330,7 @@ class SavageGolf {
                 console.warn('holeDisplay element not found!');
             }
             
-            // Update the game status bar
-            this.updateGameStatusBar();
+            
             
             // Update the game display to show current state
             this.updateGameDisplay();
@@ -590,26 +570,7 @@ class SavageGolf {
         this.ui.showNotification('Game state cleared successfully', 'success');
     }
 
-    /**
-     * Update game status bar with current game information
-     */
-    updateGameStatusBar() {
-        const gameStatusText = document.querySelector('.game-status-text');
-        const currentHoleText = document.querySelector('.current-hole-text');
-        
-        if (gameStatusText) {
-            if (this.gameStarted) {
-                const enabledGames = Object.values(this.gameConfigs).filter(config => config.enabled).length;
-                gameStatusText.textContent = `Game in progress - ${enabledGames} game${enabledGames !== 1 ? 's' : ''} active`;
-            } else {
-                gameStatusText.textContent = 'No active game';
-            }
-        }
-        
-        if (currentHoleText) {
-            currentHoleText.textContent = `Hole ${this.currentHole} of 18`;
-        }
-    }
+
 
     /**
      * Update storage info display
@@ -785,8 +746,7 @@ class SavageGolf {
         // Update navigation button visibility for selected games
         this.updateGameNavigationVisibility();
         
-        // Update game status bar
-        this.updateGameStatusBar();
+
         
         // Auto-save game state
         this.saveGameState();
@@ -816,23 +776,14 @@ class SavageGolf {
         if (this.currentHole > 1) {
             this.currentHole--;
             
-            // Update both hole display elements (with null checks)
-            const currentHoleElement = document.getElementById('currentHole');
-            const holeDisplayElement = document.getElementById('holeDisplay');
-            
-                    
-            
-            if (currentHoleElement) {
-                currentHoleElement.textContent = this.currentHole;
-            } else {
-                console.warn('currentHole element not found in previousHole');
-            }
-            
-            if (holeDisplayElement) {
-                holeDisplayElement.textContent = this.currentHole;
-            } else {
-                console.warn('holeDisplay element not found in previousHole');
-            }
+                    // Update hole display element
+        const holeDisplayElement = document.getElementById('holeDisplay');
+        
+        if (holeDisplayElement) {
+            holeDisplayElement.textContent = this.currentHole;
+        } else {
+            console.warn('holeDisplay element not found in previousHole');
+        }
             
             this.updatePreviousHoleButton();
             this.updateGameDisplay();
@@ -853,17 +804,8 @@ class SavageGolf {
         
         this.currentHole++;
         
-        // Update both hole display elements (with null checks)
-        const currentHoleElement = document.getElementById('currentHole');
+        // Update hole display element
         const holeDisplayElement = document.getElementById('holeDisplay');
-        
-
-        
-        if (currentHoleElement) {
-            currentHoleElement.textContent = this.currentHole;
-        } else {
-            console.warn('currentHole element not found in nextHole');
-        }
         
         if (holeDisplayElement) {
             holeDisplayElement.textContent = this.currentHole;
@@ -2106,12 +2048,8 @@ class SavageGolf {
         // PlayerManager.reset() already handles team selection cleanup
         
         // Reset display (with null checks)
-        const currentHoleElement = document.getElementById('currentHole');
         const holeDisplayElement = document.getElementById('holeDisplay');
         
-        if (currentHoleElement) {
-            currentHoleElement.textContent = '1';
-        }
         if (holeDisplayElement) {
             holeDisplayElement.textContent = '1';
         }
