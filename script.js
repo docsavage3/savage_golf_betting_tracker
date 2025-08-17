@@ -2343,7 +2343,7 @@ class SavageGolf {
             { id: 'skinsBet', value: '1.00' },
             { id: 'kpBet', value: '1.00' },
             { id: 'snakeBet', value: '1.00' },
-            { id: 'wolfBet', value: '2.00' }
+            { id: 'wolfBet', value: '1.00' }
         ];
         
         betInputs.forEach(({ id, value }) => {
