@@ -407,7 +407,10 @@ export class GameManager {
         });
         
         this.gameActions.murph.forEach(call => {
-            if (call.result === 'success') {
+            // Handle both 'success'/'fail' and 'made'/'failed' result formats
+            const isSuccess = call.result === 'success' || call.result === 'made';
+            
+            if (isSuccess) {
                 // Caller gets paid by all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
