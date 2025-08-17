@@ -7,7 +7,7 @@ A mobile-friendly web application to track golf side games and bets. Perfect for
 ## 🎮 Games Available
 
 ### **Murph Game**
-- **Players**: 2-4 players (now requires exactly 4)
+- **Players**: 2-4 players
 - **Objective**: Call "Murph" and get the ball in the hole within 2 shots
 - **Betting**: Agreed amount per Murph call
 - **Rules**: 
@@ -17,20 +17,40 @@ A mobile-friendly web application to track golf side games and bets. Perfect for
   - Agreed bet amount is applied to each Murph call
 
 ### **Skins Game**
-- **Players**: Exactly 4 players (2 teams of 2)
-- **Objective**: Lowest net team score wins the skin
+- **Players**: 2-4 players
+- **Objective**: Best individual score (2-3 players) or best team score (4 players) wins the skin
 - **Betting**: Agreed amount per skin won
 - **Rules**: 
-  - Teams are formed from 4 players
-  - Lowest net score from one team wins the skin
-  - Carryover system: if no team wins, skins accumulate
+  - **2-3 players**: Individual competition, best score wins
+  - **4 players**: Team competition (2 teams of 2), best team score wins
+  - Carryover system: if no one wins, skins accumulate
   - Agreed bet amount is applied to each skin won
+
+### **Closest to the Pin (KP)**
+- **Players**: 2-4 players
+- **Objective**: Get closest to the pin on designated holes
+- **Betting**: Agreed amount per KP won
+- **Rules**: 
+  - KP is assigned to specific holes during setup
+  - Player closest to the pin wins the KP
+  - Multiple KPs can be won per round
+  - Agreed bet amount is applied to each KP
+
+### **Snake Game**
+- **Players**: 2-4 players
+- **Objective**: Avoid being the last player to get a "snake" on any hole
+- **Betting**: Agreed amount per snake
+- **Rules**: 
+  - Snake is assigned to one player per hole
+  - Each snake adds the bet amount to the pot
+  - Last player to get a snake owes the entire pot to other players
+  - Pot is split equally among non-snake players
 
 ## 📱 Features
 
 - **Mobile-first design** - Optimized for phone use on the course
-- **Multiple side games** - Play Murph and Skins simultaneously
-- **4-player requirement** - Perfect for foursome golf rounds
+- **Multiple side games** - Play Murph, Skins, KP, and Snake simultaneously
+- **Flexible player count** - Supports 2-4 players (perfect for any group size)
 - **Individual game tracking** - Separate bet amounts and tracking for each game
 - **Combined totals** - See overall financial standings across all games
 - **Real-time tracking** - See who owes what as the game progresses
@@ -43,10 +63,11 @@ A mobile-friendly web application to track golf side games and bets. Perfect for
 ## 🚀 Getting Started
 
 1. **Open the app** in your mobile browser
-2. **Enter 4 player names** (exactly 4 players required)
-3. **Select which games to play** (Murph, Skins, or both)
-4. **Set bet amounts** for each selected game
-5. **Start the game** and begin tracking!
+2. **Select number of players** (2-4 players supported)
+3. **Enter player names** for your group
+4. **Select which games to play** (Murph, Skins, KP, Snake, or any combination)
+5. **Set bet amounts** for each selected game
+6. **Start the game** and begin tracking!
 
 ## 🎮 During the Game
 
@@ -66,14 +87,30 @@ Once the game starts, you'll see a central navigation page with:
 7. See **Murph Financial Summary** for current standings
 
 ### **Skins Game Page:**
-1. **Select your teams** from the dropdown menus (each player can only be on one team)
+1. **For 4 players**: Select your teams from the dropdown menus (each player can only be on one team)
 2. Click **"Record Skins"** button
 3. Enter the hole number
-4. Select the winning team or carryover
+4. Select the winner (individual player for 2-3 players, team for 4 players) or carryover
 5. **Carryover tracking** - See how many skins are at stake
 6. Save the result
 7. View **Skins History** organized by hole
 8. See **Skins Financial Summary** for current standings
+
+### **KP (Closest to the Pin) Game Page:**
+1. Click **"Record KP"** button
+2. Enter the hole number
+3. Select the player who got closest to the pin
+4. Save the result
+5. View **KP History** organized by hole
+6. See **KP Financial Summary** for current standings
+
+### **Snake Game Page:**
+1. Click **"Record Snake"** button
+2. Enter the hole number
+3. Select the player who got the "snake" on that hole
+4. Save the result
+5. View **Snake History** organized by hole
+6. See **Snake Financial Summary** for current standings
 
 ### **Combined Total Page:**
 - **Overall Financial Summary** - Combined totals across all games
@@ -103,7 +140,7 @@ Once the game starts, you'll see a central navigation page with:
 ### **Game Completion:**
 - **18-hole limit** - Game automatically ends after completing hole 18
 - **Final Results Page** - Comprehensive summary of all games played
-- **Individual game breakdowns** - See results for Murph and Skins separately
+- **Individual game breakdowns** - See results for Murph, Skins, KP, and Snake separately
 - **Combined totals** - Overall financial standings across all games
 - **Payment instructions** - Clear breakdown of who needs to pay whom
 - **Easy restart** - Start a new game directly from final results
@@ -117,16 +154,19 @@ Once the game starts, you'll see a central navigation page with:
   - 🟢 Green for successful actions/wins
   - 🔴 Red for failed actions/losses  
   - 🟠 Orange for carryovers (Skins)
+  - 🎯 Blue for KP wins
+  - 🐍 Purple for Snake penalties
 
 ## 💰 Financial Tracking
 
 The app automatically calculates:
-- **Individual game totals** - See standings for each game separately
+- **Individual game totals** - See standings for each game separately (Murph, Skins, KP, Snake)
 - **Combined totals** - Overall financial standings across all games
 - **Running totals** throughout the game
 - **Clear visual indicators** (green for positive, red for negative, orange for neutral)
-- **Team-based calculations** for Skins game
+- **Team-based calculations** for Skins game (4 players)
 - **Carryover multipliers** - Multiple skins can be won on a single hole
+- **Snake pot management** - Automatic calculation of snake penalties and payouts
 
 ## 🔄 Starting a New Game
 
@@ -156,6 +196,8 @@ Click **"🔄 New Game"** to reset everything and start fresh with new players o
 - **Local storage** - Game data persists during the session
 - **Responsive design** - Works on all devices
 - **Progressive Web App** ready
+- **4 game types supported** - Murph, Skins, KP, and Snake
+- **Flexible player support** - 2-4 players with adaptive game logic
 
 ## 💡 Tips for Best Experience
 
