@@ -39,6 +39,7 @@ export class UIManager {
             ELEMENT_IDS.SKINS_PAGE, 
             ELEMENT_IDS.KP_PAGE, 
             ELEMENT_IDS.SNAKE_PAGE, 
+            ELEMENT_IDS.WOLF_PAGE, 
             ELEMENT_IDS.COMBINED_PAGE, 
             ELEMENT_IDS.FINAL_RESULTS
         ];
@@ -89,6 +90,14 @@ export class UIManager {
                     this.showElement(ELEMENT_IDS.SNAKE_PAGE);
                 } else {
                     this.showNotification('Snake game is not enabled for this round.', NOTIFICATION_CONFIG.TYPES.ERROR);
+                    return;
+                }
+                break;
+            case PAGE_NAMES.WOLF:
+                if (gameConfigs.wolf?.enabled) {
+                    this.showElement(ELEMENT_IDS.WOLF_PAGE);
+                } else {
+                    this.showNotification('Wolf game is not enabled for this round.', NOTIFICATION_CONFIG.TYPES.ERROR);
                     return;
                 }
                 break;

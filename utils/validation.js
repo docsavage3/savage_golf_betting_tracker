@@ -102,7 +102,8 @@ export class ValidationManager {
             murph: document.getElementById('gameMurph')?.checked || false,
             skins: document.getElementById('gameSkins')?.checked || false,
             kp: document.getElementById('gameKP')?.checked || false,
-            snake: document.getElementById('gameSnake')?.checked || false
+            snake: document.getElementById('gameSnake')?.checked || false,
+            wolf: document.getElementById('gameWolf')?.checked || false
         };
     }
 
@@ -194,7 +195,8 @@ export class ValidationManager {
             murph: 'Murph',
             skins: 'Skins',
             kp: 'KP',
-            snake: 'Snake'
+            snake: 'Snake',
+            wolf: 'Wolf'
         };
         return displayNames[gameType] || gameType;
     }

@@ -103,6 +103,7 @@ class SavageGolf {
         document.getElementById(ELEMENT_IDS.NAV_SKINS).addEventListener('click', () => this.showPage(PAGE_NAMES.SKINS));
         document.getElementById(ELEMENT_IDS.NAV_KP).addEventListener('click', () => this.showPage(PAGE_NAMES.KP));
         document.getElementById(ELEMENT_IDS.NAV_SNAKE).addEventListener('click', () => this.showPage(PAGE_NAMES.SNAKE));
+        document.getElementById(ELEMENT_IDS.NAV_WOLF).addEventListener('click', () => this.showPage(PAGE_NAMES.WOLF));
         document.getElementById(ELEMENT_IDS.NAV_COMBINED).addEventListener('click', () => this.showPage(PAGE_NAMES.COMBINED));
         
         // Back to navigation buttons
@@ -110,6 +111,7 @@ class SavageGolf {
         document.getElementById('backToNav2').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNavKP').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNavSnake').addEventListener('click', () => this.showPage('navigation'));
+        document.getElementById('backToNavWolf').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav3').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav4').addEventListener('click', () => this.showPage('navigation'));
         
@@ -142,6 +144,11 @@ class SavageGolf {
         document.getElementById('recordSnake').addEventListener('click', () => this.showSnakeModal());
         document.getElementById('saveSnake').addEventListener('click', () => this.saveSnakeAction());
         document.getElementById('cancelSnake').addEventListener('click', () => this.hideSnakeModal());
+        
+        // Wolf game
+        document.getElementById('recordWolf').addEventListener('click', () => this.showWolfModal());
+        document.getElementById('saveWolf').addEventListener('click', () => this.saveWolfAction());
+        document.getElementById('cancelWolf').addEventListener('click', () => this.hideWolfModal());
 
         
         // New game
@@ -171,6 +178,12 @@ class SavageGolf {
                 this.hideSnakeModal();
             }
         });
+        
+        document.getElementById('wolfModal').addEventListener('click', (e) => {
+            if (e.target.id === 'wolfModal') {
+                this.hideWolfModal();
+            }
+        });
     }
 
     showPage(pageName) {
@@ -187,6 +200,8 @@ class SavageGolf {
             this.updateKPPage();
         } else if (pageName === 'snake') {
             this.updateSnakePage();
+        } else if (pageName === 'wolf') {
+            this.updateWolfPage();
         } else if (pageName === 'combined') {
             this.updateCombinedPage();
         } else if (pageName === 'finalResults') {
@@ -214,6 +229,11 @@ class SavageGolf {
         this.updateSnakeSummary();
     }
 
+    updateWolfPage() {
+        this.updateWolfActionsList();
+        this.updateWolfSummary();
+    }
+
     updateCombinedPage() {
         this.updateCombinedSummary();
         this.updateGameBreakdowns();
@@ -229,11 +249,13 @@ class SavageGolf {
         const skinsCheckbox = document.getElementById('gameSkins');
         const kpCheckbox = document.getElementById('gameKP');
         const snakeCheckbox = document.getElementById('gameSnake');
+        const wolfCheckbox = document.getElementById('gameWolf');
         
         murphCheckbox.addEventListener('change', () => this.toggleGameSection('murph'));
         skinsCheckbox.addEventListener('change', () => this.toggleGameSection('skins'));
         kpCheckbox.addEventListener('change', () => this.toggleGameSection('kp'));
         snakeCheckbox.addEventListener('change', () => this.toggleGameSection('snake'));
+        wolfCheckbox.addEventListener('change', () => this.toggleGameSection('wolf'));
         
         // Set initial navigation button visibility
         this.updateGameNavigationVisibility();
@@ -304,6 +326,9 @@ class SavageGolf {
         }
         if (this.gameConfigs.snake?.enabled) {
             this.updateSnakePage();
+        }
+        if (this.gameConfigs.wolf?.enabled) {
+            this.updateWolfPage();
         }
         
         // Show success notification
@@ -650,6 +675,7 @@ class SavageGolf {
         const skinsChecked = document.getElementById('gameSkins').checked;
         const kpChecked = document.getElementById('gameKP').checked;
         const snakeChecked = document.getElementById('gameSnake').checked;
+        const wolfChecked = document.getElementById('gameWolf').checked;
         
         // Show/hide Murph button
         const navMurph = document.getElementById('navMurph');
@@ -674,6 +700,12 @@ class SavageGolf {
         if (navSnake) {
             navSnake.style.display = snakeChecked ? 'flex' : 'none';
         }
+        
+        // Show/hide Wolf button
+        const navWolf = document.getElementById('navWolf');
+        if (navWolf) {
+            navWolf.style.display = wolfChecked ? 'flex' : 'none';
+        }
     }
 
     startGame() {
@@ -691,6 +723,7 @@ class SavageGolf {
         const skinsChecked = document.getElementById('gameSkins').checked;
         const kpChecked = document.getElementById('gameKP').checked;
         const snakeChecked = document.getElementById('gameSnake').checked;
+        const wolfChecked = document.getElementById('gameWolf').checked;
         
         if (murphChecked) {
             this.gameConfigs.murph = {
@@ -732,6 +765,13 @@ class SavageGolf {
         if (snakeChecked) {
             this.gameConfigs.snake = {
                 betAmount: parseFloat(document.getElementById('snakeBet').value),
+                enabled: true
+            };
+        }
+        
+        if (wolfChecked) {
+            this.gameConfigs.wolf = {
+                betAmount: parseFloat(document.getElementById('wolfBet').value),
                 enabled: true
             };
         }
@@ -1453,6 +1493,158 @@ class SavageGolf {
         this.ui.showNotification(`${player} got a snake on hole ${hole}!`, 'success');
     }
 
+    // Wolf Game Methods
+    showWolfModal() {
+        const modal = document.getElementById('wolfModal');
+        const holeInput = document.getElementById('wolfHole');
+        const wolfPlayerSelect = document.getElementById('wolfPlayer');
+        const wolfChoiceSelect = document.getElementById('wolfChoice');
+        const partnerSelect = document.getElementById('wolfPartner');
+        const resultSelect = document.getElementById('wolfResult');
+        
+        // Set current hole
+        holeInput.value = this.currentHole;
+        
+        // Populate wolf player options (should be the current wolf for this hole)
+        wolfPlayerSelect.innerHTML = '<option value="">Select Wolf...</option>';
+        this.players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player;
+            option.textContent = player;
+            wolfPlayerSelect.appendChild(option);
+        });
+        
+        // Set default wolf based on rotation
+        if (this.gameInstances.wolf) {
+            const currentWolf = this.gameInstances.wolf.getCurrentWolf(this.currentHole);
+            if (currentWolf) {
+                wolfPlayerSelect.value = currentWolf.player;
+            }
+        }
+        
+        // Initially hide partner field and make it not required
+        const partnerGroup = document.getElementById('wolfPartnerGroup');
+        partnerGroup.style.display = 'none';
+        partnerSelect.required = false;
+        
+        // Populate partner options
+        partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+        this.players.forEach(player => {
+            if (player !== wolfPlayerSelect.value) {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                partnerSelect.appendChild(option);
+            }
+        });
+        
+        // Add event listener for wolf choice change
+        wolfChoiceSelect.addEventListener('change', () => {
+            const partnerGroup = document.getElementById('wolfPartnerGroup');
+            if (wolfChoiceSelect.value === 'partner') {
+                partnerGroup.style.display = 'block';
+                partnerSelect.required = true;
+                // Repopulate partner options when switching to partner mode
+                partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+                this.players.forEach(player => {
+                    if (player !== wolfPlayerSelect.value) {
+                        const option = document.createElement('option');
+                        option.value = player;
+                        option.textContent = player;
+                        partnerSelect.appendChild(option);
+                    }
+                });
+            } else {
+                partnerGroup.style.display = 'none';
+                partnerSelect.required = false;
+                partnerSelect.value = '';
+            }
+        });
+        
+        // Add event listener for wolf player change to update partner options
+        wolfPlayerSelect.addEventListener('change', () => {
+            // Repopulate partner options excluding the selected wolf
+            partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+            this.players.forEach(player => {
+                if (player !== wolfPlayerSelect.value) {
+                    const option = document.createElement('option');
+                    option.value = player;
+                    option.textContent = player;
+                    partnerSelect.appendChild(option);
+                }
+            });
+        });
+        
+        // Show modal
+        modal.style.display = 'block';
+    }
+
+    hideWolfModal() {
+        const modal = document.getElementById('wolfModal');
+        modal.style.display = 'none';
+        
+        // Clear form
+        document.getElementById('wolfHole').value = '';
+        document.getElementById('wolfPlayer').selectedIndex = 0;
+        document.getElementById('wolfChoice').selectedIndex = 0;
+        document.getElementById('wolfPartner').selectedIndex = 0;
+        document.getElementById('wolfResult').selectedIndex = 0;
+    }
+
+    saveWolfAction() {
+        const hole = parseInt(document.getElementById('wolfHole').value);
+        const wolf = document.getElementById('wolfPlayer').value;
+        const wolfChoice = document.getElementById('wolfChoice').value;
+        const partner = document.getElementById('wolfPartner').value;
+        const result = document.getElementById('wolfResult').value;
+        
+        // Form values captured
+        
+        // Basic validation
+        if (!hole || !wolf || !wolfChoice || !result) {
+            this.ui.showNotification('Please fill in all required fields.', 'error');
+            return;
+        }
+        
+        // Validate partner is selected if not lone wolf
+        if (wolfChoice === 'partner' && !partner) {
+            this.ui.showNotification('Please select a partner.', 'error');
+            return;
+        }
+        
+        // Create wolf action
+        const wolfAction = {
+            id: Date.now(),
+            hole: hole,
+            wolf: wolf,
+            wolfChoice: wolfChoice,
+            partner: wolfChoice === 'partner' ? partner : null,
+            result: result,
+            timestamp: new Date()
+        };
+        
+        // Add to game instance if it exists
+        if (this.gameInstances && this.gameInstances.wolf) {
+            this.gameInstances.wolf.addAction(wolfAction);
+        }
+        
+        // Also add to legacy for backwards compatibility
+        this.gameActions.wolf.push(wolfAction);
+        // Wolf action added to legacy system
+        
+        // Auto-save game state
+        this.saveGameState();
+        
+        // Hide modal and update display
+        this.hideWolfModal();
+        this.updateGameDisplay();
+        
+        // Show result message
+        const resultText = result === 'wolf_wins' ? 'won' : 'lost';
+        const choiceText = wolfChoice === 'lone_wolf' ? 'Lone Wolf' : `Wolf + ${wolfAction.partner}`;
+        this.ui.showNotification(`${choiceText} ${resultText} on hole ${hole}!`, 'success');
+    }
+
     updateGameDisplay() {
 
         
@@ -1473,6 +1665,9 @@ class SavageGolf {
         } else if (this.currentPage === 'snake' && this.gameConfigs.snake?.enabled) {
 
             this.updateSnakePage();
+        } else if (this.currentPage === 'wolf' && this.gameConfigs.wolf?.enabled) {
+
+            this.updateWolfPage();
         } else if (this.currentPage === 'combined') {
 
             this.updateCombinedPage();
@@ -1565,6 +1760,26 @@ class SavageGolf {
             const snakeBtn = document.getElementById('navSnake');
             if (snakeBtn) {
                 snakeBtn.classList.remove('selected');
+            }
+        }
+        
+        // Update Wolf status and styling
+        if (this.gameConfigs.wolf?.enabled) {
+            const wolfCount = this.gameActions.wolf.length;
+            const wolfStatus = document.getElementById('wolfStatus');
+            if (wolfStatus) {
+                wolfStatus.textContent = `${wolfCount} hole${wolfCount !== 1 ? 's' : ''}`;
+            }
+            // Add selected class to Wolf button
+            const wolfBtn = document.getElementById('navWolf');
+            if (wolfBtn) {
+                wolfBtn.classList.add('selected');
+            }
+        } else {
+            // Remove selected class from Wolf button
+            const wolfBtn = document.getElementById('navWolf');
+            if (wolfBtn) {
+                wolfBtn.classList.remove('selected');
             }
         }
     }
@@ -1771,6 +1986,68 @@ class SavageGolf {
         });
     }
 
+    updateWolfActionsList() {
+        const container = document.getElementById('wolfActionsList');
+        container.innerHTML = '';
+        
+        if (this.gameActions.wolf.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Wolf holes recorded yet</p>';
+            return;
+        }
+        
+        // Group by hole
+        const wolfByHole = {};
+        this.gameActions.wolf.forEach(wolf => {
+            if (!wolfByHole[wolf.hole]) {
+                wolfByHole[wolf.hole] = [];
+            }
+            wolfByHole[wolf.hole].push(wolf);
+        });
+        
+        // Display by hole
+        Object.keys(wolfByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
+            const holeDiv = document.createElement('div');
+            holeDiv.className = 'hole-group';
+            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            wolfByHole[hole].forEach(wolf => {
+                const wolfDiv = document.createElement('div');
+                wolfDiv.className = `game-action-item ${wolf.result === 'wolf_wins' ? 'success' : 'error'}`;
+                
+                let resultText = '';
+                if (wolf.wolfChoice === 'lone_wolf') {
+                    if (wolf.result === 'wolf_wins') {
+                        resultText = '🐺 Lone Wolf Wins!';
+                    } else {
+                        resultText = '🐺 Lone Wolf Loses';
+                    }
+                } else {
+                    if (wolf.result === 'wolf_wins') {
+                        resultText = `🐺 Wolf + ${wolf.partner} Win!`;
+                    } else {
+                        resultText = `🐺 Wolf + ${wolf.partner} Lose`;
+                    }
+                }
+                
+                wolfDiv.innerHTML = `
+                    <div class="game-action-header">
+                        <span class="game-action-player">${wolf.wolf}</span>
+                        <span class="game-action-hole">Hole ${wolf.hole}</span>
+                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteWolfAction(${wolf.id})" title="Delete this Wolf action">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="game-action-result ${wolf.result === 'wolf_wins' ? 'success' : 'error'}">
+                        ${resultText}
+                    </div>
+                `;
+                holeDiv.appendChild(wolfDiv);
+            });
+            
+            container.appendChild(holeDiv);
+        });
+    }
+
     updateMurphSummary() {
         const container = document.getElementById('murphSummary');
         
@@ -1819,6 +2096,18 @@ class SavageGolf {
         this.displaySummary(container, summary);
     }
 
+    updateWolfSummary() {
+        const container = document.getElementById('wolfSummary');
+        
+        if (this.gameActions.wolf.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Wolf holes recorded yet</p>';
+            return;
+        }
+        
+        const summary = this.calculateWolfSummary();
+        this.displaySummary(container, summary);
+    }
+
     displaySummary(container, summary) {
         let summaryHTML = '';
         
@@ -1841,7 +2130,7 @@ class SavageGolf {
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
-        if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0) {
+        if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0 && this.gameActions.wolf.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No activity yet</p>';
             return;
         }
@@ -1863,6 +2152,10 @@ class SavageGolf {
         
         if (this.gameConfigs.snake?.enabled) {
             gameSummaries.snake = this.calculateSnakeSummary();
+        }
+        
+        if (this.gameConfigs.wolf?.enabled) {
+            gameSummaries.wolf = this.calculateWolfSummary();
         }
         
         const combinedSummary = this.calculateCombinedSummary(gameSummaries);
@@ -1937,6 +2230,23 @@ class SavageGolf {
                 snakeBreakdownSection.style.display = 'none';
             }
         }
+        
+        // Update Wolf breakdown
+        const wolfBreakdownSection = document.getElementById('wolfBreakdownSection');
+        if (this.gameConfigs.wolf?.enabled) {
+            if (wolfBreakdownSection) {
+                wolfBreakdownSection.style.display = 'block';
+            }
+            const wolfBreakdown = document.getElementById('wolfBreakdown');
+            if (wolfBreakdown) {
+                const summary = this.calculateWolfSummary();
+                this.displaySummary(wolfBreakdown, summary);
+            }
+        } else {
+            if (wolfBreakdownSection) {
+                wolfBreakdownSection.style.display = 'none';
+            }
+        }
     }
 
     displaySummary(container, summary) {
@@ -1972,6 +2282,11 @@ class SavageGolf {
 
     calculateSnakeSummary() {
         return this.gameManager.calculateGameSummary(GAME_TYPES.SNAKE);
+    }
+
+    calculateWolfSummary() {
+        // Use legacy system since the game instance has action persistence issues
+        return this.gameManager.calculateLegacyWolfSummary();
     }
 
 
@@ -2027,7 +2342,8 @@ class SavageGolf {
             { id: 'murphBet', value: '1.00' },
             { id: 'skinsBet', value: '1.00' },
             { id: 'kpBet', value: '1.00' },
-            { id: 'snakeBet', value: '1.00' }
+            { id: 'snakeBet', value: '1.00' },
+            { id: 'wolfBet', value: '2.00' }
         ];
         
         betInputs.forEach(({ id, value }) => {
@@ -2248,6 +2564,36 @@ class SavageGolf {
             
             // Show success message
             this.ui.showNotification(`Deleted Snake action for ${action.player} on Hole ${action.hole}`, 'success');
+        }
+    }
+
+    deleteWolfAction(actionId) {
+        // Find the action to delete
+        const actionIndex = this.gameActions.wolf.findIndex(action => action.id === actionId);
+        if (actionIndex === -1) {
+            this.ui.showNotification('Wolf action not found.', 'error');
+            return;
+        }
+        
+        const action = this.gameActions.wolf[actionIndex];
+        
+        // Show confirmation dialog
+        let actionDescription = '';
+        if (action.wolfChoice === 'lone_wolf') {
+            actionDescription = `${action.wolf} (Lone Wolf) ${action.result === 'wolf_wins' ? 'won' : 'lost'}`;
+        } else {
+            actionDescription = `${action.wolf} + ${action.partner} ${action.result === 'wolf_wins' ? 'won' : 'lost'}`;
+        }
+        
+        if (confirm(`Are you sure you want to delete this Wolf action?\n\nHole ${action.hole}: ${actionDescription}`)) {
+            // Remove the action
+            this.gameActions.wolf.splice(actionIndex, 1);
+            
+            // Update display
+            this.updateGameDisplay();
+            
+            // Show success message
+            this.ui.showNotification(`Deleted Wolf action for Hole ${action.hole}`, 'success');
         }
     }
 
