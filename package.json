@@ -1,0 +1,36 @@
+{
+  "name": "savage_golf_betting_tracker",
+  "version": "1.0.0",
+  "description": "A mobile-friendly web application to track golf side games and bets. Perfect for foursomes looking to add some excitement to their rounds with multiple side games running simultaneously.",
+  "main": "constants.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:debug": "jest --detectOpenHandles --forceExit",
+    "test:runner": "node test-runner.js",
+    "test:validation": "jest --testPathPatterns=\"validation.test.js\"",
+    "test:games": "jest --testPathPatterns=\"games\"",
+    "test:managers": "jest --testPathPatterns=\"managers\"",
+    "test:integration": "jest --testPathPatterns=\"integration\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/docsavage3/savage_golf_betting_tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/docsavage3/savage_golf_betting_tracker/issues"
+  },
+  "homepage": "https://github.com/docsavage3/savage_golf_betting_tracker#readme",
+  "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "jsdom": "^26.1.0"
+  }
+}

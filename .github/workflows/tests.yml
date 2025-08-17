@@ -1,0 +1,89 @@
+name: 🧪 Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm ci
+      
+    - name: 🧪 Run all tests
+      run: npm test
+      
+    - name: 📊 Generate coverage report
+      run: npm run test:coverage
+      
+    - name: 📁 Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: 🎯 Run specific test suites
+      run: |
+        echo "Running validation tests..."
+        npm run test:validation
+        echo "Running game logic tests..."
+        npm run test:games
+        echo "Running manager tests..."
+        npm run test:managers
+        echo "Running integration tests..."
+        npm run test:integration
+        
+  lint-and-format:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm ci
+      
+    - name: 🔍 Check for console.log statements
+      run: |
+        echo "Checking for console.log statements in source code..."
+        if grep -r "console.log" managers/ games/ utils/ --include="*.js" | grep -v "// console.log"; then
+          echo "❌ Found console.log statements in source code"
+          echo "Please remove or comment out console.log statements before committing"
+          exit 1
+        else
+          echo "✅ No console.log statements found in source code"
+        fi
+        
+    - name: 📝 Check file formatting
+      run: |
+        echo "Checking file formatting..."
+        if ! npm run test:format 2>/dev/null; then
+          echo "⚠️  Format check not configured, skipping..."
+        fi
