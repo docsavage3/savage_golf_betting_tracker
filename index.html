@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savage Side Bets</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏌️</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -153,6 +154,21 @@
             </div>
             
             <button type="button" id="startGame" class="btn btn-primary">Start Game</button>
+            
+            <!-- Storage Management Section -->
+            <div class="storage-section">
+                <h3>💾 Game Storage</h3>
+                <div class="storage-controls">
+                    <button id="saveGame" class="btn btn-secondary">💾 Save Game</button>
+                    <button id="loadGame" class="btn btn-secondary">📂 Load Game</button>
+                    <button id="exportGame" class="btn btn-secondary">📤 Export Game</button>
+                    <button id="importGame" class="btn btn-secondary">📥 Import Game</button>
+                    <button id="clearGame" class="btn btn-danger">🗑️ Clear Game</button>
+                </div>
+                <div id="storageInfo" class="storage-info">
+                    <p>No saved game found</p>
+                </div>
+            </div>
         </section>
 
         <!-- Game Navigation Section -->
@@ -454,6 +470,13 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="constants.js"></script>
+    <script type="module" src="ui/ui-manager.js"></script>
+    <script type="module" src="managers/player-manager.js"></script>
+    <script type="module" src="managers/game-manager.js"></script>
+    <script type="module" src="managers/storage-manager.js"></script>
+    <script type="module" src="utils/validation.js"></script>
+    <script type="module" src="games/index.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

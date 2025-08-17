@@ -1300,3 +1300,44 @@ header h1 {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-hover);
 }
+
+/* Storage Section Styles */
+.storage-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.storage-section h3 {
+    color: #ffffff;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.storage-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.storage-controls .btn {
+    min-width: 120px;
+    font-size: 14px;
+}
+
+.storage-info {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.storage-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}

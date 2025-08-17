@@ -1,0 +1,114 @@
+/**
+ * Murph Game Class
+ * Handles Murph game logic, calculations, and validation
+ */
+
+import { BaseGame } from './base-game.js';
+import { GAME_TYPES } from '../constants.js';
+
+export class MurphGame extends BaseGame {
+    constructor(players, config = {}) {
+        super(GAME_TYPES.MURPH, players, config);
+    }
+
+    /**
+     * Calculate player balances for Murph game
+     * @returns {Object} Player balances { playerName: balance }
+     */
+    calculateSummary() {
+        const playerBalances = this.initializePlayerBalances();
+        
+        this.actions.forEach(call => {
+            const betAmount = this.getBetAmount();
+            const numOtherPlayers = this.players.length - 1;
+            
+            if (call.result === 'success') {
+                // Caller gets paid by all other players
+                this.players.forEach(player => {
+                    if (player !== call.player) {
+                        playerBalances[player] -= betAmount;
+                    }
+                });
+                playerBalances[call.player] += numOtherPlayers * betAmount;
+            } else {
+                // Caller pays all other players
+                this.players.forEach(player => {
+                    if (player !== call.player) {
+                        playerBalances[player] += betAmount;
+                    }
+                });
+                playerBalances[call.player] -= numOtherPlayers * betAmount;
+            }
+        });
+        
+        return playerBalances;
+    }
+
+    /**
+     * Validate a Murph action
+     * @param {Object} action - The action to validate
+     * @returns {boolean} True if valid
+     */
+    validateAction(action) {
+        // Required fields
+        if (!action.player || !action.hole || !action.result) {
+            return false;
+        }
+
+        // Validate player exists
+        if (!this.players.includes(action.player)) {
+            return false;
+        }
+
+        // Validate hole is valid
+        if (action.hole < 1 || action.hole > 18) {
+            return false;
+        }
+
+        // Validate result
+        if (!['success', 'fail'].includes(action.result)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get Murph-specific statistics
+     * @returns {Object} Murph game statistics
+     */
+    getStats() {
+        const baseStats = super.getStats();
+        const successfulCalls = this.actions.filter(action => action.result === 'success').length;
+        const failedCalls = this.actions.filter(action => action.result === 'fail').length;
+        
+        return {
+            ...baseStats,
+            successfulCalls,
+            failedCalls,
+            successRate: this.actions.length > 0 ? (successfulCalls / this.actions.length * 100).toFixed(1) : 0
+        };
+    }
+
+    /**
+     * Get actions by player
+     * @param {string} playerName - The player name
+     * @returns {Array} Array of actions for the player
+     */
+    getPlayerActions(playerName) {
+        return this.actions.filter(action => action.player === playerName);
+    }
+
+    /**
+     * Get success rate for a specific player
+     * @param {string} playerName - The player name
+     * @returns {number} Success rate as percentage
+     */
+    getPlayerSuccessRate(playerName) {
+        const playerActions = this.getPlayerActions(playerName);
+        if (playerActions.length === 0) return 0;
+        
+        const successes = playerActions.filter(action => action.result === 'success').length;
+        return (successes / playerActions.length * 100);
+    }
+}

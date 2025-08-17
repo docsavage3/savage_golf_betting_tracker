@@ -1,45 +1,85 @@
 
+import { 
+    ELEMENT_IDS, 
+    GAME_TYPES, 
+    GAME_NAMES, 
+    PAGE_NAMES, 
+    DEFAULTS, 
+    CSS_CLASSES, 
+    DISPLAY_STYLES, 
+    MESSAGES, 
+    TEAM_CONFIG, 
+    NOTIFICATION_CONFIG, 
+    SKINS_CONFIG, 
+    HTML_TEMPLATES, 
+    VALIDATION_RULES 
+} from './constants.js';
+
+import { createGame, MurphGame, SkinsGame, KPGame, SnakeGame } from './games/index.js';
+import { UIManager } from './ui/ui-manager.js';
+import { PlayerManager } from './managers/player-manager.js';
+import { ValidationManager } from './utils/validation.js';
+import { GameManager } from './managers/game-manager.js';
+import { StorageManager } from './managers/storage-manager.js';
 
 class SavageGolf {
     constructor() {
-        this.players = [];
-        this.gameConfigs = {};
-        this.currentHole = 1;
-        this.gameActions = {
-            murph: [],
-            skins: [],
-            kp: [],
-            snake: []
-        };
-        this.gameStarted = false;
-        this.requiredPlayers = 4;
-        this.currentPage = 'navigation';
+        this.currentHole = DEFAULTS.STARTING_HOLE;
+        
+        // Initialize UI Manager
+        this.ui = new UIManager();
+        
+        // Initialize Player Manager
+        this.playerManager = new PlayerManager(this.ui);
+        
+        // Initialize Validation Manager
+        this.validator = new ValidationManager(this.ui);
+        
+        // Initialize Game Manager
+        this.gameManager = new GameManager(this.ui);
+        
+        // Initialize Storage Manager
+        this.storage = new StorageManager();
+        
+        // Legacy properties for backwards compatibility
+        this.gameConfigs = this.gameManager.gameConfigs;
+        this.gameActions = this.gameManager.gameActions;
+        this.gameInstances = this.gameManager.gameInstances;
+        this.gameStarted = this.gameManager.gameStarted;
+        this.players = this.gameManager.players;
+        this.requiredPlayers = this.gameManager.requiredPlayers;
+        this.currentPage = PAGE_NAMES.NAVIGATION;
         
         this.initializeEventListeners();
         this.setupGameCheckboxes();
-        this.setupPlayerCountSelector();
+        
+        // Try to load saved game state
+        this.loadSavedGame();
+        
+        // Update storage info display
+        this.updateStorageInfo();
     }
 
     initializeEventListeners() {
         // Game setup
-        document.getElementById('startGame').addEventListener('click', () => this.startGame());
+        document.getElementById(ELEMENT_IDS.START_GAME).addEventListener('click', () => this.startGame());
         
         // Game play
-        document.getElementById('previousHole').addEventListener('click', () => this.previousHole());
-        document.getElementById('nextHole').addEventListener('click', () => this.nextHole());
+        document.getElementById(ELEMENT_IDS.PREVIOUS_HOLE).addEventListener('click', () => this.previousHole());
+        document.getElementById(ELEMENT_IDS.NEXT_HOLE).addEventListener('click', () => this.nextHole());
         
         // Complete Game button (appears on hole 18)
-        const completeBtn = document.getElementById('completeGame');
+        const completeBtn = document.getElementById(ELEMENT_IDS.COMPLETE_GAME);
         if (completeBtn) {
             completeBtn.addEventListener('click', () => this.completeGameFlow());
         }
         
         // Navigation buttons
-        document.getElementById('navMurph').addEventListener('click', () => this.showPage('murph'));
-        document.getElementById('navSkins').addEventListener('click', () => this.showPage('skins'));
-        document.getElementById('navKP').addEventListener('click', () => this.showPage('kp'));
-        document.getElementById('navSnake').addEventListener('click', () => this.showPage('snake'));
-        document.getElementById('navCombined').addEventListener('click', () => this.showPage('combined'));
+        document.getElementById(ELEMENT_IDS.NAV_MURPH).addEventListener('click', () => this.showPage(PAGE_NAMES.MURPH));
+        document.getElementById(ELEMENT_IDS.NAV_SKINS).addEventListener('click', () => this.showPage(PAGE_NAMES.SKINS));
+        document.getElementById(ELEMENT_IDS.NAV_KP).addEventListener('click', () => this.showPage(PAGE_NAMES.KP));
+        document.getElementById(ELEMENT_IDS.NAV_SNAKE).addEventListener('click', () => this.showPage(PAGE_NAMES.SNAKE));
+        document.getElementById(ELEMENT_IDS.NAV_COMBINED).addEventListener('click', () => this.showPage(PAGE_NAMES.COMBINED));
         
         // Back to navigation buttons
         document.getElementById('backToNav').addEventListener('click', () => this.showPage('navigation'));
@@ -51,6 +91,13 @@ class SavageGolf {
         
         // New game from final results
         document.getElementById('newGameFromFinal').addEventListener('click', () => this.resetGame());
+        
+        // Storage management buttons
+        document.getElementById('saveGame').addEventListener('click', () => this.saveGameState());
+        document.getElementById('loadGame').addEventListener('click', () => this.loadSavedGame());
+        document.getElementById('exportGame').addEventListener('click', () => this.exportGameState());
+        document.getElementById('importGame').addEventListener('click', () => this.importGameState());
+        document.getElementById('clearGame').addEventListener('click', () => this.clearGameState());
         
         // Murph game
         document.getElementById('callMurph').addEventListener('click', () => this.showMurphModal());
@@ -103,49 +150,8 @@ class SavageGolf {
     }
 
     showPage(pageName) {
-        // Hide all pages
-        const pages = ['gameNavigation', 'murphPage', 'skinsPage', 'kpPage', 'snakePage', 'combinedPage', 'finalResults'];
-        pages.forEach(page => {
-            document.getElementById(page).style.display = 'none';
-        });
-        
-        // Show the requested page
-        if (pageName === 'navigation') {
-            document.getElementById('gameNavigation').style.display = 'block';
-        } else if (pageName === 'murph') {
-            if (this.gameConfigs.murph?.enabled) {
-                document.getElementById('murphPage').style.display = 'block';
-            } else {
-                this.showNotification('Murph game is not enabled for this round.', 'error');
-                return;
-            }
-        } else if (pageName === 'skins') {
-            if (this.gameConfigs.skins?.enabled) {
-                document.getElementById('skinsPage').style.display = 'block';
-            } else {
-                this.showNotification('Skins game is not enabled for this round.', 'error');
-                return;
-            }
-        } else if (pageName === 'kp') {
-            if (this.gameConfigs.kp?.enabled) {
-                document.getElementById('kpPage').style.display = 'block';
-            } else {
-                this.showNotification('KP game is not enabled for this round.', 'error');
-                return;
-            }
-        } else if (pageName === 'snake') {
-            if (this.gameConfigs.snake?.enabled) {
-                document.getElementById('snakePage').style.display = 'block';
-            } else {
-                this.showNotification('Snake game is not enabled for this round.', 'error');
-                return;
-            }
-        } else if (pageName === 'combined') {
-            document.getElementById('combinedPage').style.display = 'block';
-        } else if (pageName === 'finalResults') {
-            document.getElementById('finalResults').style.display = 'block';
-        }
-        
+        // Use UIManager to handle page display
+        this.ui.showPage(pageName, this.gameConfigs);
         this.currentPage = pageName;
         
         // Update the specific page content
@@ -210,225 +216,210 @@ class SavageGolf {
         
         // Don't call toggleGameSection initially since no games are checked
         // The bet amount fields will be shown/hidden when checkboxes are changed
-        
-        // Set up player input listeners to populate team selects when players are entered
-        this.setupPlayerInputListeners();
     }
 
-    setupPlayerCountSelector() {
-        const playerCountSelect = document.getElementById('playerCount');
-        if (playerCountSelect) {
-            playerCountSelect.addEventListener('change', (e) => {
-                const playerCount = parseInt(e.target.value);
-                
-                this.updatePlayerInputs(playerCount);
-                this.updateTeamSelections();
-                
-                // Show player input fields when a count is selected
-                const playerInputsContainer = document.getElementById('playerInputs');
-                if (playerInputsContainer) {
-                    playerInputsContainer.style.display = 'block';
-                }
-                
-                // Hide help message when a count is selected
-                const helpMessage = document.querySelector('.player-count-help');
-                if (helpMessage) {
-                    helpMessage.style.display = 'none';
-                }
-            });
+    // =========================================================================
+    // STORAGE OPERATIONS
+    // =========================================================================
+
+    /**
+     * Load saved game state on app startup
+     */
+    loadSavedGame() {
+        const savedState = this.storage.loadGameState();
+        if (savedState) {
+            this.restoreGameState(savedState);
         }
     }
 
-    updatePlayerInputs(playerCount) {
-        this.requiredPlayers = playerCount;
-        
-        // Show/hide player inputs based on count
-        const playerInputs = ['player1Input', 'player2Input', 'player3Input', 'player4Input'];
-        playerInputs.forEach((inputId, index) => {
-            const inputDiv = document.getElementById(inputId);
-            if (inputDiv) {
-                if (index < playerCount) {
-                    inputDiv.classList.remove('hidden');
-                    const input = inputDiv.querySelector('input');
-                    if (input) input.required = true;
-                } else {
-                    inputDiv.classList.add('hidden');
-                    const input = inputDiv.querySelector('input');
-                    if (input) input.required = false;
-                }
-            }
-        });
-        
-        // Also ensure the container is visible when we have a valid player count
-        if (playerCount > 0) {
-            const playerInputsContainer = document.getElementById('playerInputs');
-            if (playerInputsContainer) {
-                playerInputsContainer.style.display = 'block';
-            }
-        }
-    }
+    /**
+     * Save current game state
+     */
+    saveGameState() {
+        if (!this.gameStarted) return;
 
-    setupPlayerInputListeners() {
-        // Listen for changes in player name inputs to populate team selects
-        const playerInputs = document.querySelectorAll('.player-input input');
-        playerInputs.forEach(input => {
-            input.addEventListener('input', () => {
+        const gameState = {
+            gameConfigs: this.gameConfigs,
+            players: this.players,
+            requiredPlayers: this.requiredPlayers,
+            currentHole: this.currentHole,
+            gameStarted: this.gameStarted,
+            gameCompleted: this.gameManager.gameCompleted,
+            gameActions: this.gameActions,
+            currentPage: this.currentPage
+        };
 
-                this.updateTeamSelects();
-            });
-        });
-    }
-
-    updateTeamSelects() {
-        // Get current player names
-        const playerNames = Array.from(document.querySelectorAll('.player-input input'))
-            .map(input => input.value.trim())
-            .filter(name => name.length > 0);
-        
-        // Only populate team selects if we have exactly 4 players
-        if (playerNames.length === 4) {
-            this.populateTeamSelects();
+        const success = this.storage.saveGameState(gameState);
+        if (success) {
+            this.ui.showNotification('Game progress saved!', 'success');
         } else {
-            // Clear team selections if we don't have 4 players
-            this.clearTeamSelections();
+            this.ui.showNotification('Failed to save game progress', 'error');
         }
     }
 
-    populateTeamSelects() {
-        // Get current player names from inputs
-        const playerNames = Array.from(document.querySelectorAll('.player-input input'))
-            .map(input => input.value.trim())
-            .filter(name => name.length > 0);
-        
+    /**
+     * Restore game state from saved data
+     * @param {Object} savedState - Saved game state
+     */
+    restoreGameState(savedState) {
+        try {
+            // Restore basic game configuration
+            this.gameConfigs = savedState.gameConfigs || {};
+            this.players = savedState.players || [];
+            this.requiredPlayers = savedState.requiredPlayers || DEFAULTS.PLAYER_COUNT;
+            this.currentHole = savedState.currentHole || DEFAULTS.STARTING_HOLE;
+            this.gameStarted = savedState.gameStarted || false;
+            this.currentPage = savedState.currentPage || PAGE_NAMES.NAVIGATION;
 
-        
-        // Only proceed if we have exactly 4 players
-        if (playerNames.length !== 4) {
-            this.clearTeamSelections();
+            // Restore game manager state
+            this.gameManager.restoreGameState(savedState);
+
+            // Restore UI state
+            this.restoreUIState(savedState);
+
+            // Show resume notification
+            if (this.gameStarted && !this.gameManager.gameCompleted) {
+                this.ui.showNotification('Previous game loaded! You can resume from where you left off.', 'info');
+            }
+
+            console.log('Game state restored successfully');
+        } catch (error) {
+            console.error('Failed to restore game state:', error);
+            this.ui.showNotification('Failed to restore previous game', 'error');
+        }
+    }
+
+    /**
+     * Restore UI state from saved data
+     * @param {Object} savedState - Saved game state
+     */
+    restoreUIState(savedState) {
+        // Restore game checkboxes
+        Object.entries(savedState.gameConfigs).forEach(([gameType, config]) => {
+            const checkbox = document.querySelector(`input[data-game="${gameType}"]`);
+            if (checkbox) {
+                checkbox.checked = config.enabled;
+                this.toggleGameSection(gameType, config.enabled);
+            }
+        });
+
+        // Restore player inputs
+        if (savedState.players.length > 0) {
+            this.playerManager.restorePlayerInputs(savedState.players);
+        }
+
+        // Restore bet amounts
+        this.restoreBetAmounts(savedState.gameConfigs);
+
+        // Show appropriate page
+        if (this.gameStarted) {
+            this.showPage(savedState.currentPage);
+        }
+    }
+
+    /**
+     * Restore bet amounts from saved configuration
+     * @param {Object} gameConfigs - Game configurations
+     */
+    restoreBetAmounts(gameConfigs) {
+        Object.entries(gameConfigs).forEach(([gameType, config]) => {
+            if (config.enabled && config.betAmount) {
+                const betInput = document.querySelector(`#${gameType}BetAmount`);
+                if (betInput) {
+                    betInput.value = config.betAmount;
+                }
+            }
+        });
+    }
+
+    /**
+     * Export current game state to file
+     */
+    exportGameState() {
+        if (!this.gameStarted) {
+            this.ui.showNotification('No active game to export', 'error');
             return;
         }
-        
-        // Populate all team selection dropdowns
-        const teamSelects = [
-            'team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'
-        ];
-        
-        teamSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            if (select) {
-                select.innerHTML = '<option value="">Select player...</option>';
-                
-                playerNames.forEach(player => {
-                    const option = document.createElement('option');
-                    option.value = player;
-                    option.textContent = player;
-                    select.appendChild(option);
-                });
 
-            } else {
+        const gameState = {
+            gameConfigs: this.gameConfigs,
+            players: this.players,
+            requiredPlayers: this.requiredPlayers,
+            currentHole: this.currentHole,
+            gameStarted: this.gameStarted,
+            gameCompleted: this.gameManager.gameCompleted,
+            gameActions: this.gameActions,
+            currentPage: this.currentPage
+        };
 
+        this.storage.exportGameState(gameState);
+        this.ui.showNotification('Game exported successfully!', 'success');
+    }
+
+    /**
+     * Import game state from file
+     */
+    importGameState() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const importedState = await this.storage.importGameState(file);
+                this.restoreGameState(importedState);
+                this.ui.showNotification('Game imported successfully!', 'success');
+            } catch (error) {
+                this.ui.showNotification(`Import failed: ${error.message}`, 'error');
             }
-        });
-        
-        // Add change listeners to update other dropdowns when selections change
-        this.setupTeamSelectListeners();
+        };
+
+        input.click();
     }
 
-    setupTeamSelectListeners() {
-        const teamSelects = [
-            'team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'
-        ];
-        
-        teamSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            select.addEventListener('change', () => {
-                // Only update other dropdowns when this one changes
-                this.updateOtherDropdowns(selectId);
-            });
-        });
+    /**
+     * Clear current game state
+     */
+    clearGameState() {
+        const confirmed = window.confirm('⚠️ WARNING: This will permanently delete the current game state and cannot be undone.\n\nAre you sure you want to clear the game?');
+        if (!confirmed) return;
+
+        this.storage.clearGameState();
+        this.resetGame();
+        this.ui.showNotification('Game state cleared successfully', 'success');
     }
 
-    updateOtherDropdowns(changedSelectId) {
-        const teamSelects = [
-            'team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'
-        ];
-        
-        // Get all currently selected values
-        const selectedValues = teamSelects.map(selectId => {
-            const select = document.getElementById(selectId);
-            return select.value;
-        });
-        
-        // Update other dropdowns (not the one that just changed)
-        teamSelects.forEach((selectId) => {
-            if (selectId === changedSelectId) return; // Skip the changed one
-            
-            const select = document.getElementById(selectId);
-            const currentValue = select.value;
-            
-            // Store current selection
-            const wasSelected = currentValue;
-            
-            // Clear and repopulate
-            select.innerHTML = '<option value="">Select player...</option>';
-            
-            // Get all player names
-            const playerNames = Array.from(document.querySelectorAll('.player-input input'))
-                .map(input => input.value.trim())
-                .filter(name => name.length > 0);
-            
-            // Add options for available players
-            playerNames.forEach(player => {
-                // Check if this player is already selected in another dropdown
-                const isSelectedElsewhere = selectedValues.some((value, otherSelectId) => 
-                    value === player && otherSelectId !== selectId
-                );
-                
-                // Only add if not selected elsewhere, or if this is the current selection
-                if (!isSelectedElsewhere || player === wasSelected) {
-                    const option = document.createElement('option');
-                    option.value = player;
-                    option.textContent = player;
-                    select.appendChild(option);
-                }
-            });
-            
-            // Restore selection if it was valid
-            if (wasSelected && wasSelected !== '') {
-                select.value = wasSelected;
-            }
-        });
-    }
+    /**
+     * Update storage info display
+     */
+    updateStorageInfo() {
+        const storageInfo = document.getElementById('storageInfo');
+        if (!storageInfo) return;
 
-    validateTeamSelection() {
-        const team1Player1 = document.getElementById('team1Player1').value;
-        const team1Player2 = document.getElementById('team1Player2').value;
-        const team2Player1 = document.getElementById('team2Player1').value;
-        const team2Player2 = document.getElementById('team2Player2').value;
-        
-        // Check if all players are selected
-        if (!team1Player1 || !team1Player2 || !team2Player1 || !team2Player2) {
-            return false;
+        const info = this.storage.getStorageInfo();
+        if (!info) {
+            storageInfo.innerHTML = '<p>Storage info unavailable</p>';
+            return;
         }
-        
-        // Check for duplicate players
-        const selectedPlayers = [team1Player1, team1Player2, team2Player1, team2Player2];
-        const uniquePlayers = new Set(selectedPlayers);
-        
-        return uniquePlayers.size === 4;
+
+        if (info.hasCurrentState) {
+            storageInfo.innerHTML = `
+                <p>✅ Game saved</p>
+                <p>📊 Storage used: ${info.totalSizeMB} MB</p>
+                <p>💾 Backups: ${info.backupCount}</p>
+                <p>🕒 Last saved: ${new Date(info.lastSaved || Date.now()).toLocaleString()}</p>
+            `;
+        } else {
+            storageInfo.innerHTML = '<p>No saved game found</p>';
+        }
     }
 
-    clearTeamSelections() {
-        // Clear team selection dropdowns
-        const teamSelects = ['team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'];
-        teamSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            if (select) {
-                select.value = '';
-                select.innerHTML = '<option value="">Select player...</option>';
-            }
-        });
-    }
+
+
+
 
     toggleGameSection(gameType) {
         // Handle special case for KP (since it's already uppercase in HTML)
@@ -458,7 +449,7 @@ class SavageGolf {
                 if (this.requiredPlayers === 4) {
                     teamSelection.style.display = 'block';
                     // Populate team selects if we have 4 players
-                    this.updateTeamSelects();
+                    this.playerManager.updateTeamSelections();
                 } else {
                     teamSelection.style.display = 'none';
                 }
@@ -466,7 +457,7 @@ class SavageGolf {
                 betAmount.style.display = 'none';
                 teamSelection.style.display = 'none';
                 // Clear team selections when unchecking
-                this.clearTeamSelections();
+                this.playerManager.clearTeamSelections();
             }
         } else {
             if (checkbox.checked) {
@@ -516,15 +507,10 @@ class SavageGolf {
         // Validate inputs
         if (!this.validateGameSetup()) return;
         
-        // Get player count
-        const playerCountSelect = document.getElementById('playerCount');
-        this.requiredPlayers = parseInt(playerCountSelect.value);
-        
-        // Get player names (only the required number)
-        this.players = Array.from(document.querySelectorAll('.player-input input'))
-            .map(input => input.value.trim())
-            .filter(name => name.length > 0)
-            .slice(0, this.requiredPlayers);
+        // Get player information from PlayerManager
+        this.requiredPlayers = this.playerManager.getRequiredPlayers();
+        this.players = this.playerManager.getCurrentPlayerNames().slice(0, this.requiredPlayers);
+        this.playerManager.setPlayers(this.players);
         
         // Get game configurations
         this.gameConfigs = {};
@@ -551,24 +537,15 @@ class SavageGolf {
             // Only set up teams if we have 4 players
             if (this.requiredPlayers === 4) {
                 // Validate team selection
-                if (!this.validateTeamSelection()) {
-                    this.showNotification('Please select 4 different players for the two teams.', 'error');
+                if (!this.playerManager.validateTeamSelection()) {
+                    this.ui.showNotification('Please select 4 different players for the two teams.', 'error');
                     return;
                 }
                 
-                const team1Player1 = document.getElementById('team1Player1').value;
-                const team1Player2 = document.getElementById('team1Player2').value;
-                const team2Player1 = document.getElementById('team2Player1').value;
-                const team2Player2 = document.getElementById('team2Player2').value;
-                
-                this.gameConfigs.skins.teams = [
-                    [team1Player1, team1Player2],
-                    [team2Player1, team2Player2]
-                ];
-                this.gameConfigs.skins.teamNames = {
-                    team1: `${team1Player1} & ${team1Player2}`,
-                    team2: `${team2Player1} & ${team2Player2}`
-                };
+                // Get team configuration from PlayerManager
+                const teamConfig = this.playerManager.getTeamConfiguration();
+                this.gameConfigs.skins.teams = teamConfig.teams;
+                this.gameConfigs.skins.teamNames = teamConfig.teamNames;
             }
         }
         
@@ -586,7 +563,13 @@ class SavageGolf {
             };
         }
         
-        this.gameStarted = true;
+        // Initialize games using GameManager
+        this.gameManager.initializeGames(this.gameConfigs, this.players, this.requiredPlayers);
+        
+        // Update legacy references
+        this.gameActions = this.gameManager.gameActions;
+        this.gameInstances = this.gameManager.gameInstances;
+        this.gameStarted = this.gameManager.gameStarted;
         
         // Hide setup, show navigation
         document.getElementById('gameSetup').style.display = 'none';
@@ -601,81 +584,23 @@ class SavageGolf {
         // Update navigation button visibility for selected games
         this.updateGameNavigationVisibility();
         
+        // Auto-save game state
+        this.saveGameState();
+        
         // Show success message
-        this.showNotification('Game started! Good luck!', 'success');
+        this.ui.showNotification('Game started! Good luck!', 'success');
     }
 
-    validateGameSetup() {
-        // Check if at least one game is selected
-        const murphChecked = document.getElementById('gameMurph').checked;
-        const skinsChecked = document.getElementById('gameSkins').checked;
-        const kpChecked = document.getElementById('gameKP').checked;
-        const snakeChecked = document.getElementById('gameSnake').checked;
-        
-        if (!murphChecked && !skinsChecked && !kpChecked && !snakeChecked) {
-            this.showNotification('Please select at least one game to play.', 'error');
-            return false;
-        }
-        
-        // Validate player names
-        const playerInputs = document.querySelectorAll('.player-input input');
-        const validPlayers = Array.from(playerInputs)
-            .map(input => input.value.trim())
-            .filter(name => name.length > 0);
-        
-        if (validPlayers.length !== this.requiredPlayers) {
-            this.showNotification(`Exactly ${this.requiredPlayers} players are required.`, 'error');
-            return false;
-        }
-        
-        // Check for duplicate names
-        const uniqueNames = new Set(validPlayers);
-        if (uniqueNames.size !== validPlayers.length) {
-            this.showNotification('Player names must be unique.', 'error');
-            return false;
-        }
-        
-        // Validate bet amounts for selected games
-        if (murphChecked) {
-            const murphBet = parseFloat(document.getElementById('murphBet').value);
-            if (isNaN(murphBet) || murphBet <= 0) {
-                this.showNotification('Please enter a valid bet amount for Murph.', 'error');
-                return false;
-            }
-        }
-        
-        if (skinsChecked) {
-            const skinsBet = parseFloat(document.getElementById('skinsBet').value);
-            if (isNaN(skinsBet) || skinsBet <= 0) {
-                this.showNotification('Please enter a valid bet amount for Skins.', 'error');
-                return false;
-            }
-            
-            // Only validate team selection for 4 players
-            if (this.requiredPlayers === 4) {
-                if (!this.validateTeamSelection()) {
-                    this.showNotification('Please select 4 different players for the two teams.', 'error');
-                    return false;
-                }
-            }
-        }
-        
 
+
+    validateGameSetup() {
+        // Use ValidationManager for comprehensive validation
+        const validationResult = this.validator.validateGameSetup(this.playerManager, this.requiredPlayers);
         
-        if (kpChecked) {
-            const kpBet = parseFloat(document.getElementById('kpBet').value);
-            if (isNaN(kpBet) || kpBet <= 0) {
-                this.showNotification('Please enter a valid bet amount for KP.', 'error');
-                return false;
-            }
-        }
-        
-        if (snakeChecked) {
-            const snakeBet = parseFloat(document.getElementById('snakeBet').value);
-            if (isNaN(snakeBet) || snakeBet <= 0) {
-                this.showNotification('Please enter a valid bet amount for Snake.', 'error');
-                return false;
-            }
+        if (!validationResult.success) {
+            // Show the first error message
+            this.ui.showNotification(validationResult.errors[0], 'error');
+            return false;
         }
         
         return true;
@@ -687,13 +612,17 @@ class SavageGolf {
             document.getElementById('currentHole').textContent = this.currentHole;
             this.updatePreviousHoleButton();
             this.updateGameDisplay();
-            this.showNotification(`Moved back to hole ${this.currentHole}`, 'info');
+            
+            // Auto-save game state
+            this.saveGameState();
+            
+            this.ui.showNotification(`Moved back to hole ${this.currentHole}`, 'info');
         }
     }
 
     nextHole() {
         if (this.currentHole >= 18) {
-            this.showNotification('Maximum 18 holes reached. Game complete!', 'success');
+            this.ui.showNotification('Maximum 18 holes reached. Game complete!', 'success');
             this.endGame();
             return;
         }
@@ -702,7 +631,11 @@ class SavageGolf {
         document.getElementById('currentHole').textContent = this.currentHole;
         this.updatePreviousHoleButton();
         this.updateGameDisplay();
-        this.showNotification(`Moving to hole ${this.currentHole}`, 'info');
+        
+        // Auto-save game state
+        this.saveGameState();
+        
+        this.ui.showNotification(`Moving to hole ${this.currentHole}`, 'info');
     }
 
     updatePreviousHoleButton() {
@@ -760,7 +693,7 @@ class SavageGolf {
         }
         
         // Show notification that game is complete
-        this.showNotification('Game complete! Results are locked. View Combined Total for payment instructions.', 'success');
+        this.ui.showNotification('Game complete! Results are locked. View Combined Total for payment instructions.', 'success');
     }
 
     lockEdits() {
@@ -1014,125 +947,32 @@ class SavageGolf {
     }
 
     generatePaymentInstructions() {
-		const gameSummaries = {};
-		
-		if (this.gameConfigs.murph?.enabled) {
-			gameSummaries.murph = this.calculateMurphSummary();
-		}
-		
-		if (this.gameConfigs.skins?.enabled) {
-			gameSummaries.skins = this.calculateSkinsSummary();
-		}
-		
-		if (this.gameConfigs.kp?.enabled) {
-			gameSummaries.kp = this.calculateKPSummary();
-		}
-		
-		if (this.gameConfigs.snake?.enabled) {
-			gameSummaries.snake = this.calculateSnakeSummary();
-		}
-		
-		const combinedSummary = this.calculateCombinedSummary(gameSummaries);
-		
-		// Build settlement transfers so totals add up exactly
-		const winners = Object.entries(combinedSummary)
-			.filter(([_, balance]) => balance > 0)
-			.map(([name, balance]) => ({ name, amount: balance }))
-			.sort((a, b) => b.amount - a.amount);
-		const losers = Object.entries(combinedSummary)
-			.filter(([_, balance]) => balance < 0)
-			.map(([name, balance]) => ({ name, amount: Math.abs(balance) }))
-			.sort((a, b) => b.amount - a.amount); // largest debtor first
-		
-		// Greedy settlement: match largest winner with largest debtor
-		const transfersByWinner = new Map();
-		let wi = 0, li = 0;
-		while (wi < winners.length && li < losers.length) {
-			const w = winners[wi];
-			const l = losers[li];
-			const pay = Math.min(w.amount, l.amount);
-			if (pay > 0) {
-				if (!transfersByWinner.has(w.name)) transfersByWinner.set(w.name, []);
-				transfersByWinner.get(w.name).push({ from: l.name, amount: pay });
-				w.amount -= pay;
-				l.amount -= pay;
-			}
-			if (w.amount <= 0.000001) wi++;
-			if (l.amount <= 0.000001) li++;
-		}
-		
-		let html = `
-			<div class="final-game-section payment-instructions">
-				<h3>💳 Payment Instructions</h3>
-		`;
-		
-		if (winners.length === 0 || losers.length === 0 || transfersByWinner.size === 0) {
-			html += '<p class="no-payments">No payments needed - all players are even!</p>';
-		} else {
-			html += '<div class="payment-list">';
-			for (const [winner, transfers] of transfersByWinner.entries()) {
-				const totalReceive = transfers.reduce((s, t) => s + t.amount, 0);
-				html += `
-					<div class="payment-item">
-						<div class="payment-header">
-							<span class="payment-recipient">${winner} receives $${totalReceive.toFixed(2)}</span>
-						</div>
-						<div class="payment-breakdown">
-				`;
-				transfers.forEach(t => {
-					html += `
-							<div class="payment-detail">
-								<span class="payment-from">${t.from}</span>
-								<span class="payment-arrow">→</span>
-								<span class="payment-to">${winner}</span>
-								<span class="payment-amount">$${t.amount.toFixed(2)}</span>
-							</div>
-					`;
-				});
-				html += '</div></div>';
-			}
-			html += '</div>';
-		}
-		
-		html += '</div>';
-		return html;
+        // Use GameManager to generate payment instructions
+        return this.gameManager.generatePaymentInstructions();
     }
 
     // Murph Game Methods
     showMurphModal() {
-        const modal = document.getElementById('murphModal');
-        const playerSelect = document.getElementById('murphPlayer');
-        const holeInput = document.getElementById('murphHole');
-        
-        // Populate player select
-        playerSelect.innerHTML = '<option value="">Select player...</option>';
-        this.players.forEach(player => {
-            const option = document.createElement('option');
-            option.value = player;
-            option.textContent = player;
-            playerSelect.appendChild(option);
-        });
-        
-        // Set current hole
-        holeInput.value = this.currentHole;
+        // Use UIManager to show modal
+        this.ui.showMurphModal(this.players, this.currentHole);
         
         // Reset form
-        document.getElementById('murphResult').value = '';
-        
-        modal.style.display = 'flex';
+        this.ui.clearInput('murphResult');
     }
 
     hideMurphModal() {
-        document.getElementById('murphModal').style.display = 'none';
+        this.ui.hideMurphModal();
     }
 
     saveMurphCall() {
-        const player = document.getElementById('murphPlayer').value;
-        const hole = parseInt(document.getElementById('murphHole').value);
-        const result = document.getElementById('murphResult').value;
+        const player = this.ui.getInputValue('murphPlayer');
+        const hole = parseInt(this.ui.getInputValue('murphHole'));
+        const result = this.ui.getInputValue('murphResult');
         
-        if (!player || !hole || !result) {
-            this.showNotification('Please fill in all fields.', 'error');
+        // Use ValidationManager for input validation
+        const validation = this.validator.validateMurphInput(player, hole, result);
+        if (!validation.success) {
+            this.ui.showNotification(validation.message, 'error');
             return;
         }
         
@@ -1145,15 +985,24 @@ class SavageGolf {
             timestamp: new Date()
         };
         
+        // Use game instance if available, fallback to legacy
+        if (this.gameInstances.murph) {
+            this.gameInstances.murph.addAction(murphCall);
+        }
+        
+        // Also add to legacy for backwards compatibility
         this.gameActions.murph.push(murphCall);
         
         // Hide modal and update display
         this.hideMurphModal();
         this.updateGameDisplay();
         
+        // Auto-save game state
+        this.saveGameState();
+        
         // Show result message
-        const resultText = result === 'success' ? 'made it!' : 'failed';
-        this.showNotification(`${player} called Murph on hole ${hole} and ${resultText}`, result === 'success' ? 'success' : 'error');
+        const resultText = result === 'success' ? 'made it!' : 'error';
+        this.ui.showNotification(`${player} called Murph on hole ${hole} and ${resultText}`, result === 'success' ? 'success' : 'error');
     }
 
     // Skins Game Methods
@@ -1230,8 +1079,10 @@ class SavageGolf {
         const hole = parseInt(document.getElementById('skinsHole').value);
         const winner = document.getElementById('skinsWinner').value;
         
-        if (!hole || !winner) {
-            this.showNotification('Please fill in all fields.', 'error');
+        // Use ValidationManager for input validation
+        const validation = this.validator.validateSkinsInput(winner, hole);
+        if (!validation.success) {
+            this.ui.showNotification(validation.message, 'error');
             return;
         }
         
@@ -1250,6 +1101,11 @@ class SavageGolf {
         
         this.gameActions.skins.push(skinsAction);
         
+        // Also add to game instance if it exists
+        if (this.gameInstances && this.gameInstances.skins) {
+            this.gameInstances.skins.addAction(skinsAction);
+        }
+        
         // Update carryover count based on result
         if (winner === 'carryover') {
             this.gameConfigs.skins.carryoverCount += 1;
@@ -1258,21 +1114,24 @@ class SavageGolf {
             this.gameConfigs.skins.carryoverCount = 1;
         }
         
+        // Auto-save game state
+        this.saveGameState();
+        
         // Hide modal and update display
         this.hideSkinsModal();
         this.updateGameDisplay();
         
         // Show result message
         if (winner === 'carryover') {
-            this.showNotification(`Hole ${hole}: No winner - ${this.gameConfigs.skins.carryoverCount} skins now carrying over`, 'info');
+            this.ui.showNotification(`Hole ${hole}: No winner - ${this.gameConfigs.skins.carryoverCount} skins now carrying over`, 'info');
         } else {
             if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (winner === 'team1' || winner === 'team2')) {
                 // 4 players: Show team names
                 const winningTeam = winner === 'team1' ? this.gameConfigs.skins.teamNames.team1 : this.gameConfigs.skins.teamNames.team2;
-                this.showNotification(`${winningTeam} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
+                this.ui.showNotification(`${winningTeam} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
             } else {
                 // 2-3 players: Show individual player name
-                this.showNotification(`${winner} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
+                this.ui.showNotification(`${winner} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
             }
         }
     }
@@ -1306,8 +1165,10 @@ class SavageGolf {
         const hole = parseInt(document.getElementById('kpHole').value);
         const winner = document.getElementById('kpWinner').value;
         
-        if (!hole || !winner) {
-            this.showNotification('Please fill in all fields.', 'error');
+        // Use ValidationManager for input validation
+        const validation = this.validator.validateKPInput(winner, hole);
+        if (!validation.success) {
+            this.ui.showNotification(validation.message, 'error');
             return;
         }
         
@@ -1321,12 +1182,20 @@ class SavageGolf {
         
         this.gameActions.kp.push(kpAction);
         
+        // Also add to game instance if it exists
+        if (this.gameInstances && this.gameInstances.kp) {
+            this.gameInstances.kp.addAction(kpAction);
+        }
+        
+        // Auto-save game state
+        this.saveGameState();
+        
         // Hide modal and update display
         this.hideKPModal();
         this.updateGameDisplay();
         
         // Show result message
-        this.showNotification(`${winner} got closest to the pin on hole ${hole}!`, 'success');
+        this.ui.showNotification(`${winner} got closest to the pin on hole ${hole}!`, 'success');
     }
 
     // Snake Game Methods
@@ -1358,8 +1227,10 @@ class SavageGolf {
         const hole = parseInt(document.getElementById('snakeHole').value);
         const player = document.getElementById('snakePlayer').value;
         
-        if (!hole || !player) {
-            this.showNotification('Please fill in all fields.', 'error');
+        // Use ValidationManager for input validation
+        const validation = this.validator.validateSnakeInput(player, hole);
+        if (!validation.success) {
+            this.ui.showNotification(validation.message, 'error');
             return;
         }
         
@@ -1373,12 +1244,20 @@ class SavageGolf {
         
         this.gameActions.snake.push(snakeAction);
         
+        // Also add to game instance if it exists
+        if (this.gameInstances && this.gameInstances.snake) {
+            this.gameInstances.snake.addAction(snakeAction);
+        }
+        
+        // Auto-save game state
+        this.saveGameState();
+        
         // Hide modal and update display
         this.hideSnakeModal();
         this.updateGameDisplay();
         
         // Show result message
-        this.showNotification(`${player} got a snake on hole ${hole}!`, 'success');
+        this.ui.showNotification(`${player} got a snake on hole ${hole}!`, 'success');
     }
 
     updateGameDisplay() {
@@ -1731,6 +1610,25 @@ class SavageGolf {
         this.displaySummary(container, summary);
     }
 
+    displaySummary(container, summary) {
+        let summaryHTML = '';
+        
+        Object.entries(summary).forEach(([player, balance]) => {
+            const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
+            const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
+                              balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
+            
+            summaryHTML += `
+                <div class="summary-item">
+                    <span class="summary-player">${player}</span>
+                    <span class="summary-amount ${balanceClass}">${balanceText}</span>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = summaryHTML;
+    }
+
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
@@ -1852,169 +1750,30 @@ class SavageGolf {
     }
 
     calculateMurphSummary() {
-        const playerBalances = {};
-        this.players.forEach(player => {
-            playerBalances[player] = 0;
-        });
-        
-        this.gameActions.murph.forEach(call => {
-            if (call.result === 'success') {
-                // Caller gets paid by all other players
-                this.players.forEach(player => {
-                    if (player !== call.player) {
-                        playerBalances[player] -= this.gameConfigs.murph.betAmount;
-                    }
-                });
-                playerBalances[call.player] += (this.players.length - 1) * this.gameConfigs.murph.betAmount;
-            } else {
-                // Caller pays all other players
-                this.players.forEach(player => {
-                    if (player !== call.player) {
-                        playerBalances[player] += this.gameConfigs.murph.betAmount;
-                    }
-                });
-                playerBalances[call.player] -= (this.players.length - 1) * this.gameConfigs.murph.betAmount;
-            }
-        });
-        
-        return playerBalances;
+        return this.gameManager.calculateGameSummary(GAME_TYPES.MURPH);
     }
 
     calculateSkinsSummary() {
-        const playerBalances = {};
-        this.players.forEach(player => {
-            playerBalances[player] = 0;
-        });
-        
-        this.gameActions.skins.forEach(skin => {
-            if (skin.winner === 'carryover') {
-                // No money changes hands on carryovers
-                return;
-            }
-            
-            const betAmount = this.gameConfigs.skins.betAmount;
-            const skinsWon = skin.skinsWon;
-            
-            if (this.requiredPlayers === 4 && this.gameConfigs.skins.teams && this.gameConfigs.skins.teams.length > 0) {
-                // 4 players: Handle team-based skins
-                if (skin.winner === 'team1') {
-                    // Team 1 players get paid by Team 2 players
-                    const team1Players = this.gameConfigs.skins.teams[0];
-                    const team2Players = this.gameConfigs.skins.teams[1];
-                    
-                    team1Players.forEach(player => {
-                        playerBalances[player] += betAmount * skinsWon;
-                    });
-                    
-                    team2Players.forEach(player => {
-                        playerBalances[player] -= betAmount * skinsWon;
-                    });
-                } else if (skin.winner === 'team2') {
-                    // Team 2 players get paid by Team 1 players
-                    const team1Players = this.gameConfigs.skins.teams[0];
-                    const team2Players = this.gameConfigs.skins.teams[1];
-                    
-                    team1Players.forEach(player => {
-                        playerBalances[player] -= betAmount * skinsWon;
-                    });
-                    
-                    team2Players.forEach(player => {
-                        playerBalances[player] += betAmount * skinsWon;
-                    });
-                }
-            } else {
-                // 2-3 players: Handle individual player skins
-                const winner = skin.winner;
-                
-                // Winner gets paid by all other players
-                this.players.forEach(player => {
-                    if (player === winner) {
-                        playerBalances[player] += betAmount * skinsWon * (this.players.length - 1);
-                    } else {
-                        playerBalances[player] -= betAmount * skinsWon;
-                    }
-                });
-            }
-        });
-        
-        return playerBalances;
+        return this.gameManager.calculateGameSummary(GAME_TYPES.SKINS);
     }
 
     calculateKPSummary() {
-        const playerBalances = {};
-        this.players.forEach(player => {
-            playerBalances[player] = 0;
-        });
-        
-        this.gameActions.kp.forEach(kp => {
-            const betAmount = this.gameConfigs.kp.betAmount;
-            
-            // KP winner gets paid by all other players
-            this.players.forEach(player => {
-                if (player !== kp.winner) {
-                    playerBalances[player] -= betAmount;
-                }
-            });
-            playerBalances[kp.winner] += (this.players.length - 1) * betAmount;
-        });
-        
-        return playerBalances;
+        return this.gameManager.calculateGameSummary(GAME_TYPES.KP);
     }
 
     calculateSnakeSummary() {
-        const playerBalances = {};
-        this.players.forEach(player => {
-            playerBalances[player] = 0;
-        });
-        
-        if (this.gameActions.snake.length === 0) {
-            return playerBalances;
-        }
-        
-        const betAmount = this.gameConfigs.snake.betAmount;
-        const totalSnakes = this.gameActions.snake.length;
-        const snakePot = totalSnakes * betAmount;
-        
-        // Each snake increases the pot (no individual penalties)
-        // The last snake player owes the entire accumulated pot to the other 3 players
-        
-        if (totalSnakes === 1) {
-            // Special case: Only 1 snake - that player owes the pot to the other 3
-            const singleSnake = this.gameActions.snake[0];
-            playerBalances[singleSnake.player] -= snakePot;
-            
-            // The other 3 players each get paid the pot amount divided by 3
-            const paymentPerPlayer = snakePot / 3;
-            
-            this.players.forEach(player => {
-                if (player !== singleSnake.player) {
-                    playerBalances[player] += paymentPerPlayer;
-                }
-            });
-        } else {
-            // Multiple snakes: Each increases pot, last snake owes entire pot
-            // Each snake player does NOT pay individually - they just increase the pot
-            
-            // The last player to get a snake owes the entire pot to the other 3 players
-            const lastSnake = this.gameActions.snake[this.gameActions.snake.length - 1];
-            playerBalances[lastSnake.player] -= snakePot;
-            
-            // The other 3 players each get paid the pot amount divided by 3
-            const paymentPerPlayer = snakePot / 3;
-            
-            this.players.forEach(player => {
-                if (player !== lastSnake.player) {
-                    playerBalances[player] += paymentPerPlayer;
-                }
-            });
-        }
-        
-        return playerBalances;
+        return this.gameManager.calculateGameSummary(GAME_TYPES.SNAKE);
     }
 
 
 
     calculateCombinedSummary(gameSummaries) {
+        // If no gameSummaries provided, use GameManager to calculate
+        if (!gameSummaries) {
+            return this.gameManager.calculateCombinedSummary();
+        }
+        
+        // Legacy method for backwards compatibility
         const combinedBalances = {};
         this.players.forEach(player => {
             combinedBalances[player] = 0;
@@ -2029,65 +1788,19 @@ class SavageGolf {
         return combinedBalances;
     }
 
-    showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            z-index: 1001;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        `;
-        
-        // Set background color based on type
-        const colors = {
-            success: '#27ae60',
-            error: '#e74c3c',
-            info: '#3498db',
-            warning: '#f39c12'
-        };
-        notification.style.backgroundColor = colors[type] || colors.info;
-        
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        // Animate in
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.style.transform = 'translateX(400px)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-    }
+
 
     resetGame() {
-        // Reset game state
+        // Reset using managers
+        this.gameManager.resetGames();
+        this.playerManager.reset();
+        
+        // Update legacy references
         this.players = [];
         this.gameConfigs = {};
+        this.gameActions = this.gameManager.gameActions;
+        this.gameStarted = this.gameManager.gameStarted;
         this.currentHole = 1;
-        this.gameActions = {
-            murph: [],
-            skins: [],
-            kp: [],
-            snake: []
-        };
-        this.gameStarted = false;
         this.currentPage = 'navigation';
         
         // Reset form inputs
@@ -2101,31 +1814,9 @@ class SavageGolf {
         document.getElementById('gameSnake').checked = false;
         document.querySelectorAll('.player-input input').forEach(input => input.value = '');
         
-        // Reset player count to 4 and hide player inputs
-        const playerCountSelect = document.getElementById('playerCount');
-        if (playerCountSelect) {
-            playerCountSelect.value = '4';
-            this.updatePlayerInputs(4);
-        }
+        // PlayerManager.reset() already handles player-related cleanup
         
-        // Hide player input fields
-        const playerInputsContainer = document.getElementById('playerInputs');
-        if (playerInputsContainer) {
-            playerInputsContainer.style.display = 'none';
-        }
-        
-        // Show help message again
-        const helpMessage = document.querySelector('.player-count-help');
-        if (helpMessage) {
-            helpMessage.style.display = 'block';
-        }
-        
-        // Reset team selection dropdowns
-        const teamSelects = ['team1Player1', 'team1Player2', 'team2Player1', 'team2Player2'];
-        teamSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Select player...</option>';
-        });
+        // PlayerManager.reset() already handles team selection cleanup
         
         // Reset display
         document.getElementById('currentHole').textContent = '1';
@@ -2174,14 +1865,14 @@ class SavageGolf {
         // Reset previous hole button state
         this.updatePreviousHoleButton();
         
-        this.showNotification('Game reset! Ready for a new round.', 'info');
+        this.ui.showNotification('Game reset! Ready for a new round.', 'info');
     }
 
     deleteMurphCall(callId) {
         // Find the call to delete
         const callIndex = this.gameActions.murph.findIndex(call => call.id === callId);
         if (callIndex === -1) {
-            this.showNotification('Murph call not found.', 'error');
+            this.ui.showNotification('Murph call not found.', 'error');
             return;
         }
         
@@ -2196,7 +1887,7 @@ class SavageGolf {
             this.updateGameDisplay();
             
             // Show success message
-            this.showNotification(`Deleted Murph call for ${call.player} on Hole ${call.hole}`, 'success');
+            this.ui.showNotification(`Deleted Murph call for ${call.player} on Hole ${call.hole}`, 'success');
         }
     }
 
@@ -2204,7 +1895,7 @@ class SavageGolf {
         // Find the action to delete
         const actionIndex = this.gameActions.skins.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
-            this.showNotification('Skins action not found.', 'error');
+            this.ui.showNotification('Skins action not found.', 'error');
             return;
         }
         
@@ -2233,7 +1924,7 @@ class SavageGolf {
             this.updateGameDisplay();
             
             // Show success message
-            this.showNotification(`Deleted Skins action for Hole ${action.hole}`, 'success');
+            this.ui.showNotification(`Deleted Skins action for Hole ${action.hole}`, 'success');
         }
     }
 
@@ -2241,7 +1932,7 @@ class SavageGolf {
         // Find the action to delete
         const actionIndex = this.gameActions.kp.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
-            this.showNotification('KP action not found.', 'error');
+            this.ui.showNotification('KP action not found.', 'error');
             return;
         }
         
@@ -2256,7 +1947,7 @@ class SavageGolf {
             this.updateGameDisplay();
             
             // Show success message
-            this.showNotification(`Deleted KP action for ${action.winner} on Hole ${action.hole}`, 'success');
+            this.ui.showNotification(`Deleted KP action for ${action.winner} on Hole ${action.hole}`, 'success');
         }
     }
 
@@ -2264,7 +1955,7 @@ class SavageGolf {
         // Find the action to delete
         const actionIndex = this.gameActions.snake.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
-            this.showNotification('Snake action not found.', 'error');
+            this.ui.showNotification('Snake action not found.', 'error');
             return;
         }
         
@@ -2279,7 +1970,7 @@ class SavageGolf {
             this.updateGameDisplay();
             
             // Show success message
-            this.showNotification(`Deleted Snake action for ${action.player} on Hole ${action.hole}`, 'success');
+            this.ui.showNotification(`Deleted Snake action for ${action.player} on Hole ${action.hole}`, 'success');
         }
     }
 
