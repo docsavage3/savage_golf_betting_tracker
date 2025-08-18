@@ -34,6 +34,7 @@ import { StorageManager } from './managers/storage-manager.js';
 
 class SavageGolf {
     constructor() {
+        console.log('SavageGolf constructor called');
         this.currentHole = DEFAULTS.STARTING_HOLE;
         
         // Initialize UI Manager
@@ -76,11 +77,8 @@ class SavageGolf {
             this.autoResumeGame(savedState);
         } else {
             // No saved game, stay on setup page
-
             this.showPage('setup');
         }
-        
-
     }
 
     initializeEventListeners() {
@@ -2712,9 +2710,6 @@ class SavageGolf {
         carryoverOption.textContent = '🔄 Carryover';
         select.appendChild(carryoverOption);
     }
-    
-    showSkinsTeamOptions(showTeams) {
-
     
     populateDropdown(selectId, options) {
         const select = document.getElementById(selectId);
