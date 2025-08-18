@@ -34,7 +34,6 @@ import { StorageManager } from './managers/storage-manager.js';
 
 class SavageGolf {
     constructor() {
-        console.log('SavageGolf constructor called');
         this.currentHole = DEFAULTS.STARTING_HOLE;
         
         // Initialize UI Manager
@@ -478,8 +477,6 @@ class SavageGolf {
      */
     restoreGameState(savedState) {
         try {
-            console.log('restoreGameState called with:', savedState);
-    
             
             // Restore basic game configuration
             this.gameConfigs = savedState.gameConfigs || {};
@@ -488,10 +485,6 @@ class SavageGolf {
             this.currentHole = savedState.currentHole || DEFAULTS.STARTING_HOLE;
             this.gameStarted = savedState.gameStarted || false;
             this.currentPage = savedState.currentPage || PAGE_NAMES.NAVIGATION;
-            
-            console.log('After restore - gameConfigs:', this.gameConfigs);
-            console.log('After restore - players:', this.players);
-            console.log('After restore - requiredPlayers:', this.requiredPlayers);
 
             
 
@@ -677,7 +670,6 @@ class SavageGolf {
                 betAmount.style.display = 'block';
                 // Get current player count from PlayerManager to determine if we should show team selection
                 const currentPlayerCount = this.playerManager.getRequiredPlayers();
-                console.log(`Skins checkbox checked, current player count: ${currentPlayerCount}`);
                 // Only show team selection for 4 players
                 if (currentPlayerCount === 4) {
                     teamSelection.style.display = 'block';
@@ -2661,7 +2653,6 @@ class SavageGolf {
 
     // Quick Actions Dashboard functionality
     setupQuickActions() {
-        console.log('setupQuickActions called');
         // Update quick hole display
         const quickHoleDisplay = document.getElementById('quickHoleDisplay');
         if (quickHoleDisplay) {
@@ -2676,11 +2667,6 @@ class SavageGolf {
     }
     
     updateQuickActionsVisibility() {
-        console.log('updateQuickActionsVisibility called');
-        console.log('Current gameConfigs:', this.gameConfigs);
-        console.log('Current players:', this.players);
-        console.log('Current requiredPlayers:', this.requiredPlayers);
-        
         const quickCards = {
             murph: document.getElementById('quickMurphCard'),
             skins: document.getElementById('quickSkinsCard'),
@@ -2689,32 +2675,24 @@ class SavageGolf {
             wolf: document.getElementById('quickWolfCard')
         };
         
-        console.log('Quick card elements found:', quickCards);
-        
         Object.entries(quickCards).forEach(([gameType, card]) => {
-            console.log(`Checking ${gameType}: card exists: ${!!card}, enabled: ${this.gameConfigs[gameType]?.enabled}`);
             if (card && this.gameConfigs[gameType]?.enabled) {
-                console.log(`Showing ${gameType} quick action card`);
                 card.style.display = 'block';
                 this.populateQuickActionDropdowns(gameType);
             } else if (card) {
-                console.log(`Hiding ${gameType} quick action card`);
                 card.style.display = 'none';
             }
         });
     }
     
     populateQuickActionDropdowns(gameType) {
-        console.log(`populateQuickActionDropdowns called for ${gameType}, requiredPlayers: ${this.requiredPlayers}`);
         if (gameType === 'murph') {
             this.populateDropdown('quickMurphPlayer', this.players);
         } else if (gameType === 'skins') {
             // For Skins, show team options only for 4 players, individual players for 2-3 players
             if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
-                console.log('Setting up Skins for 4 players with teams');
                 this.populateSkinsTeamDropdown();
             } else {
-                console.log('Setting up Skins for 2-3 players with individual players');
                 this.populateDropdown('quickSkinsWinner', this.players);
             }
         } else if (gameType === 'kp') {
