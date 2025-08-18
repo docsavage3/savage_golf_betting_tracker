@@ -823,6 +823,9 @@ class SavageGolf {
         document.getElementById('gameSetup').style.display = 'none';
         this.showPage('navigation');
         
+        // Scroll to top of the page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
         // Initialize hole navigation button states
         this.updatePreviousHoleButton();
         

@@ -60,6 +60,8 @@ export class UIManager {
             case PAGE_NAMES.NAVIGATION:
             case 'navigation':
                 this.showElement(ELEMENT_IDS.GAME_NAVIGATION);
+                // Scroll to top when showing navigation page
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 break;
             case PAGE_NAMES.MURPH:
                 if (gameConfigs.murph?.enabled) {
