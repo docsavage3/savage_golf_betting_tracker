@@ -236,7 +236,7 @@ class SavageGolf {
         this.updateGameBreakdowns();
         const target = document.getElementById('paymentInstructionsCombined');
         if (target) {
-            SecurityUtils.setTextContent(target, this.generatePaymentInstructions());
+            SecurityUtils.setInnerHTML(target, this.generatePaymentInstructions());
         }
     }
 
@@ -970,7 +970,7 @@ class SavageGolf {
         this.updateGameBreakdowns();
         const target = document.getElementById('paymentInstructionsCombined');
         if (target) {
-            SecurityUtils.setTextContent(target, this.generatePaymentInstructions());
+            SecurityUtils.setInnerHTML(target, this.generatePaymentInstructions());
         }
         
         // Show notification that game is complete
