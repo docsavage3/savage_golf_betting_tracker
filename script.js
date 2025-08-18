@@ -1,4 +1,3 @@
-
 /**
  * Savage Golf Betting Tracker
  * Main application logic and game management
@@ -77,11 +76,8 @@ class SavageGolf {
             this.autoResumeGame(savedState);
         } else {
             // No saved game, stay on setup page
-
             this.showPage('setup');
         }
-        
-
     }
 
     initializeEventListeners() {
@@ -257,11 +253,35 @@ class SavageGolf {
         snakeCheckbox.addEventListener('change', () => this.toggleGameSection('snake'));
         wolfCheckbox.addEventListener('change', () => this.toggleGameSection('wolf'));
         
+        // Set up player count change listener to update team selection visibility
+        const playerCountSelect = document.getElementById('playerCount');
+        if (playerCountSelect) {
+            playerCountSelect.addEventListener('change', () => this.updateTeamSelectionVisibility());
+        }
+        
         // Set initial navigation button visibility
         this.updateGameNavigationVisibility();
         
         // Don't call toggleGameSection initially since no games are checked
         // The bet amount fields will be shown/hidden when checkboxes are changed
+    }
+    
+    updateTeamSelectionVisibility() {
+        // Update team selection visibility when player count changes
+        const skinsCheckbox = document.getElementById('gameSkins');
+        if (skinsCheckbox && skinsCheckbox.checked) {
+            const currentPlayerCount = this.playerManager.getRequiredPlayers();
+            const teamSelection = document.getElementById('skinsTeamSelection');
+            if (teamSelection) {
+                if (currentPlayerCount === 4) {
+                    teamSelection.style.display = 'block';
+                    this.playerManager.updateTeamSelections();
+                } else {
+                    teamSelection.style.display = 'none';
+                    this.playerManager.clearTeamSelections();
+                }
+            }
+        }
     }
 
     // =========================================================================
@@ -313,6 +333,9 @@ class SavageGolf {
         this.updatePreviousHoleButton();
         this.updateGameNavigationVisibility();
         this.updateGameBreakdowns();
+        
+        // Setup quick actions dashboard
+        this.setupQuickActions();
         
         // Update individual game pages if enabled
         if (this.gameConfigs.murph?.enabled) {
@@ -379,6 +402,9 @@ class SavageGolf {
             
             // Update game breakdowns
             this.updateGameBreakdowns();
+            
+            // Setup quick actions dashboard
+            this.setupQuickActions();
             
             // Update all game pages to show restored data
             if (this.gameConfigs.murph?.enabled) {
@@ -451,7 +477,6 @@ class SavageGolf {
      */
     restoreGameState(savedState) {
         try {
-    
             
             // Restore basic game configuration
             this.gameConfigs = savedState.gameConfigs || {};
@@ -643,8 +668,10 @@ class SavageGolf {
             const teamSelection = document.getElementById('skinsTeamSelection');
             if (checkbox.checked) {
                 betAmount.style.display = 'block';
+                // Get current player count from PlayerManager to determine if we should show team selection
+                const currentPlayerCount = this.playerManager.getRequiredPlayers();
                 // Only show team selection for 4 players
-                if (this.requiredPlayers === 4) {
+                if (currentPlayerCount === 4) {
                     teamSelection.style.display = 'block';
                     // Populate team selects if we have 4 players
                     this.playerManager.updateTeamSelections();
@@ -788,11 +815,17 @@ class SavageGolf {
         document.getElementById('gameSetup').style.display = 'none';
         this.showPage('navigation');
         
+        // Scroll to top of the page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
         // Initialize hole navigation button states
         this.updatePreviousHoleButton();
         
         // Initialize game state
         this.updateGameDisplay();
+        
+        // Setup quick actions dashboard
+        this.setupQuickActions();
         
         // Update navigation button visibility for selected games
         this.updateGameNavigationVisibility();
@@ -828,13 +861,19 @@ class SavageGolf {
             this.currentHole--;
             
                     // Update hole display element
-        const holeDisplayElement = document.getElementById('holeDisplay');
-        
-        if (holeDisplayElement) {
-            holeDisplayElement.textContent = this.currentHole;
-        } else {
-            console.warn('holeDisplay element not found in previousHole');
-        }
+            const holeDisplayElement = document.getElementById('holeDisplay');
+            
+            if (holeDisplayElement) {
+                holeDisplayElement.textContent = this.currentHole;
+            } else {
+                console.warn('holeDisplay element not found in previousHole');
+            }
+            
+            // Update quick actions hole display
+            const quickHoleDisplay = document.getElementById('quickHoleDisplay');
+            if (quickHoleDisplay) {
+                quickHoleDisplay.textContent = this.currentHole;
+            }
             
             this.updatePreviousHoleButton();
             this.updateGameDisplay();
@@ -862,6 +901,12 @@ class SavageGolf {
             holeDisplayElement.textContent = this.currentHole;
         } else {
             console.warn('holeDisplay element not found in nextHole');
+        }
+        
+        // Update quick actions hole display
+        const quickHoleDisplay = document.getElementById('quickHoleDisplay');
+        if (quickHoleDisplay) {
+            quickHoleDisplay.textContent = this.currentHole;
         }
         
         this.updatePreviousHoleButton();
@@ -1649,30 +1694,24 @@ class SavageGolf {
 
         
         // Update navigation status
-
         this.updateNavigationStatus();
+        
+        // Update quick actions status
+        this.updateQuickActionsStatus();
         
         // Update current page if it's visible and the game is enabled
         if (this.currentPage === 'murph' && this.gameConfigs.murph?.enabled) {
-
             this.updateMurphPage();
         } else if (this.currentPage === 'skins' && this.gameConfigs.skins?.enabled) {
-
             this.updateSkinsPage();
         } else if (this.currentPage === 'kp' && this.gameConfigs.kp?.enabled) {
-
             this.updateKPPage();
         } else if (this.currentPage === 'snake' && this.gameConfigs.snake?.enabled) {
-
             this.updateSnakePage();
         } else if (this.currentPage === 'wolf' && this.gameConfigs.wolf?.enabled) {
-
             this.updateWolfPage();
         } else if (this.currentPage === 'combined') {
-
             this.updateCombinedPage();
-        } else {
-
         }
     }
 
@@ -2610,6 +2649,336 @@ class SavageGolf {
             // No carryovers, reset to 1
             this.gameConfigs.skins.carryoverCount = 1;
         }
+    }
+
+    // Quick Actions Dashboard functionality
+    setupQuickActions() {
+        // Update quick hole display
+        const quickHoleDisplay = document.getElementById('quickHoleDisplay');
+        if (quickHoleDisplay) {
+            quickHoleDisplay.textContent = this.currentHole;
+        }
+        
+        // Show/hide quick action cards based on enabled games
+        this.updateQuickActionsVisibility();
+        
+        // Setup quick action event handlers
+        this.setupQuickActionHandlers();
+    }
+    
+    updateQuickActionsVisibility() {
+        const quickCards = {
+            murph: document.getElementById('quickMurphCard'),
+            skins: document.getElementById('quickSkinsCard'),
+            kp: document.getElementById('quickKPCard'),
+            snake: document.getElementById('quickSnakeCard'),
+            wolf: document.getElementById('quickWolfCard')
+        };
+        
+        Object.entries(quickCards).forEach(([gameType, card]) => {
+            if (card && this.gameConfigs[gameType]?.enabled) {
+                card.style.display = 'block';
+                this.populateQuickActionDropdowns(gameType);
+            } else if (card) {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    populateQuickActionDropdowns(gameType) {
+        if (gameType === 'murph') {
+            this.populateDropdown('quickMurphPlayer', this.players);
+        } else if (gameType === 'skins') {
+            // For Skins, show team options only for 4 players, individual players for 2-3 players
+            if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+                this.populateSkinsTeamDropdown();
+            } else {
+                this.populateDropdown('quickSkinsWinner', this.players);
+            }
+        } else if (gameType === 'kp') {
+            this.populateDropdown('quickKPPlayer', this.players);
+        } else if (gameType === 'snake') {
+            this.populateDropdown('quickSnakePlayer', this.players);
+        } else if (gameType === 'wolf') {
+            this.populateDropdown('quickWolfPlayer', this.players);
+            this.populateDropdown('quickWolfPartner', this.players);
+        }
+    }
+    
+    populateSkinsTeamDropdown() {
+        const select = document.getElementById('quickSkinsWinner');
+        if (!select) return;
+        
+        // Clear existing options
+        select.innerHTML = '<option value="">Winner...</option>';
+        
+        // Add team options for 4-player games
+        if (this.gameConfigs.skins?.teamNames?.team1) {
+            const team1Option = document.createElement('option');
+            team1Option.value = 'team1';
+            team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+            select.appendChild(team1Option);
+        }
+        
+        if (this.gameConfigs.skins?.teamNames?.team2) {
+            const team2Option = document.createElement('option');
+            team2Option.value = 'team2';
+            team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
+            select.appendChild(team2Option);
+        }
+        
+        // Add carryover option
+        const carryoverOption = document.createElement('option');
+        carryoverOption.value = 'carryover';
+        carryoverOption.textContent = '🔄 Carryover';
+        select.appendChild(carryoverOption);
+    }
+    
+    populateDropdown(selectId, options) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        // Clear existing options except the first placeholder
+        select.innerHTML = '<option value="">Select...</option>';
+        
+        // Add new options
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.textContent = option;
+            select.appendChild(optionElement);
+        });
+    }
+    
+    setupQuickActionHandlers() {
+        // Quick Murph
+        const quickMurphSave = document.getElementById('quickMurphSave');
+        if (quickMurphSave) {
+            quickMurphSave.addEventListener('click', () => this.handleQuickMurph());
+        }
+        
+        // Quick Skins
+        const quickSkinsSave = document.getElementById('quickSkinsSave');
+        if (quickSkinsSave) {
+            quickSkinsSave.addEventListener('click', () => this.handleQuickSkins());
+        }
+        
+        // Quick KP
+        const quickKPSave = document.getElementById('quickKPSave');
+        if (quickKPSave) {
+            quickKPSave.addEventListener('click', () => this.handleQuickKP());
+        }
+        
+        // Quick Snake
+        const quickSnakeSave = document.getElementById('quickSnakeSave');
+        if (quickSnakeSave) {
+            quickSnakeSave.addEventListener('click', () => this.handleQuickSnake());
+        }
+        
+        // Quick Wolf
+        const quickWolfSave = document.getElementById('quickWolfSave');
+        if (quickWolfSave) {
+            quickWolfSave.addEventListener('click', () => this.handleQuickWolf());
+        }
+        
+        // Wolf partner selection logic
+        const quickWolfChoice = document.getElementById('quickWolfChoice');
+        const quickWolfPartner = document.getElementById('quickWolfPartner');
+        if (quickWolfChoice && quickWolfPartner) {
+            quickWolfChoice.addEventListener('change', () => {
+                if (quickWolfChoice.value === 'partner') {
+                    quickWolfPartner.style.display = 'block';
+                    quickWolfPartner.required = true;
+                } else {
+                    quickWolfPartner.style.display = 'none';
+                    quickWolfPartner.required = false;
+                }
+            });
+        }
+    }
+    
+    handleQuickMurph() {
+        const player = document.getElementById('quickMurphPlayer').value;
+        const result = document.getElementById('quickMurphResult').value;
+        
+        if (!player || !result) {
+            alert('Please select both player and result');
+            return;
+        }
+        
+        const action = {
+            hole: this.currentHole,
+            player: player,
+            result: result === 'made' ? 'made' : 'failed'
+        };
+        
+        this.gameManager.addGameAction('murph', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
+        this.updateGameDisplay();
+        this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        
+        // Clear form
+        document.getElementById('quickMurphPlayer').value = '';
+        document.getElementById('quickMurphResult').value = '';
+    }
+    
+    handleQuickSkins() {
+        const winner = document.getElementById('quickSkinsWinner').value;
+        
+        if (!winner) {
+            alert('Please select a winner');
+            return;
+        }
+        
+        const action = {
+            hole: this.currentHole,
+            winner: winner
+        };
+        
+        this.gameManager.addGameAction('skins', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
+        this.updateGameDisplay();
+        this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        
+        // Clear form
+        document.getElementById('quickSkinsWinner').value = '';
+    }
+    
+    handleQuickKP() {
+        const player = document.getElementById('quickKPPlayer').value;
+        
+        if (!player) {
+            alert('Please select a player');
+            return;
+        }
+        
+        const action = {
+            hole: this.currentHole,
+            player: player
+        };
+        
+        this.gameManager.addGameAction('kp', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
+        this.updateGameDisplay();
+        this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        
+        // Clear form
+        document.getElementById('quickKPPlayer').value = '';
+    }
+    
+    handleQuickSnake() {
+        const player = document.getElementById('quickSnakePlayer').value;
+        
+        if (!player) {
+            alert('Please select a player');
+            return;
+        }
+        
+        const action = {
+            hole: this.currentHole,
+            player: player
+        };
+        
+        this.gameManager.addGameAction('snake', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
+        this.updateGameDisplay();
+        this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        
+        // Clear form
+        document.getElementById('quickSnakePlayer').value = '';
+    }
+    
+    handleQuickWolf() {
+        const wolf = document.getElementById('quickWolfPlayer').value;
+        const choice = document.getElementById('quickWolfChoice').value;
+        const partner = document.getElementById('quickWolfPartner').value;
+        const result = document.getElementById('quickWolfResult').value;
+        
+        if (!wolf || !choice || !result) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        if (choice === 'partner' && !partner) {
+            alert('Please select a partner');
+            return;
+        }
+        
+        const action = {
+            hole: this.currentHole,
+            wolf: wolf,
+            wolfChoice: choice,
+            partner: choice === 'partner' ? partner : null,
+            result: result
+        };
+        
+        this.gameManager.addGameAction('wolf', action);
+        
+        // Update local gameActions reference
+        this.gameActions = this.gameManager.gameActions;
+        
+        this.updateGameDisplay();
+        this.updateQuickActionsStatus();
+        this.updateCombinedSummary();
+        this.updateGameBreakdowns();
+        
+        // Clear form
+        document.getElementById('quickWolfPlayer').value = '';
+        document.getElementById('quickWolfChoice').value = '';
+        document.getElementById('quickWolfPartner').value = '';
+        document.getElementById('quickWolfResult').value = '';
+        document.getElementById('quickWolfPartner').style.display = 'none';
+    }
+    
+    updateQuickActionsStatus() {
+        // Update status displays for quick actions
+        const quickStatuses = {
+            murph: 'quickMurphStatus',
+            skins: 'quickSkinsStatus',
+            kp: 'quickKPStatus',
+            snake: 'quickSnakeStatus',
+            wolf: 'quickWolfStatus'
+        };
+        
+        Object.entries(quickStatuses).forEach(([gameType, statusId]) => {
+            const statusElement = document.getElementById(statusId);
+            if (statusElement && this.gameConfigs[gameType]?.enabled) {
+                const actions = this.gameManager.getGameActions(gameType);
+                const count = actions.length;
+                
+                if (gameType === 'murph') {
+                    statusElement.textContent = `${count} calls`;
+                } else if (gameType === 'skins') {
+                    statusElement.textContent = `${count} skins`;
+                } else if (gameType === 'kp') {
+                    statusElement.textContent = `${count} KPs`;
+                } else if (gameType === 'snake') {
+                    statusElement.textContent = `${count} snakes`;
+                } else if (gameType === 'wolf') {
+                    statusElement.textContent = `${count} holes`;
+                }
+            }
+        });
     }
 }
 

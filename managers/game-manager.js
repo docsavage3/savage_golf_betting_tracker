@@ -168,20 +168,28 @@ export class GameManager {
      * @returns {boolean} True if action was added successfully
      */
     addGameAction(gameType, action) {
-        if (!this.gameInstances[gameType]) {
-            console.warn(`Game instance not found for ${gameType}`);
-            return false;
-        }
-
-        // Add to game instance if available
-        const success = this.gameInstances[gameType].addAction(action);
-        
-        // Also add to legacy for backwards compatibility
-        if (success) {
-            this.gameActions[gameType].push(action);
+        // Always add to legacy system for backwards compatibility
+        if (!this.gameActions[gameType]) {
+            this.gameActions[gameType] = [];
         }
         
-        return success;
+        // Add to legacy actions first
+        this.gameActions[gameType].push(action);
+        
+        // Try to add to game instance if available
+        if (this.gameInstances[gameType]) {
+            try {
+                const success = this.gameInstances[gameType].addAction(action);
+                
+                if (!success) {
+                    console.warn(`Failed to add action to game instance for ${gameType}`);
+                }
+            } catch (error) {
+                console.warn(`Error adding action to game instance for ${gameType}:`, error);
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -392,31 +400,46 @@ export class GameManager {
      * @returns {Object} Player balances
      */
     calculateLegacyMurphSummary() {
+        console.log('calculateLegacyMurphSummary called');
+        console.log('Players:', this.players);
+        console.log('Murph config:', this.gameConfigs.murph);
+        console.log('Murph actions:', this.gameActions.murph);
+        
         const playerBalances = {};
         this.players.forEach(player => {
             playerBalances[player] = 0;
         });
         
         this.gameActions.murph.forEach(call => {
-            if (call.result === 'success') {
+            console.log('Processing Murph call:', call);
+            // Handle both 'success'/'fail' and 'made'/'failed' result formats
+            const isSuccess = call.result === 'success' || call.result === 'made';
+            console.log(`Call result: ${call.result}, isSuccess: ${isSuccess}`);
+            
+            if (isSuccess) {
                 // Caller gets paid by all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
                         playerBalances[player] -= this.gameConfigs.murph.betAmount;
+                        console.log(`${player} pays ${this.gameConfigs.murph.betAmount}`);
                     }
                 });
                 playerBalances[call.player] += (this.players.length - 1) * this.gameConfigs.murph.betAmount;
+                console.log(`${call.player} receives ${(this.players.length - 1) * this.gameConfigs.murph.betAmount}`);
             } else {
                 // Caller pays all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
                         playerBalances[player] += this.gameConfigs.murph.betAmount;
+                        console.log(`${player} receives ${this.gameConfigs.murph.betAmount}`);
                     }
                 });
                 playerBalances[call.player] -= (this.players.length - 1) * this.gameConfigs.murph.betAmount;
+                console.log(`${call.player} pays ${(this.players.length - 1) * this.gameConfigs.murph.betAmount}`);
             }
         });
         
+        console.log('Final player balances:', playerBalances);
         return playerBalances;
     }
 

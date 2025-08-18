@@ -22,13 +22,14 @@ export class KPGame extends BaseGame {
             const betAmount = this.getBetAmount();
             const numOtherPlayers = this.players.length - 1;
             
-            // KP winner gets paid by all other players
+            // KP winner gets paid by all other players - handle both 'winner' and 'player' fields
+            const winner = kp.winner || kp.player;
             this.players.forEach(player => {
-                if (player !== kp.winner) {
+                if (player !== winner) {
                     playerBalances[player] -= betAmount;
                 }
             });
-            playerBalances[kp.winner] += numOtherPlayers * betAmount;
+            playerBalances[winner] += numOtherPlayers * betAmount;
         });
         
         return playerBalances;
@@ -40,13 +41,14 @@ export class KPGame extends BaseGame {
      * @returns {boolean} True if valid
      */
     validateAction(action) {
-        // Required fields
-        if (!action.winner || !action.hole) {
+        // Required fields - accept both 'winner' and 'player' for compatibility
+        const player = action.winner || action.player;
+        if (!player || !action.hole) {
             return false;
         }
 
         // Validate player exists
-        if (!this.players.includes(action.winner)) {
+        if (!this.players.includes(player)) {
             return false;
         }
 
@@ -68,7 +70,7 @@ export class KPGame extends BaseGame {
         // Count wins per player
         const playerWins = {};
         this.players.forEach(player => {
-            playerWins[player] = this.actions.filter(action => action.winner === player).length;
+            playerWins[player] = this.actions.filter(action => (action.winner || action.player) === player).length;
         });
         
         return {
@@ -84,7 +86,7 @@ export class KPGame extends BaseGame {
      * @returns {Array} Array of KP actions won by the player
      */
     getPlayerWins(playerName) {
-        return this.actions.filter(action => action.winner === playerName);
+        return this.actions.filter(action => (action.winner || action.player) === playerName);
     }
 
     /**
