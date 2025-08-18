@@ -254,11 +254,35 @@ class SavageGolf {
         snakeCheckbox.addEventListener('change', () => this.toggleGameSection('snake'));
         wolfCheckbox.addEventListener('change', () => this.toggleGameSection('wolf'));
         
+        // Set up player count change listener to update team selection visibility
+        const playerCountSelect = document.getElementById('playerCount');
+        if (playerCountSelect) {
+            playerCountSelect.addEventListener('change', () => this.updateTeamSelectionVisibility());
+        }
+        
         // Set initial navigation button visibility
         this.updateGameNavigationVisibility();
         
         // Don't call toggleGameSection initially since no games are checked
         // The bet amount fields will be shown/hidden when checkboxes are changed
+    }
+    
+    updateTeamSelectionVisibility() {
+        // Update team selection visibility when player count changes
+        const skinsCheckbox = document.getElementById('gameSkins');
+        if (skinsCheckbox && skinsCheckbox.checked) {
+            const currentPlayerCount = this.playerManager.getRequiredPlayers();
+            const teamSelection = document.getElementById('skinsTeamSelection');
+            if (teamSelection) {
+                if (currentPlayerCount === 4) {
+                    teamSelection.style.display = 'block';
+                    this.playerManager.updateTeamSelections();
+                } else {
+                    teamSelection.style.display = 'none';
+                    this.playerManager.clearTeamSelections();
+                }
+            }
+        }
     }
 
     // =========================================================================
@@ -646,8 +670,11 @@ class SavageGolf {
             const teamSelection = document.getElementById('skinsTeamSelection');
             if (checkbox.checked) {
                 betAmount.style.display = 'block';
+                // Get current player count from PlayerManager to determine if we should show team selection
+                const currentPlayerCount = this.playerManager.getRequiredPlayers();
+                console.log(`Skins checkbox checked, current player count: ${currentPlayerCount}`);
                 // Only show team selection for 4 players
-                if (this.requiredPlayers === 4) {
+                if (currentPlayerCount === 4) {
                     teamSelection.style.display = 'block';
                     // Populate team selects if we have 4 players
                     this.playerManager.updateTeamSelections();
