@@ -313,6 +313,9 @@ class SavageGolf {
         this.updateGameNavigationVisibility();
         this.updateGameBreakdowns();
         
+        // Setup quick actions dashboard
+        this.setupQuickActions();
+        
         // Update individual game pages if enabled
         if (this.gameConfigs.murph?.enabled) {
             this.updateMurphPage();
@@ -378,6 +381,9 @@ class SavageGolf {
             
             // Update game breakdowns
             this.updateGameBreakdowns();
+            
+            // Setup quick actions dashboard
+            this.setupQuickActions();
             
             // Update all game pages to show restored data
             if (this.gameConfigs.murph?.enabled) {
@@ -2658,11 +2664,13 @@ class SavageGolf {
         if (gameType === 'murph') {
             this.populateDropdown('quickMurphPlayer', this.players);
         } else if (gameType === 'skins') {
-            // For Skins, populate team names if 4 players, otherwise individual players
+            // For Skins, show team options only for 4 players, individual players for 2-3 players
             if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
                 this.populateSkinsTeamDropdown();
+                this.showSkinsTeamOptions(true);
             } else {
                 this.populateDropdown('quickSkinsWinner', this.players);
+                this.showSkinsTeamOptions(false);
             }
         } else if (gameType === 'kp') {
             this.populateDropdown('quickKPPlayer', this.players);
@@ -2684,6 +2692,16 @@ class SavageGolf {
         if (team2Option && this.gameConfigs.skins?.teamNames?.team2) {
             team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
         }
+    }
+    
+    showSkinsTeamOptions(showTeams) {
+        const team1Option = document.getElementById('quickSkinsTeam1');
+        const team2Option = document.getElementById('quickSkinsTeam2');
+        const carryoverOption = document.getElementById('quickSkinsWinner').querySelector('option[value="carryover"]');
+        
+        if (team1Option) team1Option.style.display = showTeams ? '' : 'none';
+        if (team2Option) team2Option.style.display = showTeams ? '' : 'none';
+        if (carryoverOption) carryoverOption.style.display = showTeams ? '' : 'none';
     }
     
     populateDropdown(selectId, options) {
