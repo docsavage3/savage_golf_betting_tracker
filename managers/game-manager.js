@@ -400,46 +400,34 @@ export class GameManager {
      * @returns {Object} Player balances
      */
     calculateLegacyMurphSummary() {
-        console.log('calculateLegacyMurphSummary called');
-        console.log('Players:', this.players);
-        console.log('Murph config:', this.gameConfigs.murph);
-        console.log('Murph actions:', this.gameActions.murph);
-        
         const playerBalances = {};
         this.players.forEach(player => {
             playerBalances[player] = 0;
         });
         
         this.gameActions.murph.forEach(call => {
-            console.log('Processing Murph call:', call);
             // Handle both 'success'/'fail' and 'made'/'failed' result formats
             const isSuccess = call.result === 'success' || call.result === 'made';
-            console.log(`Call result: ${call.result}, isSuccess: ${isSuccess}`);
             
             if (isSuccess) {
                 // Caller gets paid by all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
                         playerBalances[player] -= this.gameConfigs.murph.betAmount;
-                        console.log(`${player} pays ${this.gameConfigs.murph.betAmount}`);
                     }
                 });
                 playerBalances[call.player] += (this.players.length - 1) * this.gameConfigs.murph.betAmount;
-                console.log(`${call.player} receives ${(this.players.length - 1) * this.gameConfigs.murph.betAmount}`);
             } else {
                 // Caller pays all other players
                 this.players.forEach(player => {
                     if (player !== call.player) {
                         playerBalances[player] += this.gameConfigs.murph.betAmount;
-                        console.log(`${player} receives ${this.gameConfigs.murph.betAmount}`);
                     }
                 });
                 playerBalances[call.player] -= (this.players.length - 1) * this.gameConfigs.murph.betAmount;
-                console.log(`${call.player} pays ${(this.players.length - 1) * this.gameConfigs.murph.betAmount}`);
             }
         });
         
-        console.log('Final player balances:', playerBalances);
         return playerBalances;
     }
 
