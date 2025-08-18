@@ -176,8 +176,8 @@ export class SecurityUtils {
             case 'low':
                 console.info('ℹ️ SECURITY LOW:', logEntry);
                 break;
-            default:
-                console.log('ℹ️ SECURITY EVENT:', logEntry);
+                    default:
+            console.info('ℹ️ SECURITY EVENT:', logEntry);
         }
 
         // Store in localStorage for security monitoring (limited to last 100 events)
