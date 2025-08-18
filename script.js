@@ -2628,6 +2628,7 @@ class SavageGolf {
 
     // Quick Actions Dashboard functionality
     setupQuickActions() {
+        console.log('setupQuickActions called');
         // Update quick hole display
         const quickHoleDisplay = document.getElementById('quickHoleDisplay');
         if (quickHoleDisplay) {
@@ -2661,16 +2662,17 @@ class SavageGolf {
     }
     
     populateQuickActionDropdowns(gameType) {
+        console.log(`populateQuickActionDropdowns called for ${gameType}, requiredPlayers: ${this.requiredPlayers}`);
         if (gameType === 'murph') {
             this.populateDropdown('quickMurphPlayer', this.players);
         } else if (gameType === 'skins') {
             // For Skins, show team options only for 4 players, individual players for 2-3 players
             if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+                console.log('Setting up Skins for 4 players with teams');
                 this.populateSkinsTeamDropdown();
-                this.showSkinsTeamOptions(true);
             } else {
+                console.log('Setting up Skins for 2-3 players with individual players');
                 this.populateDropdown('quickSkinsWinner', this.players);
-                this.showSkinsTeamOptions(false);
             }
         } else if (gameType === 'kp') {
             this.populateDropdown('quickKPPlayer', this.players);
@@ -2683,26 +2685,36 @@ class SavageGolf {
     }
     
     populateSkinsTeamDropdown() {
-        const team1Option = document.getElementById('quickSkinsTeam1');
-        const team2Option = document.getElementById('quickSkinsTeam2');
+        const select = document.getElementById('quickSkinsWinner');
+        if (!select) return;
         
-        if (team1Option && this.gameConfigs.skins?.teamNames?.team1) {
+        // Clear existing options
+        select.innerHTML = '<option value="">Winner...</option>';
+        
+        // Add team options for 4-player games
+        if (this.gameConfigs.skins?.teamNames?.team1) {
+            const team1Option = document.createElement('option');
+            team1Option.value = 'team1';
             team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+            select.appendChild(team1Option);
         }
-        if (team2Option && this.gameConfigs.skins?.teamNames?.team2) {
+        
+        if (this.gameConfigs.skins?.teamNames?.team2) {
+            const team2Option = document.createElement('option');
+            team2Option.value = 'team2';
             team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
+            select.appendChild(team2Option);
         }
+        
+        // Add carryover option
+        const carryoverOption = document.createElement('option');
+        carryoverOption.value = 'carryover';
+        carryoverOption.textContent = '🔄 Carryover';
+        select.appendChild(carryoverOption);
     }
     
     showSkinsTeamOptions(showTeams) {
-        const team1Option = document.getElementById('quickSkinsTeam1');
-        const team2Option = document.getElementById('quickSkinsTeam2');
-        const carryoverOption = document.getElementById('quickSkinsWinner').querySelector('option[value="carryover"]');
-        
-        if (team1Option) team1Option.style.display = showTeams ? '' : 'none';
-        if (team2Option) team2Option.style.display = showTeams ? '' : 'none';
-        if (carryoverOption) carryoverOption.style.display = showTeams ? '' : 'none';
-    }
+
     
     populateDropdown(selectId, options) {
         const select = document.getElementById(selectId);
