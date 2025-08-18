@@ -2,7 +2,7 @@
 
 A mobile-friendly web application to track golf side games and bets. Perfect for foursomes looking to add some excitement to their rounds with multiple side games running simultaneously.
 
-**Copyright (c) 2025 Daniel Savage. Licensed under [MIT License](LICENSE).**
+**Copyright (c) 2025 Daniel Savage. All rights reserved. Proprietary software - no commercial use, copying, forking, or reuse permitted.**
 
 ## 🎮 Games Available
 
@@ -241,20 +241,29 @@ Click **"🔄 New Game"** to reset everything and start fresh with new players o
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**PROPRIETARY SOFTWARE - ALL RIGHTS RESERVED**
 
 **Copyright (c) 2025 Daniel Savage. All rights reserved.**
 
-The MIT License allows others to:
-- Use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software
-- Use the software for commercial purposes
-- Modify the software and distribute modified versions
+This software is proprietary and confidential. The following restrictions apply:
 
-**However, the MIT License requires that:**
-- The original copyright notice and license must be included in all copies
-- The software is provided "as is" without warranty
+**🚫 STRICTLY PROHIBITED:**
+- **Commercial Use**: No selling, licensing, or distributing for profit
+- **Copying**: No reproduction or duplication in any form
+- **Forking**: No branching or deriving into separate projects
+- **Reuse**: No incorporation into other software projects
+- **Distribution**: No sharing or making available to third parties
+- **Reverse Engineering**: No disassembly or decompilation
 
-This protects your intellectual property while allowing legitimate use and development.
+**✅ PERMITTED USE:**
+- Personal use only by Daniel Savage
+- Educational purposes for Daniel Savage
+- Development and testing by Daniel Savage
+
+**⚠️ LEGAL NOTICE:**
+Any violation of these restrictions constitutes a breach of this license and may result in legal action. Unauthorized use, copying, distribution, or modification is strictly prohibited.
+
+This software is protected by copyright laws and international treaties.
 
 ---
 

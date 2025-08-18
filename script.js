@@ -31,6 +31,7 @@ import { PlayerManager } from './managers/player-manager.js';
 import { ValidationManager } from './utils/validation.js';
 import { GameManager } from './managers/game-manager.js';
 import { StorageManager } from './managers/storage-manager.js';
+import { SecurityUtils } from './utils/security.js';
 
 class SavageGolf {
     constructor() {
@@ -235,7 +236,7 @@ class SavageGolf {
         this.updateGameBreakdowns();
         const target = document.getElementById('paymentInstructionsCombined');
         if (target) {
-            target.innerHTML = this.generatePaymentInstructions();
+            SecurityUtils.setTextContent(target, this.generatePaymentInstructions());
         }
     }
 
@@ -969,7 +970,7 @@ class SavageGolf {
         this.updateGameBreakdowns();
         const target = document.getElementById('paymentInstructionsCombined');
         if (target) {
-            target.innerHTML = this.generatePaymentInstructions();
+            SecurityUtils.setTextContent(target, this.generatePaymentInstructions());
         }
         
         // Show notification that game is complete
@@ -1028,7 +1029,7 @@ class SavageGolf {
         // Payment Instructions
         finalResultsHTML += this.generatePaymentInstructions();
         
-        container.innerHTML = finalResultsHTML;
+        SecurityUtils.setInnerHTML(container, finalResultsHTML);
     }
 
     generateMurphFinalSummary() {
@@ -1300,7 +1301,11 @@ class SavageGolf {
             // 4 players: Show team options
 
             const winnerSelect = document.getElementById('skinsWinner');
-            winnerSelect.innerHTML = '<option value="">Select result...</option>';
+            winnerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select result...';
+        winnerSelect.appendChild(defaultOption);
             
             // Add team options
             const team1Option = document.createElement('option');
@@ -1322,7 +1327,11 @@ class SavageGolf {
 
             // 2-3 players: Show individual player options
             const winnerSelect = document.getElementById('skinsWinner');
-            winnerSelect.innerHTML = '<option value="">Select winner...</option>';
+            winnerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select winner...';
+        winnerSelect.appendChild(defaultOption);
             
             this.players.forEach(player => {
                 const option = document.createElement('option');
@@ -1483,7 +1492,11 @@ class SavageGolf {
         const holeInput = document.getElementById('snakeHole');
         
         // Populate player select
-        playerSelect.innerHTML = '<option value="">Select player...</option>';
+        playerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select player...';
+        playerSelect.appendChild(defaultOption);
         this.players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
@@ -1551,7 +1564,11 @@ class SavageGolf {
         holeInput.value = this.currentHole;
         
         // Populate wolf player options (should be the current wolf for this hole)
-        wolfPlayerSelect.innerHTML = '<option value="">Select Wolf...</option>';
+        wolfPlayerSelect.innerHTML = '';
+        const defaultWolfOption = document.createElement('option');
+        defaultWolfOption.value = '';
+        defaultWolfOption.textContent = 'Select Wolf...';
+        wolfPlayerSelect.appendChild(defaultWolfOption);
         this.players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
@@ -1573,7 +1590,11 @@ class SavageGolf {
         partnerSelect.required = false;
         
         // Populate partner options
-        partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+        partnerSelect.innerHTML = '';
+        const defaultPartnerOption = document.createElement('option');
+        defaultPartnerOption.value = '';
+        defaultPartnerOption.textContent = 'Select Partner...';
+        partnerSelect.appendChild(defaultPartnerOption);
         this.players.forEach(player => {
             if (player !== wolfPlayerSelect.value) {
                 const option = document.createElement('option');
@@ -1590,7 +1611,11 @@ class SavageGolf {
                 partnerGroup.style.display = 'block';
                 partnerSelect.required = true;
                 // Repopulate partner options when switching to partner mode
-                partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+                partnerSelect.innerHTML = '';
+                const defaultPartnerOption = document.createElement('option');
+                defaultPartnerOption.value = '';
+                defaultPartnerOption.textContent = 'Select Partner...';
+                partnerSelect.appendChild(defaultPartnerOption);
                 this.players.forEach(player => {
                     if (player !== wolfPlayerSelect.value) {
                         const option = document.createElement('option');
@@ -1609,7 +1634,11 @@ class SavageGolf {
         // Add event listener for wolf player change to update partner options
         wolfPlayerSelect.addEventListener('change', () => {
             // Repopulate partner options excluding the selected wolf
-            partnerSelect.innerHTML = '<option value="">Select Partner...</option>';
+            partnerSelect.innerHTML = '';
+            const defaultPartnerOption = document.createElement('option');
+            defaultPartnerOption.value = '';
+            defaultPartnerOption.textContent = 'Select Partner...';
+            partnerSelect.appendChild(defaultPartnerOption);
             this.players.forEach(player => {
                 if (player !== wolfPlayerSelect.value) {
                     const option = document.createElement('option');
@@ -1828,7 +1857,12 @@ class SavageGolf {
         container.innerHTML = '';
         
         if (this.gameActions.murph.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Murph calls yet</p>';
+            const noDataP = document.createElement('p');
+            noDataP.style.textAlign = 'center';
+            noDataP.style.color = '#7f8c8d';
+            noDataP.style.fontStyle = 'italic';
+            noDataP.textContent = 'No Murph calls yet';
+            container.appendChild(noDataP);
             return;
         }
         
@@ -1845,23 +1879,45 @@ class SavageGolf {
         Object.keys(callsByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
             const holeDiv = document.createElement('div');
             holeDiv.className = 'hole-group';
-            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            const holeH5 = document.createElement('h5');
+            holeH5.style.margin = '16px 0 8px 0';
+            holeH5.style.color = '#2c3e50';
+            holeH5.textContent = `Hole ${hole}`;
+            holeDiv.appendChild(holeH5);
             
             callsByHole[hole].forEach(call => {
                 const callDiv = document.createElement('div');
                 callDiv.className = `game-action-item ${call.result}`;
-                callDiv.innerHTML = `
-                    <div class="game-action-header">
-                        <span class="game-action-player">${call.player}</span>
-                        <span class="game-action-hole">Hole ${call.hole}</span>
-                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteMurphCall(${call.id})" title="Delete this Murph call">
-                            🗑️
-                        </button>
-                    </div>
-                    <div class="game-action-result ${call.result}">
-                        ${call.result === 'success' ? '✅ Made it!' : '❌ Failed'}
-                    </div>
-                `;
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'game-action-header';
+                
+                const playerSpan = document.createElement('span');
+                playerSpan.className = 'game-action-player';
+                playerSpan.textContent = SecurityUtils.sanitizeInput(call.player);
+                
+                const holeSpan = document.createElement('span');
+                holeSpan.className = 'game-action-hole';
+                holeSpan.textContent = `Hole ${SecurityUtils.sanitizeInput(call.hole)}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete this Murph call';
+                deleteBtn.onclick = () => this.deleteMurphCall(call.id);
+                
+                headerDiv.appendChild(playerSpan);
+                headerDiv.appendChild(holeSpan);
+                headerDiv.appendChild(deleteBtn);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `game-action-result ${call.result}`;
+                resultDiv.textContent = call.result === 'success' ? '✅ Made it!' : '❌ Failed';
+                
+                callDiv.appendChild(headerDiv);
+                callDiv.appendChild(resultDiv);
                 holeDiv.appendChild(callDiv);
             });
             
@@ -1874,7 +1930,12 @@ class SavageGolf {
         container.innerHTML = '';
         
         if (this.gameActions.skins.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Skins recorded yet</p>';
+            const noDataP = document.createElement('p');
+            noDataP.style.textAlign = 'center';
+            noDataP.style.color = '#7f8c8d';
+            noDataP.style.fontStyle = 'italic';
+            noDataP.textContent = 'No Skins recorded yet';
+            container.appendChild(noDataP);
             return;
         }
         
@@ -1891,7 +1952,12 @@ class SavageGolf {
         Object.keys(skinsByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
             const holeDiv = document.createElement('div');
             holeDiv.className = 'hole-group';
-            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            const holeH5 = document.createElement('h5');
+            holeH5.style.margin = '16px 0 8px 0';
+            holeH5.style.color = '#2c3e50';
+            holeH5.textContent = `Hole ${hole}`;
+            holeDiv.appendChild(holeH5);
             
             skinsByHole[hole].forEach(skin => {
                 const skinDiv = document.createElement('div');
@@ -1903,27 +1969,43 @@ class SavageGolf {
                 } else if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (skin.winner === 'team1' || skin.winner === 'team2')) {
                     // 4 players: Show team names
                     if (skin.winner === 'team1') {
-                        resultText = `${this.gameConfigs.skins.teamNames.team1} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                        resultText = `${SecurityUtils.sanitizeInput(this.gameConfigs.skins.teamNames.team1)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                     } else {
-                        resultText = `${this.gameConfigs.skins.teamNames.team2} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                        resultText = `${SecurityUtils.sanitizeInput(this.gameConfigs.skins.teamNames.team2)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                     }
                 } else {
                     // 2-3 players: Show individual player name
-                    resultText = `${skin.winner} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                    resultText = `${SecurityUtils.sanitizeInput(skin.winner)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                 }
                 
-                skinDiv.innerHTML = `
-                    <div class="game-action-header">
-                        <span class="game-action-player">Hole ${skin.hole}</span>
-                        <span class="game-action-hole">Skins</span>
-                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteSkinsAction(${skin.id})" title="Delete this Skins action">
-                            🗑️
-                        </button>
-                    </div>
-                    <div class="game-action-result ${skin.winner === 'carryover' ? 'neutral' : 'success'}">
-                        ${resultText}
-                    </div>
-                `;
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'game-action-header';
+                
+                const playerSpan = document.createElement('span');
+                playerSpan.className = 'game-action-player';
+                playerSpan.textContent = `Hole ${SecurityUtils.sanitizeInput(skin.hole)}`;
+                
+                const holeSpan = document.createElement('span');
+                holeSpan.className = 'game-action-hole';
+                holeSpan.textContent = 'Skins';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete this Skins action';
+                deleteBtn.onclick = () => this.deleteSkinsAction(skin.id);
+                
+                headerDiv.appendChild(playerSpan);
+                headerDiv.appendChild(holeSpan);
+                headerDiv.appendChild(deleteBtn);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `game-action-result ${skin.winner === 'carryover' ? 'neutral' : 'success'}`;
+                resultDiv.textContent = resultText;
+                
+                skinDiv.appendChild(headerDiv);
+                skinDiv.appendChild(resultDiv);
                 holeDiv.appendChild(skinDiv);
             });
             
@@ -1936,7 +2018,12 @@ class SavageGolf {
         container.innerHTML = '';
         
         if (this.gameActions.kp.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No KPs recorded yet</p>';
+            const noDataP = document.createElement('p');
+            noDataP.style.textAlign = 'center';
+            noDataP.style.color = '#7f8c8d';
+            noDataP.style.fontStyle = 'italic';
+            noDataP.textContent = 'No KPs recorded yet';
+            container.appendChild(noDataP);
             return;
         }
         
@@ -1953,24 +2040,45 @@ class SavageGolf {
         Object.keys(kpsByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
             const holeDiv = document.createElement('div');
             holeDiv.className = 'hole-group';
-            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            const holeH5 = document.createElement('h5');
+            holeH5.style.margin = '16px 0 8px 0';
+            holeH5.style.color = '#2c3e50';
+            holeH5.textContent = `Hole ${hole}`;
+            holeDiv.appendChild(holeH5);
             
             kpsByHole[hole].forEach(kp => {
                 const kpDiv = document.createElement('div');
                 kpDiv.className = 'game-action-item success';
                 
-                kpDiv.innerHTML = `
-                    <div class="game-action-header">
-                        <span class="game-action-player">${kp.winner}</span>
-                        <span class="game-action-hole">Hole ${kp.hole}</span>
-                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteKPAction(${kp.id})" title="Delete this KP action">
-                            🗑️
-                        </button>
-                    </div>
-                    <div class="game-action-result success">
-                        🎯 Closest to the Pin
-                    </div>
-                `;
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'game-action-header';
+                
+                const playerSpan = document.createElement('span');
+                playerSpan.className = 'game-action-player';
+                playerSpan.textContent = SecurityUtils.sanitizeInput(kp.winner);
+                
+                const holeSpan = document.createElement('span');
+                holeSpan.className = 'game-action-hole';
+                holeSpan.textContent = `Hole ${SecurityUtils.sanitizeInput(kp.hole)}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete this KP action';
+                deleteBtn.onclick = () => this.deleteKPAction(kp.id);
+                
+                headerDiv.appendChild(playerSpan);
+                headerDiv.appendChild(holeSpan);
+                headerDiv.appendChild(deleteBtn);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'game-action-result success';
+                resultDiv.textContent = '🎯 Closest to the Pin';
+                
+                kpDiv.appendChild(headerDiv);
+                kpDiv.appendChild(resultDiv);
                 holeDiv.appendChild(kpDiv);
             });
             
@@ -1983,7 +2091,12 @@ class SavageGolf {
         container.innerHTML = '';
         
         if (this.gameActions.snake.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No snakes recorded yet</p>';
+            const noDataP = document.createElement('p');
+            noDataP.style.textAlign = 'center';
+            noDataP.style.color = '#7f8c8d';
+            noDataP.style.fontStyle = 'italic';
+            noDataP.textContent = 'No snakes recorded yet';
+            container.appendChild(noDataP);
             return;
         }
         
@@ -2000,24 +2113,45 @@ class SavageGolf {
         Object.keys(snakesByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
             const holeDiv = document.createElement('div');
             holeDiv.className = 'hole-group';
-            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            const holeH5 = document.createElement('h5');
+            holeH5.style.margin = '16px 0 8px 0';
+            holeH5.style.color = '#2c3e50';
+            holeH5.textContent = `Hole ${hole}`;
+            holeDiv.appendChild(holeH5);
             
             snakesByHole[hole].forEach(snake => {
                 const snakeDiv = document.createElement('div');
                 snakeDiv.className = 'game-action-item error';
                 
-                snakeDiv.innerHTML = `
-                    <div class="game-action-header">
-                        <span class="game-action-player">${snake.player}</span>
-                        <span class="game-action-hole">Hole ${snake.hole}</span>
-                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteSnakeAction(${snake.id})" title="Delete this Snake action">
-                            🗑️
-                        </button>
-                    </div>
-                    <div class="game-action-result error">
-                        🐍 Snake
-                    </div>
-                `;
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'game-action-header';
+                
+                const playerSpan = document.createElement('span');
+                playerSpan.className = 'game-action-player';
+                playerSpan.textContent = SecurityUtils.sanitizeInput(snake.player);
+                
+                const holeSpan = document.createElement('span');
+                holeSpan.className = 'game-action-hole';
+                holeSpan.textContent = `Hole ${SecurityUtils.sanitizeInput(snake.hole)}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete this Snake action';
+                deleteBtn.onclick = () => this.deleteSnakeAction(snake.id);
+                
+                headerDiv.appendChild(playerSpan);
+                headerDiv.appendChild(holeSpan);
+                headerDiv.appendChild(deleteBtn);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'game-action-result error';
+                resultDiv.textContent = '🐍 Snake';
+                
+                snakeDiv.appendChild(headerDiv);
+                snakeDiv.appendChild(resultDiv);
                 holeDiv.appendChild(snakeDiv);
             });
             
@@ -2030,7 +2164,12 @@ class SavageGolf {
         container.innerHTML = '';
         
         if (this.gameActions.wolf.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Wolf holes recorded yet</p>';
+            const noDataP = document.createElement('p');
+            noDataP.style.textAlign = 'center';
+            noDataP.style.color = '#7f8c8d';
+            noDataP.style.fontStyle = 'italic';
+            noDataP.textContent = 'No Wolf holes recorded yet';
+            container.appendChild(noDataP);
             return;
         }
         
@@ -2047,7 +2186,12 @@ class SavageGolf {
         Object.keys(wolfByHole).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hole => {
             const holeDiv = document.createElement('div');
             holeDiv.className = 'hole-group';
-            holeDiv.innerHTML = `<h5 style="margin: 16px 0 8px 0; color: #2c3e50;">Hole ${hole}</h5>`;
+            
+            const holeH5 = document.createElement('h5');
+            holeH5.style.margin = '16px 0 8px 0';
+            holeH5.style.color = '#2c3e50';
+            holeH5.textContent = `Hole ${hole}`;
+            holeDiv.appendChild(holeH5);
             
             wolfByHole[hole].forEach(wolf => {
                 const wolfDiv = document.createElement('div');
@@ -2062,24 +2206,40 @@ class SavageGolf {
                     }
                 } else {
                     if (wolf.result === 'wolf_wins') {
-                        resultText = `🐺 Wolf + ${wolf.partner} Win!`;
+                        resultText = `🐺 Wolf + ${SecurityUtils.sanitizeInput(wolf.partner)} Win!`;
                     } else {
-                        resultText = `🐺 Wolf + ${wolf.partner} Lose`;
+                        resultText = `🐺 Wolf + ${SecurityUtils.sanitizeInput(wolf.partner)} Lose`;
                     }
                 }
                 
-                wolfDiv.innerHTML = `
-                    <div class="game-action-header">
-                        <span class="game-action-player">${wolf.wolf}</span>
-                        <span class="game-action-hole">Hole ${wolf.hole}</span>
-                        <button type="button" class="btn-delete" onclick="window.savageGolf.deleteWolfAction(${wolf.id})" title="Delete this Wolf action">
-                            🗑️
-                        </button>
-                    </div>
-                    <div class="game-action-result ${wolf.result === 'wolf_wins' ? 'success' : 'error'}">
-                        ${resultText}
-                    </div>
-                `;
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'game-action-header';
+                
+                const playerSpan = document.createElement('span');
+                playerSpan.className = 'game-action-player';
+                playerSpan.textContent = SecurityUtils.sanitizeInput(wolf.wolf);
+                
+                const holeSpan = document.createElement('span');
+                holeSpan.className = 'game-action-hole';
+                holeSpan.textContent = `Hole ${SecurityUtils.sanitizeInput(wolf.hole)}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete this Wolf action';
+                deleteBtn.onclick = () => this.deleteWolfAction(wolf.id);
+                
+                headerDiv.appendChild(playerSpan);
+                headerDiv.appendChild(holeSpan);
+                headerDiv.appendChild(deleteBtn);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `game-action-result ${wolf.result === 'wolf_wins' ? 'success' : 'error'}`;
+                resultDiv.textContent = resultText;
+                
+                wolfDiv.appendChild(headerDiv);
+                wolfDiv.appendChild(resultDiv);
                 holeDiv.appendChild(wolfDiv);
             });
             
@@ -2148,29 +2308,40 @@ class SavageGolf {
     }
 
     displaySummary(container, summary) {
-        let summaryHTML = '';
+        container.innerHTML = '';
         
         Object.entries(summary).forEach(([player, balance]) => {
             const balanceClass = balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral';
             const balanceText = balance > 0 ? `+$${balance.toFixed(2)}` : 
                               balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : '$0.00';
             
-            summaryHTML += `
-                <div class="summary-item">
-                    <span class="summary-player">${player}</span>
-                    <span class="summary-amount ${balanceClass}">${balanceText}</span>
-                </div>
-            `;
+            const summaryItem = document.createElement('div');
+            summaryItem.className = 'summary-item';
+            
+            const playerSpan = document.createElement('span');
+            playerSpan.className = 'summary-player';
+            playerSpan.textContent = SecurityUtils.sanitizeInput(player);
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.className = `summary-amount ${balanceClass}`;
+            amountSpan.textContent = balanceText;
+            
+            summaryItem.appendChild(playerSpan);
+            summaryItem.appendChild(amountSpan);
+            container.appendChild(summaryItem);
         });
-        
-        container.innerHTML = summaryHTML;
     }
 
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
         if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0 && this.gameActions.wolf.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No activity yet</p>';
+            const noActivityP = document.createElement('p');
+            noActivityP.style.textAlign = 'center';
+            noActivityP.style.color = '#7f8c8d';
+            noActivityP.style.fontStyle = 'italic';
+            noActivityP.textContent = 'No activity yet';
+            container.appendChild(noActivityP);
             return;
         }
         
@@ -2710,7 +2881,11 @@ class SavageGolf {
         if (!select) return;
         
         // Clear existing options
-        select.innerHTML = '<option value="">Winner...</option>';
+        select.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Winner...';
+        select.appendChild(defaultOption);
         
         // Add team options for 4-player games
         if (this.gameConfigs.skins?.teamNames?.team1) {
@@ -2739,7 +2914,11 @@ class SavageGolf {
         if (!select) return;
         
         // Clear existing options except the first placeholder
-        select.innerHTML = '<option value="">Select...</option>';
+        select.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select...';
+        select.appendChild(defaultOption);
         
         // Add new options
         options.forEach(option => {

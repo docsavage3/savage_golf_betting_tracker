@@ -11,6 +11,7 @@ import {
     HTML_TEMPLATES,
     VALIDATION_RULES
 } from '../constants.js';
+import { SecurityUtils } from '../utils/security.js';
 
 export class PlayerManager {
     constructor(uiManager) {
@@ -197,7 +198,11 @@ export class PlayerManager {
         TEAM_CONFIG.TEAM_IDS.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (select) {
-                select.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+                select.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select player...';
+                select.appendChild(defaultOption);
                 
                 playerNames.forEach(player => {
                     const option = document.createElement('option');
@@ -250,7 +255,11 @@ export class PlayerManager {
                 
                 // Clear and repopulate
                 if (select) {
-                    select.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+                    select.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select player...';
+                    select.appendChild(defaultOption);
                     
                     // Get all player names
                     const playerNames = this.getCurrentPlayerNames();
@@ -287,7 +296,11 @@ export class PlayerManager {
             const select = document.getElementById(selectId);
             if (select) {
                 select.value = '';
-                select.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+                select.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select player...';
+                select.appendChild(defaultOption);
             }
         });
     }
@@ -358,6 +371,15 @@ export class PlayerManager {
             return {
                 success: false,
                 message: 'Please enter all player names'
+            };
+        }
+
+        // Enhanced security validation using SecurityUtils
+        const invalidNames = playerNames.filter(name => !SecurityUtils.validatePlayerName(name));
+        if (invalidNames.length > 0) {
+            return {
+                success: false,
+                message: 'Player names contain invalid characters. Only letters, numbers, spaces, hyphens, apostrophes, and periods are allowed.'
             };
         }
 

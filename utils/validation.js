@@ -10,6 +10,7 @@ import {
     MESSAGES,
     DEFAULTS
 } from '../constants.js';
+import { SecurityUtils } from './security.js';
 
 export class ValidationManager {
     constructor(uiManager) {

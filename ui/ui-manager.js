@@ -173,7 +173,11 @@ export class UIManager {
         const holeInput = document.getElementById('murphHole');
         
         // Populate player select
-        playerSelect.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+        playerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select player...';
+        playerSelect.appendChild(defaultOption);
         players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
@@ -258,7 +262,11 @@ export class UIManager {
         const holeInput = document.getElementById('kpHole');
         
         // Populate player select
-        playerSelect.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+        playerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select player...';
+        playerSelect.appendChild(defaultOption);
         players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
@@ -289,7 +297,11 @@ export class UIManager {
         const holeInput = document.getElementById('snakeHole');
         
         // Populate player select
-        playerSelect.innerHTML = HTML_TEMPLATES.SELECT_OPTION;
+        playerSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select player...';
+        playerSelect.appendChild(defaultOption);
         players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
