@@ -478,6 +478,7 @@ class SavageGolf {
      */
     restoreGameState(savedState) {
         try {
+            console.log('restoreGameState called with:', savedState);
     
             
             // Restore basic game configuration
@@ -487,6 +488,10 @@ class SavageGolf {
             this.currentHole = savedState.currentHole || DEFAULTS.STARTING_HOLE;
             this.gameStarted = savedState.gameStarted || false;
             this.currentPage = savedState.currentPage || PAGE_NAMES.NAVIGATION;
+            
+            console.log('After restore - gameConfigs:', this.gameConfigs);
+            console.log('After restore - players:', this.players);
+            console.log('After restore - requiredPlayers:', this.requiredPlayers);
 
             
 
@@ -2668,6 +2673,11 @@ class SavageGolf {
     }
     
     updateQuickActionsVisibility() {
+        console.log('updateQuickActionsVisibility called');
+        console.log('Current gameConfigs:', this.gameConfigs);
+        console.log('Current players:', this.players);
+        console.log('Current requiredPlayers:', this.requiredPlayers);
+        
         const quickCards = {
             murph: document.getElementById('quickMurphCard'),
             skins: document.getElementById('quickSkinsCard'),
@@ -2676,11 +2686,16 @@ class SavageGolf {
             wolf: document.getElementById('quickWolfCard')
         };
         
+        console.log('Quick card elements found:', quickCards);
+        
         Object.entries(quickCards).forEach(([gameType, card]) => {
+            console.log(`Checking ${gameType}: card exists: ${!!card}, enabled: ${this.gameConfigs[gameType]?.enabled}`);
             if (card && this.gameConfigs[gameType]?.enabled) {
+                console.log(`Showing ${gameType} quick action card`);
                 card.style.display = 'block';
                 this.populateQuickActionDropdowns(gameType);
             } else if (card) {
+                console.log(`Hiding ${gameType} quick action card`);
                 card.style.display = 'none';
             }
         });
