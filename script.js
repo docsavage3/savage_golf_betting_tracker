@@ -32,6 +32,7 @@ import { ValidationManager } from './utils/validation.js';
 import { GameManager } from './managers/game-manager.js';
 import { StorageManager } from './managers/storage-manager.js';
 import { SecurityUtils } from './utils/security.js';
+import { AnalyticsUtils } from './utils/analytics.js';
 
 class SavageGolf {
     constructor() {
@@ -184,6 +185,14 @@ class SavageGolf {
     }
 
     showPage(pageName) {
+        // Track page navigation analytics
+        if (this.currentPage && this.currentPage !== pageName) {
+            AnalyticsUtils.trackNavigation(this.currentPage, pageName);
+        }
+        
+        // Track page view
+        AnalyticsUtils.trackPageView(pageName, `Savage Golf - ${pageName}`);
+        
         // Use UIManager to handle page display
         this.ui.showPage(pageName, this.gameConfigs);
         this.currentPage = pageName;
@@ -317,6 +326,10 @@ class SavageGolf {
         // Restore the game state
         this.restoreGameState(savedState);
         
+        // Track game resume analytics
+        const resumedGames = Object.keys(this.gameConfigs || {});
+        AnalyticsUtils.trackGameResume(resumedGames, this.currentHole);
+        
         // Navigate directly to the game navigation page
         this.showPage('navigation');
         
@@ -371,12 +384,9 @@ class SavageGolf {
 
             this.restoreGameState(savedState);
             
-            
-            
-            // Check if game actions are properly restored
-            
-            
-            // Check if game instances are properly restored
+            // Track game resume analytics
+            const resumedGames = Object.keys(this.gameConfigs || {});
+            AnalyticsUtils.trackGameResume(resumedGames, this.currentHole);
             
             // Navigate to the game navigation page to continue playing
             this.showPage('navigation');
@@ -833,10 +843,12 @@ class SavageGolf {
         
 
         
-        // Auto-save game state
+                // Auto-save game state
         this.saveGameState();
-        
 
+        // Track game start in analytics
+        const selectedGames = Object.keys(this.gameConfigs);
+        AnalyticsUtils.trackGameStart(selectedGames, this.requiredPlayers, this.gameConfigs);
         
         // Show success message
         this.ui.showNotification('Game started! Good luck!', 'success');
@@ -1234,6 +1246,9 @@ class SavageGolf {
 
     // Murph Game Methods
     showMurphModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('murph', 'open');
+        
         // Use UIManager to show modal
         this.ui.showMurphModal(this.players, this.currentHole);
         
@@ -1242,6 +1257,9 @@ class SavageGolf {
     }
 
     hideMurphModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('murph', 'close');
+        
         this.ui.hideMurphModal();
     }
 
@@ -1274,6 +1292,13 @@ class SavageGolf {
         // Also add to legacy for backwards compatibility
         this.gameActions.murph.push(murphCall);
         
+        // Track modal save analytics
+        AnalyticsUtils.trackGameAction('murph', 'modal_action', hole, {
+            player: player,
+            result: result
+        });
+        AnalyticsUtils.trackModalInteraction('murph', 'save');
+        
         // Hide modal and update display
         this.hideMurphModal();
         this.updateGameDisplay();
@@ -1288,6 +1313,9 @@ class SavageGolf {
 
     // Skins Game Methods
     showSkinsModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('skins', 'open');
+        
         const modal = document.getElementById('skinsModal');
         const holeInput = document.getElementById('skinsHole');
         
@@ -1359,6 +1387,9 @@ class SavageGolf {
     }
 
     hideSkinsModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('skins', 'close');
+        
         document.getElementById('skinsModal').style.display = 'none';
     }
 
@@ -1401,6 +1432,13 @@ class SavageGolf {
             this.gameConfigs.skins.carryoverCount = 1;
         }
         
+        // Track modal save analytics
+        AnalyticsUtils.trackGameAction('skins', 'modal_action', hole, {
+            winner: winner,
+            carryoverCount: currentCarryover
+        });
+        AnalyticsUtils.trackModalInteraction('skins', 'save');
+        
         // Auto-save game state
         this.saveGameState();
         
@@ -1425,6 +1463,9 @@ class SavageGolf {
 
     // KP Game Methods
     showKPModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('kp', 'open');
+        
         const modal = document.getElementById('kpModal');
         const playerSelect = document.getElementById('kpWinner');
         const holeInput = document.getElementById('kpHole');
@@ -1445,6 +1486,9 @@ class SavageGolf {
     }
 
     hideKPModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('kp', 'close');
+        
         document.getElementById('kpModal').style.display = 'none';
     }
 
@@ -1474,6 +1518,12 @@ class SavageGolf {
             this.gameInstances.kp.addAction(kpAction);
         }
         
+        // Track modal save analytics
+        AnalyticsUtils.trackGameAction('kp', 'modal_action', hole, {
+            winner: winner
+        });
+        AnalyticsUtils.trackModalInteraction('kp', 'save');
+        
         // Auto-save game state
         this.saveGameState();
         
@@ -1487,6 +1537,9 @@ class SavageGolf {
 
     // Snake Game Methods
     showSnakeModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('snake', 'open');
+        
         const modal = document.getElementById('snakeModal');
         const playerSelect = document.getElementById('snakePlayer');
         const holeInput = document.getElementById('snakeHole');
@@ -1511,6 +1564,9 @@ class SavageGolf {
     }
 
     hideSnakeModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('snake', 'close');
+        
         document.getElementById('snakeModal').style.display = 'none';
     }
 
@@ -1540,6 +1596,12 @@ class SavageGolf {
             this.gameInstances.snake.addAction(snakeAction);
         }
         
+        // Track modal save analytics
+        AnalyticsUtils.trackGameAction('snake', 'modal_action', hole, {
+            player: player
+        });
+        AnalyticsUtils.trackModalInteraction('snake', 'save');
+        
         // Auto-save game state
         this.saveGameState();
         
@@ -1553,6 +1615,9 @@ class SavageGolf {
 
     // Wolf Game Methods
     showWolfModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('wolf', 'open');
+        
         const modal = document.getElementById('wolfModal');
         const holeInput = document.getElementById('wolfHole');
         const wolfPlayerSelect = document.getElementById('wolfPlayer');
@@ -1654,6 +1719,9 @@ class SavageGolf {
     }
 
     hideWolfModal() {
+        // Track modal interaction
+        AnalyticsUtils.trackModalInteraction('wolf', 'close');
+        
         const modal = document.getElementById('wolfModal');
         modal.style.display = 'none';
         
@@ -1705,6 +1773,15 @@ class SavageGolf {
         // Also add to legacy for backwards compatibility
         this.gameActions.wolf.push(wolfAction);
         // Wolf action added to legacy system
+        
+        // Track modal save analytics
+        AnalyticsUtils.trackGameAction('wolf', 'modal_action', hole, {
+            wolf: wolf,
+            wolfChoice: wolfChoice,
+            partner: partner,
+            result: result
+        });
+        AnalyticsUtils.trackModalInteraction('wolf', 'save');
         
         // Auto-save game state
         this.saveGameState();
@@ -2993,6 +3070,12 @@ class SavageGolf {
         
         this.gameManager.addGameAction('murph', action);
         
+        // Track quick action analytics
+        AnalyticsUtils.trackGameAction('murph', 'quick_action', this.currentHole, {
+            player: player,
+            result: result
+        });
+        
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
         
@@ -3021,6 +3104,11 @@ class SavageGolf {
         
         this.gameManager.addGameAction('skins', action);
         
+        // Track quick action analytics
+        AnalyticsUtils.trackGameAction('skins', 'quick_action', this.currentHole, {
+            winner: winner
+        });
+        
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
         
@@ -3048,6 +3136,11 @@ class SavageGolf {
         
         this.gameManager.addGameAction('kp', action);
         
+        // Track quick action analytics
+        AnalyticsUtils.trackGameAction('kp', 'quick_action', this.currentHole, {
+            player: player
+        });
+        
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
         
@@ -3074,6 +3167,11 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('snake', action);
+        
+        // Track quick action analytics
+        AnalyticsUtils.trackGameAction('snake', 'quick_action', this.currentHole, {
+            player: player
+        });
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
@@ -3112,6 +3210,14 @@ class SavageGolf {
         };
         
         this.gameManager.addGameAction('wolf', action);
+        
+        // Track quick action analytics
+        AnalyticsUtils.trackGameAction('wolf', 'quick_action', this.currentHole, {
+            wolf: wolf,
+            choice: choice,
+            partner: partner,
+            result: result
+        });
         
         // Update local gameActions reference
         this.gameActions = this.gameManager.gameActions;
