@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com https://analytics.google.com;">
     <title>Savage Side Bets</title>
     <meta name="copyright" content="Copyright (c) 2025 Daniel Savage. All rights reserved.">
     <meta name="license" content="PROPRIETARY - All rights reserved">
@@ -11,6 +11,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6W94NSNW6H"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-6W94NSNW6H', {
+            privacy_flags: {
+                analytics_storage: 'granted',
+                ad_storage: 'denied'
+            }
+        });
+    </script>
+    
     <link rel="stylesheet" href="styles.css?v=simplex">
 </head>
 <body>
@@ -687,6 +702,7 @@
     <script type="module" src="managers/game-manager.js?v=2"></script>
     <script type="module" src="managers/storage-manager.js"></script>
     <script type="module" src="utils/validation.js"></script>
+    <script type="module" src="utils/analytics.js"></script>
     <script type="module" src="games/index.js"></script>
             <script type="module" src="script.js?v=5"></script>
 </body>
