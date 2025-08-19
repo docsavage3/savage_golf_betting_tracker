@@ -33,6 +33,11 @@ import { GameManager } from './managers/game-manager.js';
 import { StorageManager } from './managers/storage-manager.js';
 import { SecurityUtils } from './utils/security.js';
 import { AnalyticsUtils } from './utils/analytics.js';
+import { GameController } from './controllers/GameController.js';
+import { MenuController } from './controllers/MenuController.js';
+import { PageManager } from './managers/page-manager.js';
+import { StateManager } from './managers/state-manager.js';
+import ErrorHandler from './utils/error-handler.js';
 
 class SavageGolf {
     constructor() {
@@ -53,13 +58,50 @@ class SavageGolf {
         // Initialize Storage Manager
         this.storage = new StorageManager();
         
+        // Initialize Game Controller
+        this.gameController = new GameController(
+            this.gameManager, 
+            this.playerManager, 
+            this.ui, 
+            this.storage, 
+            this.validator
+        );
+        
+        // Set up callbacks for GameController to call UI methods
+        this.gameController.setCallbacks({
+            showPage: (pageName) => {
+                this.syncLegacyProperties();
+                this.currentPage = pageName; // Update legacy currentPage property
+                this.pageManager.showPage(pageName);
+            },
+            updatePreviousHoleButton: () => this.updatePreviousHoleButton(),
+            updateGameDisplay: () => this.updateGameDisplay(),
+            setupQuickActions: () => this.setupQuickActions(),
+            updateGameNavigationVisibility: () => this.updateGameNavigationVisibility(),
+            showFinalResults: () => this.showFinalResults()
+        });
+        
+        // Initialize Menu Controller
+        this.menuController = new MenuController(this.ui, this.gameController);
+        
+        // Set up callbacks for MenuController
+        this.menuController.setCallbacks({
+            getCurrentPage: () => this.currentPage
+        });
+        
+        // Initialize Page Manager
+        this.pageManager = new PageManager(this.ui, this.gameManager);
+        
+        // Initialize State Manager
+        this.stateManager = new StateManager(this.storage, this.gameManager, this.playerManager, this.ui);
+        
+        // Set up PageManager callback for quick actions
+        this.pageManager.setQuickActionsCallback(() => this.setupQuickActions());
+        
         // Legacy properties for backwards compatibility
-        this.gameConfigs = this.gameManager.gameConfigs;
-        this.gameActions = this.gameManager.gameActions;
+        this.currentHole = this.gameController.getCurrentHole();
         this.gameInstances = this.gameManager.gameInstances;
         this.gameStarted = this.gameManager.gameStarted;
-        this.players = this.gameManager.players;
-        this.requiredPlayers = this.gameManager.requiredPlayers;
         this.currentPage = PAGE_NAMES.NAVIGATION;
         
         this.initializeEventListeners();
@@ -82,9 +124,18 @@ class SavageGolf {
         }
     }
 
+    /**
+     * Synchronize legacy properties with current manager state
+     */
+    syncLegacyProperties() {
+        this.gameInstances = this.gameManager.gameInstances;
+        this.gameStarted = this.gameManager.gameStarted;
+        this.currentHole = this.gameController.getCurrentHole();
+    }
+
     initializeEventListeners() {
         // Game setup
-        document.getElementById(ELEMENT_IDS.START_GAME).addEventListener('click', () => this.startGame());
+        document.getElementById(ELEMENT_IDS.START_GAME).addEventListener('click', () => this.gameController.startGame());
         
         // Game play
         document.getElementById(ELEMENT_IDS.PREVIOUS_HOLE).addEventListener('click', () => this.previousHole());
@@ -93,7 +144,7 @@ class SavageGolf {
         // Complete Game button (appears on hole 18)
         const completeBtn = document.getElementById(ELEMENT_IDS.COMPLETE_GAME);
         if (completeBtn) {
-            completeBtn.addEventListener('click', () => this.completeGameFlow());
+            completeBtn.addEventListener('click', () => this.gameController.completeGameFlow());
         }
         
         // Navigation buttons
@@ -113,25 +164,8 @@ class SavageGolf {
         document.getElementById('backToNav3').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav4').addEventListener('click', () => this.showPage('navigation'));
         
-        // Burger menu toggle
-        document.getElementById('burgerBtn').addEventListener('click', () => this.toggleBurgerMenu());
-        
-        // Burger menu options
-        document.getElementById('cancelGame').addEventListener('click', () => this.cancelGame());
-        document.getElementById('sideGamesInfo').addEventListener('click', () => this.showSideGamesInfo());
-        document.getElementById('aboutApp').addEventListener('click', () => this.showAbout());
-        
-        // Side Games modal
-        document.getElementById('closeSideGames').addEventListener('click', () => this.hideSideGamesModal());
-        
-        // About modal
-        document.getElementById('closeAbout').addEventListener('click', () => this.hideAbout());
-        
         // Cancel game from final results
-        document.getElementById('newGameFromFinal').addEventListener('click', () => this.cancelGame());
-        
-        // Close burger menu when clicking outside
-        document.addEventListener('click', (e) => this.handleOutsideClick(e));
+        document.getElementById('newGameFromFinal').addEventListener('click', () => this.menuController.cancelGame());
         
         // Game navigation controls
         
@@ -195,19 +229,7 @@ class SavageGolf {
             }
         });
         
-        // About modal - close when clicking outside
-        document.getElementById('aboutModal').addEventListener('click', (e) => {
-            if (e.target.id === 'aboutModal') {
-                this.hideAbout();
-            }
-        });
-        
-        // Side Games modal - close when clicking outside
-        document.getElementById('sideGamesModal').addEventListener('click', (e) => {
-            if (e.target.id === 'sideGamesModal') {
-                this.hideSideGamesModal();
-            }
-        });
+
     }
 
     showPage(pageName) {
@@ -220,11 +242,11 @@ class SavageGolf {
         AnalyticsUtils.trackPageView(pageName, `Savage Golf - ${pageName}`);
         
         // Use UIManager to handle page display
-        this.ui.showPage(pageName, this.gameConfigs);
+        this.ui.showPage(pageName, this.gameManager.gameConfigs);
         this.currentPage = pageName;
         
         // Control burger menu visibility
-        this.updateBurgerMenuVisibility(pageName);
+        this.menuController.updateBurgerMenuVisibility(pageName);
         
         // Update the specific page content
         if (pageName === 'murph') {
@@ -239,7 +261,7 @@ class SavageGolf {
             this.updateWolfPage();
         } else if (pageName === 'combined') {
             this.updateCombinedPage();
-        } else if (pageName === 'finalResults') {
+        } else if (pageName === 'final' || pageName === 'finalResults') {
             this.updateFinalResults();
         }
     }
@@ -356,7 +378,7 @@ class SavageGolf {
         this.restoreGameState(savedState);
         
         // Track game resume analytics
-        const resumedGames = Object.keys(this.gameConfigs || {});
+        const resumedGames = Object.keys(this.gameManager.gameConfigs || {});
         AnalyticsUtils.trackGameResume(resumedGames, this.currentHole);
         
         // Navigate directly to the game navigation page
@@ -381,19 +403,19 @@ class SavageGolf {
         this.setupQuickActions();
         
         // Update individual game pages if enabled
-        if (this.gameConfigs.murph?.enabled) {
+        if (this.gameManager.gameConfigs.murph?.enabled) {
             this.updateMurphPage();
         }
-        if (this.gameConfigs.skins?.enabled) {
+        if (this.gameManager.gameConfigs.skins?.enabled) {
             this.updateSkinsPage();
         }
-        if (this.gameConfigs.kp?.enabled) {
+        if (this.gameManager.gameConfigs.kp?.enabled) {
             this.updateKPPage();
         }
-        if (this.gameConfigs.snake?.enabled) {
+        if (this.gameManager.gameConfigs.snake?.enabled) {
             this.updateSnakePage();
         }
-        if (this.gameConfigs.wolf?.enabled) {
+        if (this.gameManager.gameConfigs.wolf?.enabled) {
             this.updateWolfPage();
         }
         
@@ -414,7 +436,7 @@ class SavageGolf {
             this.restoreGameState(savedState);
             
             // Track game resume analytics
-            const resumedGames = Object.keys(this.gameConfigs || {});
+            const resumedGames = Object.keys(this.gameManager.gameConfigs || {});
             AnalyticsUtils.trackGameResume(resumedGames, this.currentHole);
             
             // Navigate to the game navigation page to continue playing
@@ -447,16 +469,16 @@ class SavageGolf {
             this.setupQuickActions();
             
             // Update all game pages to show restored data
-            if (this.gameConfigs.murph?.enabled) {
+            if (this.gameManager.gameConfigs.murph?.enabled) {
                 this.updateMurphPage();
             }
-            if (this.gameConfigs.skins?.enabled) {
+            if (this.gameManager.gameConfigs.skins?.enabled) {
                 this.updateSkinsPage();
             }
-            if (this.gameConfigs.kp?.enabled) {
+            if (this.gameManager.gameConfigs.kp?.enabled) {
                 this.updateKPPage();
             }
-            if (this.gameConfigs.snake?.enabled) {
+            if (this.gameManager.gameConfigs.snake?.enabled) {
                 this.updateSnakePage();
             }
             
@@ -476,7 +498,7 @@ class SavageGolf {
         if (!confirmed) return;
         
         this.storage.clearGameState();
-        this.resetGame();
+        this.gameController.resetGame();
         this.hideResumeGameSection();
         this.ui.showNotification('Starting new game...', 'info');
     }
@@ -490,13 +512,13 @@ class SavageGolf {
         if (!this.gameStarted) return;
 
         const gameState = {
-            gameConfigs: this.gameConfigs,
-            players: this.players,
-            requiredPlayers: this.requiredPlayers,
+            gameConfigs: this.gameManager.gameConfigs,
+            players: this.gameManager.players,
+            requiredPlayers: this.gameManager.requiredPlayers,
             currentHole: this.currentHole,
             gameStarted: this.gameStarted,
             gameCompleted: this.gameManager.gameCompleted,
-            gameActions: this.gameActions,
+            gameActions: this.gameManager.gameActions,
             currentPage: this.currentPage
         };
 
@@ -518,10 +540,7 @@ class SavageGolf {
     restoreGameState(savedState) {
         try {
             
-            // Restore basic game configuration
-            this.gameConfigs = savedState.gameConfigs || {};
-            this.players = savedState.players || [];
-            this.requiredPlayers = savedState.requiredPlayers || DEFAULTS.PLAYER_COUNT;
+                    // Restore basic game configuration (will be done by game manager)
             this.currentHole = savedState.currentHole || DEFAULTS.STARTING_HOLE;
             this.gameStarted = savedState.gameStarted || false;
             this.currentPage = savedState.currentPage || PAGE_NAMES.NAVIGATION;
@@ -532,12 +551,7 @@ class SavageGolf {
             this.gameManager.restoreGameState(savedState);
             
             // Update legacy properties for backwards compatibility
-            this.gameConfigs = this.gameManager.gameConfigs;
-            this.gameActions = this.gameManager.gameActions;
-            this.gameInstances = this.gameManager.gameInstances;
-            this.gameStarted = this.gameManager.gameStarted;
-            this.players = this.gameManager.players;
-            this.requiredPlayers = this.gameManager.requiredPlayers;
+            this.syncLegacyProperties();
 
     
 
@@ -551,8 +565,7 @@ class SavageGolf {
 
     
         } catch (error) {
-            console.error('Failed to restore game state:', error);
-            this.ui.showNotification('Failed to restore previous game', 'error');
+            ErrorHandler.handleStorageError(error, 'restoreGameState');
         }
     }
 
@@ -621,13 +634,13 @@ class SavageGolf {
         }
 
         const gameState = {
-            gameConfigs: this.gameConfigs,
-            players: this.players,
-            requiredPlayers: this.requiredPlayers,
+            gameConfigs: this.gameManager.gameConfigs,
+            players: this.gameManager.players,
+            requiredPlayers: this.gameManager.requiredPlayers,
             currentHole: this.currentHole,
             gameStarted: this.gameStarted,
             gameCompleted: this.gameManager.gameCompleted,
-            gameActions: this.gameActions,
+            gameActions: this.gameManager.gameActions,
             currentPage: this.currentPage
         };
 
@@ -667,7 +680,7 @@ class SavageGolf {
         if (!confirmed) return;
 
         this.storage.clearGameState();
-        this.resetGame();
+        this.gameController.resetGame();
         this.ui.showNotification('Game state cleared successfully', 'success');
     }
 
@@ -775,119 +788,13 @@ class SavageGolf {
         }
     }
 
-    startGame() {
-        // Validate inputs
-        if (!this.validateGameSetup()) return;
-        
-        // Get player information from PlayerManager
-        this.requiredPlayers = this.playerManager.getRequiredPlayers();
-        this.players = this.playerManager.getCurrentPlayerNames().slice(0, this.requiredPlayers);
-        this.playerManager.setPlayers(this.players);
-        
-        // Get game configurations
-        this.gameConfigs = {};
-        const murphChecked = document.getElementById('gameMurph').checked;
-        const skinsChecked = document.getElementById('gameSkins').checked;
-        const kpChecked = document.getElementById('gameKP').checked;
-        const snakeChecked = document.getElementById('gameSnake').checked;
-        const wolfChecked = document.getElementById('gameWolf').checked;
-        
-        if (murphChecked) {
-            this.gameConfigs.murph = {
-                betAmount: parseFloat(document.getElementById('murphBet').value),
-                enabled: true
-            };
-        }
-        
-        if (skinsChecked) {
-            this.gameConfigs.skins = {
-                betAmount: parseFloat(document.getElementById('skinsBet').value),
-                enabled: true,
-                teams: [],
-                carryoverCount: 1 // Start with 1 skin
-            };
-            
-            // Only set up teams if we have 4 players
-            if (this.requiredPlayers === 4) {
-                // Validate team selection
-                if (!this.playerManager.validateTeamSelection()) {
-                    this.ui.showNotification('Please select 4 different players for the two teams.', 'error');
-                    return;
-                }
-                
-                // Get team configuration from PlayerManager
-                const teamConfig = this.playerManager.getTeamConfiguration();
-                this.gameConfigs.skins.teams = teamConfig.teams;
-                this.gameConfigs.skins.teamNames = teamConfig.teamNames;
-            }
-        }
-        
-        if (kpChecked) {
-            this.gameConfigs.kp = {
-                betAmount: parseFloat(document.getElementById('kpBet').value),
-                enabled: true
-            };
-        }
-        
-        if (snakeChecked) {
-            this.gameConfigs.snake = {
-                betAmount: parseFloat(document.getElementById('snakeBet').value),
-                enabled: true
-            };
-        }
-        
-        if (wolfChecked) {
-            this.gameConfigs.wolf = {
-                betAmount: parseFloat(document.getElementById('wolfBet').value),
-                enabled: true
-            };
-        }
-        
-        // Initialize games using GameManager
-        this.gameManager.initializeGames(this.gameConfigs, this.players, this.requiredPlayers);
-        
-        // Update legacy references
-        this.gameActions = this.gameManager.gameActions;
-        this.gameInstances = this.gameManager.gameInstances;
-        this.gameStarted = this.gameManager.gameStarted;
-        
-        // Hide setup, show navigation
-        document.getElementById('gameSetup').style.display = 'none';
-        this.showPage('navigation');
-        
-        // Scroll to top of the page
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Initialize hole navigation button states
-        this.updatePreviousHoleButton();
-        
-        // Initialize game state
-        this.updateGameDisplay();
-        
-        // Setup quick actions dashboard
-        this.setupQuickActions();
-        
-        // Update navigation button visibility for selected games
-        this.updateGameNavigationVisibility();
-        
 
-        
-                // Auto-save game state
-        this.saveGameState();
-
-        // Track game start in analytics
-        const selectedGames = Object.keys(this.gameConfigs);
-        AnalyticsUtils.trackGameStart(selectedGames, this.requiredPlayers, this.gameConfigs);
-        
-        // Show success message
-        this.ui.showNotification('Game started! Good luck!', 'success');
-    }
 
 
 
     validateGameSetup() {
         // Use ValidationManager for comprehensive validation
-        const validationResult = this.validator.validateGameSetup(this.playerManager, this.requiredPlayers);
+        const validationResult = this.validator.validateGameSetup(this.playerManager, this.gameManager.requiredPlayers);
         
         if (!validationResult.success) {
             // Show the first error message
@@ -989,34 +896,23 @@ class SavageGolf {
     }
 
     endGame() {
-        // Show final results page
-        this.showPage('finalResults');
+        // Show final results page using PageManager
+        this.pageManager.showPage('final');
         
         // Update final results content
         this.updateFinalResults();
     }
 
-    // Complete game flow from navigation at hole 18
-    completeGameFlow() {
-        // Show warning and get confirmation
-        const confirmed = window.confirm('⚠️ WARNING: Completing the game will lock all results and prevent further edits.\n\nAre you sure you want to complete the game and view the final financial summary?');
-        if (!confirmed) return;
+    showFinalResults() {
+        // Show final results page using PageManager
+        this.pageManager.showPage('final');
         
-        // Lock: disable all record buttons and navigation except Combined
-        this.lockEdits();
-        
-        // Navigate to Combined page and render summary + payment instructions
-        this.showPage('combined');
-        this.updateCombinedSummary();
-        this.updateGameBreakdowns();
-        const target = document.getElementById('paymentInstructionsCombined');
-        if (target) {
-            SecurityUtils.setInnerHTML(target, this.generatePaymentInstructions());
-        }
-        
-        // Show notification that game is complete
-        this.ui.showNotification('Game complete! Results are locked. View Combined Total for payment instructions.', 'success');
+        // Update final results content (since PageManager doesn't call our showPage method)
+        this.updateFinalResults();
     }
+
+    // Complete game flow from navigation at hole 18
+
 
     lockEdits() {
         // disable game record buttons
@@ -1048,19 +944,19 @@ class SavageGolf {
         `;
         
         // Individual Game Results
-        if (this.gameConfigs.murph?.enabled && this.gameActions.murph.length > 0) {
+        if (this.gameManager.gameConfigs.murph?.enabled && this.gameManager.gameActions.murph.length > 0) {
             finalResultsHTML += this.generateMurphFinalSummary();
         }
         
-        if (this.gameConfigs.skins?.enabled && this.gameActions.skins.length > 0) {
+        if (this.gameManager.gameConfigs.skins?.enabled && this.gameManager.gameActions.skins.length > 0) {
             finalResultsHTML += this.generateSkinsFinalSummary();
         }
         
-        if (this.gameConfigs.kp?.enabled && this.gameActions.kp.length > 0) {
+        if (this.gameManager.gameConfigs.kp?.enabled && this.gameManager.gameActions.kp.length > 0) {
             finalResultsHTML += this.generateKPFinalSummary();
         }
         
-        if (this.gameConfigs.snake?.enabled && this.gameActions.snake.length > 0) {
+        if (this.gameManager.gameConfigs.snake?.enabled && this.gameManager.gameActions.snake.length > 0) {
             finalResultsHTML += this.generateSnakeFinalSummary();
         }
         
@@ -1081,11 +977,11 @@ class SavageGolf {
                 <div class="final-game-stats">
                     <div class="stat-item">
                         <span class="stat-label">Total Calls:</span>
-                        <span class="stat-value">${this.gameActions.murph.length}</span>
+                        <span class="stat-value">${this.gameManager.gameActions.murph.length}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Bet Amount:</span>
-                        <span class="stat-value">$${this.gameConfigs.murph.betAmount.toFixed(2)}</span>
+                        <span class="stat-value">$${this.gameManager.gameConfigs.murph.betAmount.toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="final-game-summary">
@@ -1110,8 +1006,8 @@ class SavageGolf {
 
     generateSkinsFinalSummary() {
         const skinsSummary = this.calculateSkinsSummary();
-        const totalSkins = this.gameActions.skins.filter(skin => skin.winner !== 'carryover').length;
-        const carryoverSkins = this.gameActions.skins.filter(skin => skin.winner === 'carryover').length;
+        const totalSkins = this.gameManager.gameActions.skins.filter(skin => skin.winner !== 'carryover').length;
+        const carryoverSkins = this.gameManager.gameActions.skins.filter(skin => skin.winner === 'carryover').length;
         
         let html = `
             <div class="final-game-section">
@@ -1127,7 +1023,7 @@ class SavageGolf {
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Bet Amount:</span>
-                        <span class="stat-value">$${this.gameConfigs.skins.betAmount.toFixed(2)}</span>
+                        <span class="stat-value">$${this.gameManager.gameConfigs.skins.betAmount.toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="final-game-summary">
@@ -1152,7 +1048,7 @@ class SavageGolf {
 
     generateKPFinalSummary() {
         const kpSummary = this.calculateKPSummary();
-        const totalKPs = this.gameActions.kp.length;
+        const totalKPs = this.gameManager.gameActions.kp.length;
         
         let html = `
             <div class="final-game-section">
@@ -1164,7 +1060,7 @@ class SavageGolf {
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Bet Amount:</span>
-                        <span class="stat-value">$${this.gameConfigs.kp.betAmount.toFixed(2)}</span>
+                        <span class="stat-value">$${this.gameManager.gameConfigs.kp.betAmount.toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="final-game-summary">
@@ -1189,7 +1085,7 @@ class SavageGolf {
 
     generateSnakeFinalSummary() {
         const snakeSummary = this.calculateSnakeSummary();
-        const totalSnakes = this.gameActions.snake.length;
+        const totalSnakes = this.gameManager.gameActions.snake.length;
         
         let html = `
             <div class="final-game-section">
@@ -1201,7 +1097,7 @@ class SavageGolf {
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Bet Amount:</span>
-                        <span class="stat-value">$${this.gameConfigs.snake.betAmount.toFixed(2)}</span>
+                        <span class="stat-value">$${this.gameManager.gameConfigs.snake.betAmount.toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="final-game-summary">
@@ -1227,19 +1123,19 @@ class SavageGolf {
     generateCombinedFinalSummary() {
         const gameSummaries = {};
         
-        if (this.gameConfigs.murph?.enabled) {
+        if (this.gameManager.gameConfigs.murph?.enabled) {
             gameSummaries.murph = this.calculateMurphSummary();
         }
         
-        if (this.gameConfigs.skins?.enabled) {
+        if (this.gameManager.gameConfigs.skins?.enabled) {
             gameSummaries.skins = this.calculateSkinsSummary();
         }
         
-        if (this.gameConfigs.kp?.enabled) {
+        if (this.gameManager.gameConfigs.kp?.enabled) {
             gameSummaries.kp = this.calculateKPSummary();
         }
         
-        if (this.gameConfigs.snake?.enabled) {
+        if (this.gameManager.gameConfigs.snake?.enabled) {
             gameSummaries.snake = this.calculateSnakeSummary();
         }
         
@@ -1279,7 +1175,7 @@ class SavageGolf {
         AnalyticsUtils.trackModalInteraction('murph', 'open');
         
         // Use UIManager to show modal
-        this.ui.showMurphModal(this.players, this.currentHole);
+        this.ui.showMurphModal(this.gameManager.players, this.currentHole);
         
         // Reset form
         this.ui.clearInput('murphResult');
@@ -1319,7 +1215,7 @@ class SavageGolf {
         }
         
         // Also add to legacy for backwards compatibility
-        this.gameActions.murph.push(murphCall);
+        this.gameManager.gameActions.murph.push(murphCall);
         
         // Track modal save analytics
         AnalyticsUtils.trackGameAction('murph', 'modal_action', hole, {
@@ -1354,7 +1250,7 @@ class SavageGolf {
         // Handle different player counts
 
         
-        if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+        if (this.gameManager.requiredPlayers === 4 && this.gameManager.gameConfigs.skins?.teamNames) {
             // 4 players: Show team options
 
             const winnerSelect = document.getElementById('skinsWinner');
@@ -1367,12 +1263,12 @@ class SavageGolf {
             // Add team options
             const team1Option = document.createElement('option');
             team1Option.value = 'team1';
-            team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+            team1Option.textContent = this.gameManager.gameConfigs.skins.teamNames.team1;
             winnerSelect.appendChild(team1Option);
             
             const team2Option = document.createElement('option');
             team2Option.value = 'team2';
-            team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
+            team2Option.textContent = this.gameManager.gameConfigs.skins.teamNames.team2;
             winnerSelect.appendChild(team2Option);
             
             // Add carryover option
@@ -1390,7 +1286,7 @@ class SavageGolf {
         defaultOption.textContent = 'Select winner...';
         winnerSelect.appendChild(defaultOption);
             
-            this.players.forEach(player => {
+            this.gameManager.players.forEach(player => {
                 const option = document.createElement('option');
                 option.value = player;
                 option.textContent = player;
@@ -1405,8 +1301,8 @@ class SavageGolf {
         }
         
         // Update carryover count
-        if (this.gameConfigs.skins?.carryoverCount) {
-            document.getElementById('skinsCarryoverCount').value = this.gameConfigs.skins.carryoverCount;
+        if (this.gameManager.gameConfigs.skins?.carryoverCount) {
+            document.getElementById('skinsCarryoverCount').value = this.gameManager.gameConfigs.skins.carryoverCount;
         }
         
         // Reset form
@@ -1434,7 +1330,7 @@ class SavageGolf {
         }
         
         // Get current carryover count
-        const currentCarryover = this.gameConfigs.skins.carryoverCount;
+        const currentCarryover = this.gameManager.gameConfigs.skins.carryoverCount;
         
         // Create skins action
         const skinsAction = {
@@ -1446,7 +1342,7 @@ class SavageGolf {
             timestamp: new Date()
         };
         
-        this.gameActions.skins.push(skinsAction);
+        this.gameManager.gameActions.skins.push(skinsAction);
         
         // Also add to game instance if it exists
         if (this.gameInstances && this.gameInstances.skins) {
@@ -1455,10 +1351,10 @@ class SavageGolf {
         
         // Update carryover count based on result
         if (winner === 'carryover') {
-            this.gameConfigs.skins.carryoverCount += 1;
+            this.gameManager.gameConfigs.skins.carryoverCount += 1;
         } else {
             // Reset carryover count when someone wins
-            this.gameConfigs.skins.carryoverCount = 1;
+            this.gameManager.gameConfigs.skins.carryoverCount = 1;
         }
         
         // Track modal save analytics
@@ -1477,11 +1373,11 @@ class SavageGolf {
         
         // Show result message
         if (winner === 'carryover') {
-            this.ui.showNotification(`Hole ${hole}: No winner - ${this.gameConfigs.skins.carryoverCount} skins now carrying over`, 'info');
+            this.ui.showNotification(`Hole ${hole}: No winner - ${this.gameManager.gameConfigs.skins.carryoverCount} skins now carrying over`, 'info');
         } else {
-            if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (winner === 'team1' || winner === 'team2')) {
+            if (this.gameManager.requiredPlayers === 4 && this.gameManager.gameConfigs.skins?.teamNames && (winner === 'team1' || winner === 'team2')) {
                 // 4 players: Show team names
-                const winningTeam = winner === 'team1' ? this.gameConfigs.skins.teamNames.team1 : this.gameConfigs.skins.teamNames.team2;
+                const winningTeam = winner === 'team1' ? this.gameManager.gameConfigs.skins.teamNames.team1 : this.gameManager.gameConfigs.skins.teamNames.team2;
                 this.ui.showNotification(`${winningTeam} won ${currentCarryover} skin${currentCarryover > 1 ? 's' : ''} on hole ${hole}`, 'success');
             } else {
                 // 2-3 players: Show individual player name
@@ -1501,7 +1397,7 @@ class SavageGolf {
         
         // Populate player select
         playerSelect.innerHTML = '<option value="">Select player...</option>';
-        this.players.forEach(player => {
+        this.gameManager.players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
             option.textContent = player;
@@ -1540,7 +1436,7 @@ class SavageGolf {
             timestamp: new Date()
         };
         
-        this.gameActions.kp.push(kpAction);
+        this.gameManager.gameActions.kp.push(kpAction);
         
         // Also add to game instance if it exists
         if (this.gameInstances && this.gameInstances.kp) {
@@ -1579,7 +1475,7 @@ class SavageGolf {
         defaultOption.value = '';
         defaultOption.textContent = 'Select player...';
         playerSelect.appendChild(defaultOption);
-        this.players.forEach(player => {
+        this.gameManager.players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
             option.textContent = player;
@@ -1618,7 +1514,7 @@ class SavageGolf {
             timestamp: new Date()
         };
         
-        this.gameActions.snake.push(snakeAction);
+        this.gameManager.gameActions.snake.push(snakeAction);
         
         // Also add to game instance if it exists
         if (this.gameInstances && this.gameInstances.snake) {
@@ -1663,7 +1559,7 @@ class SavageGolf {
         defaultWolfOption.value = '';
         defaultWolfOption.textContent = 'Select Wolf...';
         wolfPlayerSelect.appendChild(defaultWolfOption);
-        this.players.forEach(player => {
+        this.gameManager.players.forEach(player => {
             const option = document.createElement('option');
             option.value = player;
             option.textContent = player;
@@ -1689,7 +1585,7 @@ class SavageGolf {
         defaultPartnerOption.value = '';
         defaultPartnerOption.textContent = 'Select Partner...';
         partnerSelect.appendChild(defaultPartnerOption);
-        this.players.forEach(player => {
+        this.gameManager.players.forEach(player => {
             if (player !== wolfPlayerSelect.value) {
                 const option = document.createElement('option');
                 option.value = player;
@@ -1710,7 +1606,7 @@ class SavageGolf {
                 defaultPartnerOption.value = '';
                 defaultPartnerOption.textContent = 'Select Partner...';
                 partnerSelect.appendChild(defaultPartnerOption);
-                this.players.forEach(player => {
+                this.gameManager.players.forEach(player => {
                     if (player !== wolfPlayerSelect.value) {
                         const option = document.createElement('option');
                         option.value = player;
@@ -1733,7 +1629,7 @@ class SavageGolf {
             defaultPartnerOption.value = '';
             defaultPartnerOption.textContent = 'Select Partner...';
             partnerSelect.appendChild(defaultPartnerOption);
-            this.players.forEach(player => {
+            this.gameManager.players.forEach(player => {
                 if (player !== wolfPlayerSelect.value) {
                     const option = document.createElement('option');
                     option.value = player;
@@ -1800,7 +1696,7 @@ class SavageGolf {
         }
         
         // Also add to legacy for backwards compatibility
-        this.gameActions.wolf.push(wolfAction);
+        this.gameManager.gameActions.wolf.push(wolfAction);
         // Wolf action added to legacy system
         
         // Track modal save analytics
@@ -1835,15 +1731,15 @@ class SavageGolf {
         this.updateQuickActionsStatus();
         
         // Update current page if it's visible and the game is enabled
-        if (this.currentPage === 'murph' && this.gameConfigs.murph?.enabled) {
+        if (this.currentPage === 'murph' && this.gameManager.gameConfigs.murph?.enabled) {
             this.updateMurphPage();
-        } else if (this.currentPage === 'skins' && this.gameConfigs.skins?.enabled) {
+        } else if (this.currentPage === 'skins' && this.gameManager.gameConfigs.skins?.enabled) {
             this.updateSkinsPage();
-        } else if (this.currentPage === 'kp' && this.gameConfigs.kp?.enabled) {
+        } else if (this.currentPage === 'kp' && this.gameManager.gameConfigs.kp?.enabled) {
             this.updateKPPage();
-        } else if (this.currentPage === 'snake' && this.gameConfigs.snake?.enabled) {
+        } else if (this.currentPage === 'snake' && this.gameManager.gameConfigs.snake?.enabled) {
             this.updateSnakePage();
-        } else if (this.currentPage === 'wolf' && this.gameConfigs.wolf?.enabled) {
+        } else if (this.currentPage === 'wolf' && this.gameManager.gameConfigs.wolf?.enabled) {
             this.updateWolfPage();
         } else if (this.currentPage === 'combined') {
             this.updateCombinedPage();
@@ -1854,8 +1750,8 @@ class SavageGolf {
 
         
         // Update Murph status and styling
-        if (this.gameConfigs.murph?.enabled) {
-            const murphCount = this.gameActions.murph.length;
+        if (this.gameManager.gameConfigs.murph?.enabled) {
+            const murphCount = this.gameManager.gameActions.murph.length;
     
             const murphStatus = document.getElementById('murphStatus');
             if (murphStatus) {
@@ -1878,8 +1774,8 @@ class SavageGolf {
         }
         
         // Update Skins status and styling
-        if (this.gameConfigs.skins?.enabled) {
-            const skinsCount = this.gameActions.skins.length;
+        if (this.gameManager.gameConfigs.skins?.enabled) {
+            const skinsCount = this.gameManager.gameActions.skins.length;
             const skinsStatus = document.getElementById('skinsStatus');
             if (skinsStatus) {
                 skinsStatus.textContent = `${skinsCount} skin${skinsCount !== 1 ? 's' : ''}`;
@@ -1898,8 +1794,8 @@ class SavageGolf {
         }
         
         // Update KP status and styling
-        if (this.gameConfigs.kp?.enabled) {
-            const kpCount = this.gameActions.kp.length;
+        if (this.gameManager.gameConfigs.kp?.enabled) {
+            const kpCount = this.gameManager.gameActions.kp.length;
             const kpStatus = document.getElementById('kpStatus');
             if (kpStatus) {
                 kpStatus.textContent = `${kpCount} KP${kpCount !== 1 ? 's' : ''}`;
@@ -1918,8 +1814,8 @@ class SavageGolf {
         }
         
         // Update Snake status and styling
-        if (this.gameConfigs.snake?.enabled) {
-            const snakeCount = this.gameActions.snake.length;
+        if (this.gameManager.gameConfigs.snake?.enabled) {
+            const snakeCount = this.gameManager.gameActions.snake.length;
             const snakeStatus = document.getElementById('snakeStatus');
             if (snakeStatus) {
                 snakeStatus.textContent = `${snakeCount} snake${snakeCount !== 1 ? 's' : ''}`;
@@ -1938,8 +1834,8 @@ class SavageGolf {
         }
         
         // Update Wolf status and styling
-        if (this.gameConfigs.wolf?.enabled) {
-            const wolfCount = this.gameActions.wolf.length;
+        if (this.gameManager.gameConfigs.wolf?.enabled) {
+            const wolfCount = this.gameManager.gameActions.wolf.length;
             const wolfStatus = document.getElementById('wolfStatus');
             if (wolfStatus) {
                 wolfStatus.textContent = `${wolfCount} hole${wolfCount !== 1 ? 's' : ''}`;
@@ -1962,7 +1858,7 @@ class SavageGolf {
         const container = document.getElementById('murphActionsList');
         container.innerHTML = '';
         
-        if (this.gameActions.murph.length === 0) {
+        if (this.gameManager.gameActions.murph.length === 0) {
             const noDataP = document.createElement('p');
             noDataP.style.textAlign = 'center';
             noDataP.style.color = '#7f8c8d';
@@ -1974,7 +1870,7 @@ class SavageGolf {
         
         // Group by hole
         const callsByHole = {};
-        this.gameActions.murph.forEach(call => {
+        this.gameManager.gameActions.murph.forEach(call => {
             if (!callsByHole[call.hole]) {
                 callsByHole[call.hole] = [];
             }
@@ -2035,7 +1931,7 @@ class SavageGolf {
         const container = document.getElementById('skinsActionsList');
         container.innerHTML = '';
         
-        if (this.gameActions.skins.length === 0) {
+        if (this.gameManager.gameActions.skins.length === 0) {
             const noDataP = document.createElement('p');
             noDataP.style.textAlign = 'center';
             noDataP.style.color = '#7f8c8d';
@@ -2047,7 +1943,7 @@ class SavageGolf {
         
         // Group by hole
         const skinsByHole = {};
-        this.gameActions.skins.forEach(skin => {
+        this.gameManager.gameActions.skins.forEach(skin => {
             if (!skinsByHole[skin.hole]) {
                 skinsByHole[skin.hole] = [];
             }
@@ -2072,12 +1968,12 @@ class SavageGolf {
                 let resultText = '';
                 if (skin.winner === 'carryover') {
                     resultText = `Carryover - ${skin.carryoverCount} skin${skin.carryoverCount > 1 ? 's' : ''} at stake`;
-                } else if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames && (skin.winner === 'team1' || skin.winner === 'team2')) {
+                } else if (this.gameManager.requiredPlayers === 4 && this.gameManager.gameConfigs.skins?.teamNames && (skin.winner === 'team1' || skin.winner === 'team2')) {
                     // 4 players: Show team names
                     if (skin.winner === 'team1') {
-                        resultText = `${SecurityUtils.sanitizeInput(this.gameConfigs.skins.teamNames.team1)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                        resultText = `${SecurityUtils.sanitizeInput(this.gameManager.gameConfigs.skins.teamNames.team1)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                     } else {
-                        resultText = `${SecurityUtils.sanitizeInput(this.gameConfigs.skins.teamNames.team2)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
+                        resultText = `${SecurityUtils.sanitizeInput(this.gameManager.gameConfigs.skins.teamNames.team2)} won ${skin.skinsWon} skin${skin.skinsWon > 1 ? 's' : ''}`;
                     }
                 } else {
                     // 2-3 players: Show individual player name
@@ -2123,7 +2019,7 @@ class SavageGolf {
         const container = document.getElementById('kpActionsList');
         container.innerHTML = '';
         
-        if (this.gameActions.kp.length === 0) {
+        if (this.gameManager.gameActions.kp.length === 0) {
             const noDataP = document.createElement('p');
             noDataP.style.textAlign = 'center';
             noDataP.style.color = '#7f8c8d';
@@ -2135,7 +2031,7 @@ class SavageGolf {
         
         // Group by hole
         const kpsByHole = {};
-        this.gameActions.kp.forEach(kp => {
+        this.gameManager.gameActions.kp.forEach(kp => {
             if (!kpsByHole[kp.hole]) {
                 kpsByHole[kp.hole] = [];
             }
@@ -2196,7 +2092,7 @@ class SavageGolf {
         const container = document.getElementById('snakeActionsList');
         container.innerHTML = '';
         
-        if (this.gameActions.snake.length === 0) {
+        if (this.gameManager.gameActions.snake.length === 0) {
             const noDataP = document.createElement('p');
             noDataP.style.textAlign = 'center';
             noDataP.style.color = '#7f8c8d';
@@ -2208,7 +2104,7 @@ class SavageGolf {
         
         // Group by hole
         const snakesByHole = {};
-        this.gameActions.snake.forEach(snake => {
+        this.gameManager.gameActions.snake.forEach(snake => {
             if (!snakesByHole[snake.hole]) {
                 snakesByHole[snake.hole] = [];
             }
@@ -2269,7 +2165,7 @@ class SavageGolf {
         const container = document.getElementById('wolfActionsList');
         container.innerHTML = '';
         
-        if (this.gameActions.wolf.length === 0) {
+        if (this.gameManager.gameActions.wolf.length === 0) {
             const noDataP = document.createElement('p');
             noDataP.style.textAlign = 'center';
             noDataP.style.color = '#7f8c8d';
@@ -2281,7 +2177,7 @@ class SavageGolf {
         
         // Group by hole
         const wolfByHole = {};
-        this.gameActions.wolf.forEach(wolf => {
+        this.gameManager.gameActions.wolf.forEach(wolf => {
             if (!wolfByHole[wolf.hole]) {
                 wolfByHole[wolf.hole] = [];
             }
@@ -2356,7 +2252,7 @@ class SavageGolf {
     updateMurphSummary() {
         const container = document.getElementById('murphSummary');
         
-        if (this.gameActions.murph.length === 0) {
+        if (this.gameManager.gameActions.murph.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Murph calls yet</p>';
             return;
         }
@@ -2368,7 +2264,7 @@ class SavageGolf {
     updateSkinsSummary() {
         const container = document.getElementById('skinsSummary');
         
-        if (this.gameActions.skins.length === 0) {
+        if (this.gameManager.gameActions.skins.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Skins recorded yet</p>';
             return;
         }
@@ -2380,7 +2276,7 @@ class SavageGolf {
     updateKPSummary() {
         const container = document.getElementById('kpSummary');
         
-        if (this.gameActions.kp.length === 0) {
+        if (this.gameManager.gameActions.kp.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No KPs recorded yet</p>';
             return;
         }
@@ -2392,7 +2288,7 @@ class SavageGolf {
     updateSnakeSummary() {
         const container = document.getElementById('snakeSummary');
         
-        if (this.gameActions.snake.length === 0) {
+        if (this.gameManager.gameActions.snake.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No snakes recorded yet</p>';
             return;
         }
@@ -2404,7 +2300,7 @@ class SavageGolf {
     updateWolfSummary() {
         const container = document.getElementById('wolfSummary');
         
-        if (this.gameActions.wolf.length === 0) {
+        if (this.gameManager.gameActions.wolf.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No Wolf holes recorded yet</p>';
             return;
         }
@@ -2441,7 +2337,7 @@ class SavageGolf {
     updateCombinedSummary() {
         const container = document.getElementById('combinedSummary');
         
-        if (this.gameActions.murph.length === 0 && this.gameActions.skins.length === 0 && this.gameActions.kp.length === 0 && this.gameActions.snake.length === 0 && this.gameActions.wolf.length === 0) {
+        if (this.gameManager.gameActions.murph.length === 0 && this.gameManager.gameActions.skins.length === 0 && this.gameManager.gameActions.kp.length === 0 && this.gameManager.gameActions.snake.length === 0 && this.gameManager.gameActions.wolf.length === 0) {
             const noActivityP = document.createElement('p');
             noActivityP.style.textAlign = 'center';
             noActivityP.style.color = '#7f8c8d';
@@ -2454,23 +2350,23 @@ class SavageGolf {
         // Calculate combined summary
         const gameSummaries = {};
         
-        if (this.gameConfigs.murph?.enabled) {
+        if (this.gameManager.gameConfigs.murph?.enabled) {
             gameSummaries.murph = this.calculateMurphSummary();
         }
         
-        if (this.gameConfigs.skins?.enabled) {
+        if (this.gameManager.gameConfigs.skins?.enabled) {
             gameSummaries.skins = this.calculateSkinsSummary();
         }
         
-        if (this.gameConfigs.kp?.enabled) {
+        if (this.gameManager.gameConfigs.kp?.enabled) {
             gameSummaries.kp = this.calculateKPSummary();
         }
         
-        if (this.gameConfigs.snake?.enabled) {
+        if (this.gameManager.gameConfigs.snake?.enabled) {
             gameSummaries.snake = this.calculateSnakeSummary();
         }
         
-        if (this.gameConfigs.wolf?.enabled) {
+        if (this.gameManager.gameConfigs.wolf?.enabled) {
             gameSummaries.wolf = this.calculateWolfSummary();
         }
         
@@ -2481,7 +2377,7 @@ class SavageGolf {
     updateGameBreakdowns() {
         // Update Murph breakdown
         const murphBreakdownSection = document.getElementById('murphBreakdownSection');
-        if (this.gameConfigs.murph?.enabled) {
+        if (this.gameManager.gameConfigs.murph?.enabled) {
             if (murphBreakdownSection) {
                 murphBreakdownSection.style.display = 'block';
             }
@@ -2498,7 +2394,7 @@ class SavageGolf {
         
         // Update Skins breakdown
         const skinsBreakdownSection = document.getElementById('skinsBreakdownSection');
-        if (this.gameConfigs.skins?.enabled) {
+        if (this.gameManager.gameConfigs.skins?.enabled) {
             if (skinsBreakdownSection) {
                 skinsBreakdownSection.style.display = 'block';
             }
@@ -2515,7 +2411,7 @@ class SavageGolf {
         
         // Update KP breakdown
         const kpBreakdownSection = document.getElementById('kpBreakdownSection');
-        if (this.gameConfigs.kp?.enabled) {
+        if (this.gameManager.gameConfigs.kp?.enabled) {
             if (kpBreakdownSection) {
                 kpBreakdownSection.style.display = 'block';
             }
@@ -2532,7 +2428,7 @@ class SavageGolf {
         
         // Update Snake breakdown
         const snakeBreakdownSection = document.getElementById('snakeBreakdownSection');
-        if (this.gameConfigs.snake?.enabled) {
+        if (this.gameManager.gameConfigs.snake?.enabled) {
             if (snakeBreakdownSection) {
                 snakeBreakdownSection.style.display = 'block';
             }
@@ -2549,7 +2445,7 @@ class SavageGolf {
         
         // Update Wolf breakdown
         const wolfBreakdownSection = document.getElementById('wolfBreakdownSection');
-        if (this.gameConfigs.wolf?.enabled) {
+        if (this.gameManager.gameConfigs.wolf?.enabled) {
             if (wolfBreakdownSection) {
                 wolfBreakdownSection.style.display = 'block';
             }
@@ -2615,7 +2511,7 @@ class SavageGolf {
         
         // Legacy method for backwards compatibility
         const combinedBalances = {};
-        this.players.forEach(player => {
+        this.gameManager.players.forEach(player => {
             combinedBalances[player] = 0;
         });
         
@@ -2630,168 +2526,22 @@ class SavageGolf {
 
 
 
-    resetGame() {
-        // Show confirmation dialog before clearing saved game
-        const confirmed = window.confirm('This will cancel the current game and clear all progress. Are you sure?');
-        if (!confirmed) return;
-        
-        // Clear saved game state from localStorage
-        this.storage.clearGameState();
-        
-        // Reset using managers
-        this.gameManager.resetGames();
-        this.playerManager.reset();
-        
-        // Update legacy references
-        this.players = [];
-        this.gameConfigs = {};
-        this.gameActions = this.gameManager.gameActions;
-        this.gameStarted = this.gameManager.gameStarted;
-        this.currentHole = 1;
-        this.currentPage = 'setup';
-        this.requiredPlayers = DEFAULTS.PLAYER_COUNT; // Reset to default 4 players
-        
 
-        
-        // Reset form inputs (with null checks)
-        const betInputs = [
-            { id: 'murphBet', value: '1.00' },
-            { id: 'skinsBet', value: '1.00' },
-            { id: 'kpBet', value: '1.00' },
-            { id: 'snakeBet', value: '1.00' },
-            { id: 'wolfBet', value: '1.00' }
-        ];
-        
-        betInputs.forEach(({ id, value }) => {
-            const input = document.getElementById(id);
-            if (input) {
-                input.value = value;
-            }
-        });
-        
-        const gameCheckboxes = [
-            'gameMurph', 'gameSkins', 'gameKP', 'gameSnake'
-        ];
-        
-        gameCheckboxes.forEach(checkboxId => {
-            const checkbox = document.getElementById(checkboxId);
-            if (checkbox) {
-                checkbox.checked = false;
-            }
-        });
-        
-        // Reset player inputs
-        const playerInputs = document.querySelectorAll('.player-input input');
-        if (playerInputs.length > 0) {
-            playerInputs.forEach(input => input.value = '');
-        }
-        
-        // PlayerManager.reset() already handles player-related cleanup
-        
-        // PlayerManager.reset() already handles team selection cleanup
-        
-        // Reset display (with null checks)
-        const holeDisplayElement = document.getElementById('holeDisplay');
-        
-        if (holeDisplayElement) {
-            holeDisplayElement.textContent = '1';
-        }
-        
-        // Reset action lists (with null checks)
-        const actionListElements = [
-            'murphActionsList', 'skinsActionsList', 'kpActionsList', 'snakeActionsList'
-        ];
-        actionListElements.forEach(elementId => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.innerHTML = '';
-            }
-        });
-        
-        // Reset summary elements (with null checks)
-        const summaryElements = [
-            'murphSummary', 'skinsSummary', 'kpSummary', 'snakeSummary', 'combinedSummary'
-        ];
-        summaryElements.forEach(elementId => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.innerHTML = '';
-            }
-        });
-        
-        // Reset breakdown elements (with null checks)
-        const breakdownElements = [
-            'murphBreakdown', 'skinsBreakdown', 'kpBreakdown', 'snakeBreakdown'
-        ];
-        breakdownElements.forEach(elementId => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.innerHTML = '';
-            }
-        });
-        
-        // Reset breakdown section visibility
-        const breakdownSections = ['murphBreakdownSection', 'skinsBreakdownSection', 'kpBreakdownSection', 'snakeBreakdownSection'];
-        breakdownSections.forEach(sectionId => {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.style.display = 'none';
-            }
-        });
-        
-        // Show setup, hide all game pages (with null checks)
-        const gameSetupElement = document.getElementById('gameSetup');
-        const gameNavigationElement = document.getElementById('gameNavigation');
-        const gamePageElements = [
-            'murphPage', 'skinsPage', 'kpPage', 'snakePage', 'combinedPage', 'finalResults'
-        ];
-        
-        if (gameSetupElement) {
-            gameSetupElement.style.display = 'block';
-        }
-        if (gameNavigationElement) {
-            gameNavigationElement.style.display = 'none';
-        }
-        
-        gamePageElements.forEach(pageId => {
-            const pageElement = document.getElementById(pageId);
-            if (pageElement) {
-                pageElement.style.display = 'none';
-            }
-        });
-        
-        // Reset game sections
-        this.toggleGameSection('murph');
-        this.toggleGameSection('skins');
-        this.toggleGameSection('kp');
-        this.toggleGameSection('snake');
-        
-        // Set initial navigation button visibility
-        this.updateGameNavigationVisibility();
-        
-        // Reset previous hole button state
-        this.updatePreviousHoleButton();
-        
-        // Navigate back to setup page
-        this.showPage('setup');
-        
-        this.ui.showNotification('Game reset! Ready for a new round.', 'info');
-    }
 
     deleteMurphCall(callId) {
         // Find the call to delete
-        const callIndex = this.gameActions.murph.findIndex(call => call.id === callId);
+        const callIndex = this.gameManager.gameActions.murph.findIndex(call => call.id === callId);
         if (callIndex === -1) {
             this.ui.showNotification('Murph call not found.', 'error');
             return;
         }
         
-        const call = this.gameActions.murph[callIndex];
+        const call = this.gameManager.gameActions.murph[callIndex];
         
         // Show confirmation dialog
         if (confirm(`Are you sure you want to delete this Murph call?\n\n${call.player} on Hole ${call.hole} - ${call.result === 'success' ? 'Made it' : 'Failed'}`)) {
             // Remove the call
-            this.gameActions.murph.splice(callIndex, 1);
+            this.gameManager.gameActions.murph.splice(callIndex, 1);
             
             // Update display
             this.updateGameDisplay();
@@ -2803,27 +2553,27 @@ class SavageGolf {
 
     deleteSkinsAction(actionId) {
         // Find the action to delete
-        const actionIndex = this.gameActions.skins.findIndex(action => action.id === actionId);
+        const actionIndex = this.gameManager.gameActions.skins.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
             this.ui.showNotification('Skins action not found.', 'error');
             return;
         }
         
-        const action = this.gameActions.skins[actionIndex];
+        const action = this.gameManager.gameActions.skins[actionIndex];
         
         // Show confirmation dialog
         let actionDescription = '';
         if (action.winner === 'team1') {
-            actionDescription = `${this.gameConfigs.skins.teamNames.team1} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
+            actionDescription = `${this.gameManager.gameConfigs.skins.teamNames.team1} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
         } else if (action.winner === 'team2') {
-            actionDescription = `${this.gameConfigs.skins.teamNames.team2} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
+            actionDescription = `${this.gameManager.gameConfigs.skins.teamNames.team2} won ${action.skinsWon} skin${action.skinsWon > 1 ? 's' : ''}`;
         } else {
             actionDescription = `Carryover - ${action.carryoverCount} skin${action.carryoverCount > 1 ? 's' : ''} at stake`;
         }
         
         if (confirm(`Are you sure you want to delete this Skins action?\n\nHole ${action.hole}: ${actionDescription}`)) {
             // Remove the action
-            this.gameActions.skins.splice(actionIndex, 1);
+            this.gameManager.gameActions.skins.splice(actionIndex, 1);
             
             // Recalculate carryover count if this was a carryover action
             if (action.winner === 'carryover') {
@@ -2840,18 +2590,18 @@ class SavageGolf {
 
     deleteKPAction(actionId) {
         // Find the action to delete
-        const actionIndex = this.gameActions.kp.findIndex(action => action.id === actionId);
+        const actionIndex = this.gameManager.gameActions.kp.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
             this.ui.showNotification('KP action not found.', 'error');
             return;
         }
         
-        const action = this.gameActions.kp[actionIndex];
+        const action = this.gameManager.gameActions.kp[actionIndex];
         
         // Show confirmation dialog
         if (confirm(`Are you sure you want to delete this KP action?\n\n${action.winner} got closest to the pin on Hole ${action.hole}`)) {
             // Remove the action
-            this.gameActions.kp.splice(actionIndex, 1);
+            this.gameManager.gameActions.kp.splice(actionIndex, 1);
             
             // Update display
             this.updateGameDisplay();
@@ -2863,18 +2613,18 @@ class SavageGolf {
 
     deleteSnakeAction(actionId) {
         // Find the action to delete
-        const actionIndex = this.gameActions.snake.findIndex(action => action.id === actionId);
+        const actionIndex = this.gameManager.gameActions.snake.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
             this.ui.showNotification('Snake action not found.', 'error');
             return;
         }
         
-        const action = this.gameActions.snake[actionIndex];
+        const action = this.gameManager.gameActions.snake[actionIndex];
         
         // Show confirmation dialog
         if (confirm(`Are you sure you want to delete this Snake action?\n\n${action.player} got a snake on Hole ${action.hole}`)) {
             // Remove the action
-            this.gameActions.snake.splice(actionIndex, 1);
+            this.gameManager.gameActions.snake.splice(actionIndex, 1);
             
             // Update display
             this.updateGameDisplay();
@@ -2886,13 +2636,13 @@ class SavageGolf {
 
     deleteWolfAction(actionId) {
         // Find the action to delete
-        const actionIndex = this.gameActions.wolf.findIndex(action => action.id === actionId);
+        const actionIndex = this.gameManager.gameActions.wolf.findIndex(action => action.id === actionId);
         if (actionIndex === -1) {
             this.ui.showNotification('Wolf action not found.', 'error');
             return;
         }
         
-        const action = this.gameActions.wolf[actionIndex];
+        const action = this.gameManager.gameActions.wolf[actionIndex];
         
         // Show confirmation dialog
         let actionDescription = '';
@@ -2904,7 +2654,7 @@ class SavageGolf {
         
         if (confirm(`Are you sure you want to delete this Wolf action?\n\nHole ${action.hole}: ${actionDescription}`)) {
             // Remove the action
-            this.gameActions.wolf.splice(actionIndex, 1);
+            this.gameManager.gameActions.wolf.splice(actionIndex, 1);
             
             // Update display
             this.updateGameDisplay();
@@ -2916,16 +2666,16 @@ class SavageGolf {
 
     recalculateCarryoverCount() {
         // Find the most recent carryover action to determine current carryover count
-        const carryoverActions = this.gameActions.skins
+        const carryoverActions = this.gameManager.gameActions.skins
             .filter(action => action.winner === 'carryover')
             .sort((a, b) => b.hole - a.hole); // Sort by hole descending
         
         if (carryoverActions.length > 0) {
             // Get the carryover count from the most recent carryover
-            this.gameConfigs.skins.carryoverCount = carryoverActions[0].carryoverCount;
+            this.gameManager.gameConfigs.skins.carryoverCount = carryoverActions[0].carryoverCount;
         } else {
             // No carryovers, reset to 1
-            this.gameConfigs.skins.carryoverCount = 1;
+            this.gameManager.gameConfigs.skins.carryoverCount = 1;
         }
     }
 
@@ -2954,7 +2704,7 @@ class SavageGolf {
         };
         
         Object.entries(quickCards).forEach(([gameType, card]) => {
-            if (card && this.gameConfigs[gameType]?.enabled) {
+            if (card && this.gameManager.gameConfigs[gameType]?.enabled) {
                 card.style.display = 'block';
                 this.populateQuickActionDropdowns(gameType);
             } else if (card) {
@@ -2965,21 +2715,21 @@ class SavageGolf {
     
     populateQuickActionDropdowns(gameType) {
         if (gameType === 'murph') {
-            this.populateDropdown('quickMurphPlayer', this.players);
+            this.populateDropdownIfEmpty('quickMurphPlayer', this.gameManager.players);
         } else if (gameType === 'skins') {
             // For Skins, show team options only for 4 players, individual players for 2-3 players
-            if (this.requiredPlayers === 4 && this.gameConfigs.skins?.teamNames) {
+            if (this.gameManager.requiredPlayers === 4 && this.gameManager.gameConfigs.skins?.teamNames) {
                 this.populateSkinsTeamDropdown();
             } else {
-                this.populateDropdown('quickSkinsWinner', this.players);
+                this.populateDropdownIfEmpty('quickSkinsWinner', this.gameManager.players);
             }
         } else if (gameType === 'kp') {
-            this.populateDropdown('quickKPPlayer', this.players);
+            this.populateDropdownIfEmpty('quickKPPlayer', this.gameManager.players);
         } else if (gameType === 'snake') {
-            this.populateDropdown('quickSnakePlayer', this.players);
+            this.populateDropdownIfEmpty('quickSnakePlayer', this.gameManager.players);
         } else if (gameType === 'wolf') {
-            this.populateDropdown('quickWolfPlayer', this.players);
-            this.populateDropdown('quickWolfPartner', this.players);
+            this.populateDropdownIfEmpty('quickWolfPlayer', this.gameManager.players);
+            this.populateDropdownIfEmpty('quickWolfPartner', this.gameManager.players);
         }
     }
     
@@ -2995,17 +2745,17 @@ class SavageGolf {
         select.appendChild(defaultOption);
         
         // Add team options for 4-player games
-        if (this.gameConfigs.skins?.teamNames?.team1) {
+        if (this.gameManager.gameConfigs.skins?.teamNames?.team1) {
             const team1Option = document.createElement('option');
             team1Option.value = 'team1';
-            team1Option.textContent = this.gameConfigs.skins.teamNames.team1;
+            team1Option.textContent = this.gameManager.gameConfigs.skins.teamNames.team1;
             select.appendChild(team1Option);
         }
         
-        if (this.gameConfigs.skins?.teamNames?.team2) {
+        if (this.gameManager.gameConfigs.skins?.teamNames?.team2) {
             const team2Option = document.createElement('option');
             team2Option.value = 'team2';
-            team2Option.textContent = this.gameConfigs.skins.teamNames.team2;
+            team2Option.textContent = this.gameManager.gameConfigs.skins.teamNames.team2;
             select.appendChild(team2Option);
         }
         
@@ -3018,22 +2768,66 @@ class SavageGolf {
     
     populateDropdown(selectId, options) {
         const select = document.getElementById(selectId);
-        if (!select) return;
+        if (!select) {
+            console.log(`Select element not found: ${selectId}`);
+            return;
+        }
+        
+        // Store current value before repopulating
+        const currentValue = select.value;
+        console.log(`Populating dropdown ${selectId} with options:`, options, `(current value: '${currentValue}')`);
         
         // Clear existing options except the first placeholder
         select.innerHTML = '';
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
-        defaultOption.textContent = 'Select...';
+        // Use specific placeholder text based on the select element
+        if (selectId.includes('Player') || selectId.includes('Winner')) {
+            defaultOption.textContent = 'Select player...';
+        } else if (selectId.includes('Result')) {
+            defaultOption.textContent = 'Result...';
+        } else if (selectId.includes('Choice')) {
+            defaultOption.textContent = 'Choice...';
+        } else if (selectId.includes('Partner')) {
+            defaultOption.textContent = 'Partner...';
+        } else {
+            defaultOption.textContent = 'Select...';
+        }
         select.appendChild(defaultOption);
         
         // Add new options
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            select.appendChild(optionElement);
-        });
+        if (options && Array.isArray(options)) {
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+            
+            // Restore previous value if it still exists in the new options
+            if (currentValue && options.includes(currentValue)) {
+                select.value = currentValue;
+                console.log(`Restored value '${currentValue}' to ${selectId}`);
+            }
+        } else {
+            console.log(`Invalid options for ${selectId}:`, options);
+        }
+    }
+    
+    populateDropdownIfEmpty(selectId, options) {
+        const select = document.getElementById(selectId);
+        if (!select) {
+            console.log(`Select element not found: ${selectId}`);
+            return;
+        }
+        
+        // Only populate if the dropdown is empty or has no selection
+        if (select.value === '' || select.options.length <= 1) {
+            console.log(`Populating empty dropdown ${selectId}`);
+            this.populateDropdown(selectId, options);
+        } else {
+            console.log(`Skipping population of ${selectId} - already has value: '${select.value}'`);
+        }
     }
     
     setupQuickActionHandlers() {
@@ -3084,10 +2878,24 @@ class SavageGolf {
     }
     
     handleQuickMurph() {
-        const player = document.getElementById('quickMurphPlayer').value;
-        const result = document.getElementById('quickMurphResult').value;
+        console.log('=== Quick Murph Save Button Clicked ===');
+        
+        const playerElement = document.getElementById('quickMurphPlayer');
+        const resultElement = document.getElementById('quickMurphResult');
+        const player = playerElement ? playerElement.value : '';
+        const result = resultElement ? resultElement.value : '';
+        
+        console.log('Quick Murph validation:', {
+            playerElement: !!playerElement,
+            resultElement: !!resultElement,
+            player: player,
+            result: result,
+            playerOptions: playerElement ? playerElement.options.length : 0,
+            allPlayerOptions: playerElement ? Array.from(playerElement.options).map(opt => opt.value) : []
+        });
         
         if (!player || !result) {
+            console.log('Validation failed - missing player or result');
             alert('Please select both player and result');
             return;
         }
@@ -3107,7 +2915,7 @@ class SavageGolf {
         });
         
         // Update local gameActions reference
-        this.gameActions = this.gameManager.gameActions;
+        this.gameManager.gameActions = this.gameManager.gameActions;
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -3140,7 +2948,7 @@ class SavageGolf {
         });
         
         // Update local gameActions reference
-        this.gameActions = this.gameManager.gameActions;
+        this.gameManager.gameActions = this.gameManager.gameActions;
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -3172,7 +2980,7 @@ class SavageGolf {
         });
         
         // Update local gameActions reference
-        this.gameActions = this.gameManager.gameActions;
+        this.gameManager.gameActions = this.gameManager.gameActions;
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -3204,7 +3012,7 @@ class SavageGolf {
         });
         
         // Update local gameActions reference
-        this.gameActions = this.gameManager.gameActions;
+        this.gameManager.gameActions = this.gameManager.gameActions;
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -3250,7 +3058,7 @@ class SavageGolf {
         });
         
         // Update local gameActions reference
-        this.gameActions = this.gameManager.gameActions;
+        this.gameManager.gameActions = this.gameManager.gameActions;
         
         this.updateGameDisplay();
         this.updateQuickActionsStatus();
@@ -3277,7 +3085,7 @@ class SavageGolf {
         
         Object.entries(quickStatuses).forEach(([gameType, statusId]) => {
             const statusElement = document.getElementById(statusId);
-            if (statusElement && this.gameConfigs[gameType]?.enabled) {
+            if (statusElement && this.gameManager.gameConfigs[gameType]?.enabled) {
                 const actions = this.gameManager.getGameActions(gameType);
                 const count = actions.length;
                 
@@ -3297,129 +3105,7 @@ class SavageGolf {
     }
 
     // Side Games Modal Methods
-    showSideGamesInfo() {
-        // Close burger menu first
-        this.closeBurgerMenu();
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('side_games_modal_opened');
-        
-        // Show side games modal
-        const modal = document.getElementById('sideGamesModal');
-        modal.style.display = 'flex';
-    }
-    
-    hideSideGamesModal() {
-        // Hide side games modal
-        const modal = document.getElementById('sideGamesModal');
-        modal.style.display = 'none';
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('side_games_modal_closed');
-    }
-    
-    // About Modal Methods
-    showAbout() {
-        // Close burger menu first
-        this.closeBurgerMenu();
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('about_modal_opened');
-        
-        // Show about modal
-        const modal = document.getElementById('aboutModal');
-        modal.style.display = 'flex';
-    }
-    
-    hideAbout() {
-        // Hide about modal
-        const modal = document.getElementById('aboutModal');
-        modal.style.display = 'none';
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('about_modal_closed');
-    }
 
-    // Burger Menu Methods
-    toggleBurgerMenu() {
-        const burgerBtn = document.getElementById('burgerBtn');
-        const dropdown = document.getElementById('burgerDropdown');
-        
-        if (dropdown.classList.contains('show')) {
-            this.closeBurgerMenu();
-        } else {
-            this.openBurgerMenu();
-        }
-    }
-
-    openBurgerMenu() {
-        const burgerBtn = document.getElementById('burgerBtn');
-        const dropdown = document.getElementById('burgerDropdown');
-        
-        // Calculate position based on burger button location
-        const btnRect = burgerBtn.getBoundingClientRect();
-        const dropdownHeight = 200; // Approximate dropdown height
-        const viewportHeight = window.innerHeight;
-        
-        // Position dropdown below button, but if it would go off-screen, position above
-        let top = btnRect.bottom + 8;
-        if (top + dropdownHeight > viewportHeight) {
-            top = btnRect.top - dropdownHeight - 8;
-        }
-        
-        // Position dropdown aligned to right edge of button
-        const right = window.innerWidth - btnRect.right;
-        
-        dropdown.style.top = `${top}px`;
-        dropdown.style.right = `${right}px`;
-        
-        burgerBtn.classList.add('active');
-        dropdown.classList.add('show');
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('burger_menu_opened');
-    }
-
-    closeBurgerMenu() {
-        const burgerBtn = document.getElementById('burgerBtn');
-        const dropdown = document.getElementById('burgerDropdown');
-        
-        burgerBtn.classList.remove('active');
-        dropdown.classList.remove('show');
-    }
-
-    updateBurgerMenuVisibility(pageName) {
-        const burgerMenu = document.querySelector('.burger-menu');
-        
-        // Show burger menu on all pages now - users expect navigation everywhere
-        burgerMenu.style.display = 'block';
-    }
-
-    handleOutsideClick(event) {
-        const burgerMenu = document.querySelector('.burger-menu');
-        const dropdown = document.getElementById('burgerDropdown');
-        
-        if (dropdown.classList.contains('show') && !burgerMenu.contains(event.target)) {
-            this.closeBurgerMenu();
-        }
-    }
-
-    cancelGame() {
-        // Close burger menu first
-        this.closeBurgerMenu();
-        
-        // Track analytics
-        AnalyticsUtils.trackFeatureUsage('cancel_game_clicked');
-        
-        // If already on setup page, don't show confusing message
-        if (this.currentPage === 'setup') {
-            this.ui.showNotification('Already on setup page!', 'info');
-            return;
-        }
-        
-        // Use existing resetGame functionality
-        this.resetGame();
-    }
 }
 
 // Initialize game when page loads

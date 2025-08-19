@@ -498,4 +498,69 @@ export class UIManager {
             element.focus();
         }
     }
+
+    // =========================================================================
+    // PAGE MANAGER SUPPORT METHODS
+    // =========================================================================
+
+    /**
+     * Update a specific game page display
+     * @param {string} gameType - The type of game (murph, skins, etc.)
+     * @param {Object} gameConfig - Game configuration
+     */
+    updateGamePageDisplay(gameType, gameConfig) {
+        if (!gameConfig) return;
+        
+        // This is a placeholder - the actual implementation would depend on 
+        // specific game page layouts and what needs to be updated
+        console.log(`Updating ${gameType} page display with config:`, gameConfig);
+    }
+
+    /**
+     * Update combined page display for multiple games
+     * @param {Array} enabledGames - List of enabled game types
+     * @param {Object} gameConfigs - All game configurations
+     */
+    updateCombinedPageDisplay(enabledGames, gameConfigs) {
+        console.log('Updating combined page display for games:', enabledGames);
+        // Placeholder for combined page update logic
+    }
+
+    /**
+     * Update navigation visibility based on enabled games
+     * @param {Object} gameStates - Object with game enabled states
+     */
+    updateNavigationVisibility(gameStates) {
+        // Update navigation button visibility
+        Object.keys(gameStates).forEach(gameType => {
+            const navElement = document.getElementById(`${gameType}Nav`);
+            if (navElement) {
+                if (gameStates[gameType]) {
+                    this.showElement(`${gameType}Nav`);
+                } else {
+                    this.hideElement(`${gameType}Nav`);
+                }
+            }
+        });
+    }
+
+    /**
+     * Update all displays - used during state restoration
+     */
+    updateAllDisplays() {
+        // Placeholder for updating all UI displays
+        console.log('Updating all UI displays');
+    }
+
+    /**
+     * Set bet amount in UI for a specific game
+     * @param {string} gameType - Game type
+     * @param {number} amount - Bet amount
+     */
+    setBetAmount(gameType, amount) {
+        const betInput = document.getElementById(`${gameType}BetAmount`);
+        if (betInput) {
+            betInput.value = amount;
+        }
+    }
 }
