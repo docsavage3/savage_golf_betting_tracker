@@ -113,13 +113,27 @@ class SavageGolf {
         document.getElementById('backToNav3').addEventListener('click', () => this.showPage('navigation'));
         document.getElementById('backToNav4').addEventListener('click', () => this.showPage('navigation'));
         
-        // New game from final results
-        document.getElementById('newGameFromFinal').addEventListener('click', () => this.resetGame());
+        // Burger menu toggle
+        document.getElementById('burgerBtn').addEventListener('click', () => this.toggleBurgerMenu());
         
-
+        // Burger menu options
+        document.getElementById('cancelGame').addEventListener('click', () => this.cancelGame());
+        document.getElementById('sideGamesInfo').addEventListener('click', () => this.showSideGamesInfo());
+        document.getElementById('aboutApp').addEventListener('click', () => this.showAbout());
+        
+        // Side Games modal
+        document.getElementById('closeSideGames').addEventListener('click', () => this.hideSideGamesModal());
+        
+        // About modal
+        document.getElementById('closeAbout').addEventListener('click', () => this.hideAbout());
+        
+        // Cancel game from final results
+        document.getElementById('newGameFromFinal').addEventListener('click', () => this.cancelGame());
+        
+        // Close burger menu when clicking outside
+        document.addEventListener('click', (e) => this.handleOutsideClick(e));
         
         // Game navigation controls
-        // Removed startNewGameFromNav event listener - using bottom New Game button instead
         
 
         
@@ -148,9 +162,7 @@ class SavageGolf {
         document.getElementById('saveWolf').addEventListener('click', () => this.saveWolfAction());
         document.getElementById('cancelWolf').addEventListener('click', () => this.hideWolfModal());
 
-        
-        // New game
-        document.getElementById('newGame').addEventListener('click', () => this.resetGame());
+
         
         // Close modals when clicking outside
         document.getElementById('murphModal').addEventListener('click', (e) => {
@@ -182,6 +194,20 @@ class SavageGolf {
                 this.hideWolfModal();
             }
         });
+        
+        // About modal - close when clicking outside
+        document.getElementById('aboutModal').addEventListener('click', (e) => {
+            if (e.target.id === 'aboutModal') {
+                this.hideAbout();
+            }
+        });
+        
+        // Side Games modal - close when clicking outside
+        document.getElementById('sideGamesModal').addEventListener('click', (e) => {
+            if (e.target.id === 'sideGamesModal') {
+                this.hideSideGamesModal();
+            }
+        });
     }
 
     showPage(pageName) {
@@ -196,6 +222,9 @@ class SavageGolf {
         // Use UIManager to handle page display
         this.ui.showPage(pageName, this.gameConfigs);
         this.currentPage = pageName;
+        
+        // Control burger menu visibility
+        this.updateBurgerMenuVisibility(pageName);
         
         // Update the specific page content
         if (pageName === 'murph') {
@@ -2603,7 +2632,7 @@ class SavageGolf {
 
     resetGame() {
         // Show confirmation dialog before clearing saved game
-        const confirmed = window.confirm('This will start a fresh game and clear any saved progress. Are you sure?');
+        const confirmed = window.confirm('This will cancel the current game and clear all progress. Are you sure?');
         if (!confirmed) return;
         
         // Clear saved game state from localStorage
@@ -2619,7 +2648,7 @@ class SavageGolf {
         this.gameActions = this.gameManager.gameActions;
         this.gameStarted = this.gameManager.gameStarted;
         this.currentHole = 1;
-        this.currentPage = 'navigation';
+        this.currentPage = 'setup';
         this.requiredPlayers = DEFAULTS.PLAYER_COUNT; // Reset to default 4 players
         
 
@@ -2743,7 +2772,8 @@ class SavageGolf {
         // Reset previous hole button state
         this.updatePreviousHoleButton();
         
-
+        // Navigate back to setup page
+        this.showPage('setup');
         
         this.ui.showNotification('Game reset! Ready for a new round.', 'info');
     }
@@ -3264,6 +3294,131 @@ class SavageGolf {
                 }
             }
         });
+    }
+
+    // Side Games Modal Methods
+    showSideGamesInfo() {
+        // Close burger menu first
+        this.closeBurgerMenu();
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('side_games_modal_opened');
+        
+        // Show side games modal
+        const modal = document.getElementById('sideGamesModal');
+        modal.style.display = 'flex';
+    }
+    
+    hideSideGamesModal() {
+        // Hide side games modal
+        const modal = document.getElementById('sideGamesModal');
+        modal.style.display = 'none';
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('side_games_modal_closed');
+    }
+    
+    // About Modal Methods
+    showAbout() {
+        // Close burger menu first
+        this.closeBurgerMenu();
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('about_modal_opened');
+        
+        // Show about modal
+        const modal = document.getElementById('aboutModal');
+        modal.style.display = 'flex';
+    }
+    
+    hideAbout() {
+        // Hide about modal
+        const modal = document.getElementById('aboutModal');
+        modal.style.display = 'none';
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('about_modal_closed');
+    }
+
+    // Burger Menu Methods
+    toggleBurgerMenu() {
+        const burgerBtn = document.getElementById('burgerBtn');
+        const dropdown = document.getElementById('burgerDropdown');
+        
+        if (dropdown.classList.contains('show')) {
+            this.closeBurgerMenu();
+        } else {
+            this.openBurgerMenu();
+        }
+    }
+
+    openBurgerMenu() {
+        const burgerBtn = document.getElementById('burgerBtn');
+        const dropdown = document.getElementById('burgerDropdown');
+        
+        // Calculate position based on burger button location
+        const btnRect = burgerBtn.getBoundingClientRect();
+        const dropdownHeight = 200; // Approximate dropdown height
+        const viewportHeight = window.innerHeight;
+        
+        // Position dropdown below button, but if it would go off-screen, position above
+        let top = btnRect.bottom + 8;
+        if (top + dropdownHeight > viewportHeight) {
+            top = btnRect.top - dropdownHeight - 8;
+        }
+        
+        // Position dropdown aligned to right edge of button
+        const right = window.innerWidth - btnRect.right;
+        
+        dropdown.style.top = `${top}px`;
+        dropdown.style.right = `${right}px`;
+        
+        burgerBtn.classList.add('active');
+        dropdown.classList.add('show');
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('burger_menu_opened');
+    }
+
+    closeBurgerMenu() {
+        const burgerBtn = document.getElementById('burgerBtn');
+        const dropdown = document.getElementById('burgerDropdown');
+        
+        burgerBtn.classList.remove('active');
+        dropdown.classList.remove('show');
+    }
+
+    updateBurgerMenuVisibility(pageName) {
+        const burgerMenu = document.querySelector('.burger-menu');
+        
+        // Show burger menu on all pages now - users expect navigation everywhere
+        burgerMenu.style.display = 'block';
+    }
+
+    handleOutsideClick(event) {
+        const burgerMenu = document.querySelector('.burger-menu');
+        const dropdown = document.getElementById('burgerDropdown');
+        
+        if (dropdown.classList.contains('show') && !burgerMenu.contains(event.target)) {
+            this.closeBurgerMenu();
+        }
+    }
+
+    cancelGame() {
+        // Close burger menu first
+        this.closeBurgerMenu();
+        
+        // Track analytics
+        AnalyticsUtils.trackFeatureUsage('cancel_game_clicked');
+        
+        // If already on setup page, don't show confusing message
+        if (this.currentPage === 'setup') {
+            this.ui.showNotification('Already on setup page!', 'info');
+            return;
+        }
+        
+        // Use existing resetGame functionality
+        this.resetGame();
     }
 }
 
