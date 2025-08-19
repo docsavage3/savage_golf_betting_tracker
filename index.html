@@ -26,13 +26,47 @@
         });
     </script>
     
-    <link rel="stylesheet" href="styles.css?v=simplex">
+    <link rel="stylesheet" href="styles.css?v=simplex15">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🏌️ Savage Side Bets</h1>
-            <p class="subtitle">Track your golf bets, not your birdies & bogeys</p>
+            <div class="header-content">
+                <div class="header-left">
+                    <img src="logo.png" alt="Savage Side Bets" class="logo">
+                </div>
+                <div class="header-right">
+                    <div class="burger-menu">
+                        <button type="button" class="burger-btn" id="burgerBtn">
+                            <span class="burger-line"></span>
+                            <span class="burger-line"></span>
+                            <span class="burger-line"></span>
+                        </button>
+                        <div class="burger-dropdown" id="burgerDropdown">
+                            <ul class="burger-menu-items">
+                                <li>
+                                    <button type="button" id="cancelGame" class="burger-menu-item">
+                                        <span class="menu-icon">🚫</span>
+                                        <span class="menu-text">Cancel Game</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" id="sideGamesInfo" class="burger-menu-item">
+                                        <span class="menu-icon">🎯</span>
+                                        <span class="menu-text">Side Games</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" id="aboutApp" class="burger-menu-item">
+                                        <span class="menu-icon">ℹ️</span>
+                                        <span class="menu-text">About</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <!-- Game Setup Section -->
@@ -537,11 +571,96 @@
             <div id="finalResultsContent"></div>
             
             <div class="final-actions">
-                <button type="button" id="newGameFromFinal" class="btn btn-primary btn-large">
-                    🆕 Start New Game
+                <button type="button" id="newGameFromFinal" class="btn btn-danger btn-large">
+                    🚫 Cancel Game
                 </button>
             </div>
         </section>
+
+        <!-- Side Games Info Modal -->
+        <div id="sideGamesModal" class="modal" style="display: none;">
+            <div class="modal-content side-games-modal-content">
+                <h3>🎯 Side Games Guide</h3>
+                
+                <div class="side-games-content">
+                    <p class="intro-text">Learn about all the exciting golf side games you can play with Savage Side Bets!</p>
+                    
+                    <!-- Murph Game -->
+                    <div class="game-info-card">
+                        <div class="game-info-header">
+                            <h4>🎯 Murph</h4>
+                        </div>
+                        <div class="game-info-content">
+                            <p><strong>How to play:</strong> Call "Murph" before your shot on any hole. If you make it, you win. If you miss, you pay everyone.</p>
+                            <p><strong>Betting logic:</strong> Caller pays everyone if they miss, or gets paid by everyone if they make it. Risk vs reward!</p>
+                            <p><strong>Strategy tip:</strong> Best on shots you're confident about, but not too easy!</p>
+                        </div>
+                    </div>
+
+                    <!-- Skins Game -->
+                    <div class="game-info-card">
+                        <div class="game-info-header">
+                            <h4>🏆 Skins</h4>
+                        </div>
+                        <div class="game-info-content">
+                            <p><strong>How to play:</strong> Best score on each hole wins the skin. Ties carry over to the next hole, building up the prize!</p>
+                            <p><strong>Betting logic:</strong> Winner gets paid by all other players. Multiple skins stack up when holes tie.</p>
+                            <p><strong>Strategy tip:</strong> Play solid golf - consistency wins over risky shots.</p>
+                        </div>
+                    </div>
+
+                    <!-- KP (Closest to Pin) -->
+                    <div class="game-info-card">
+                        <div class="game-info-header">
+                            <h4>⛳ KP (Closest to Pin)</h4>
+                        </div>
+                        <div class="game-info-content">
+                            <p><strong>How to play:</strong> On par 3 holes, whoever gets closest to the pin wins. Must be on the green to qualify!</p>
+                            <p><strong>Betting logic:</strong> Closest player gets paid by everyone else. Simple and exciting on every par 3.</p>
+                            <p><strong>Strategy tip:</strong> Aim for the center of the green - being safe often wins!</p>
+                        </div>
+                    </div>
+
+                    <!-- Snake -->
+                    <div class="game-info-card">
+                        <div class="game-info-header">
+                            <h4>🐍 Snake</h4>
+                        </div>
+                        <div class="game-info-content">
+                            <p><strong>How to play:</strong> Get a snake (3-putt) and you owe everyone money. The snake "bites" you!</p>
+                            <p><strong>Betting logic:</strong> Anyone who 3-putts pays everyone else. Encourages good putting!</p>
+                            <p><strong>Strategy tip:</strong> Lag your first putt close - avoid those costly 3-putts!</p>
+                        </div>
+                    </div>
+
+                    <!-- Wolf Game -->
+                    <div class="game-info-card">
+                        <div class="game-info-header">
+                            <h4>🐺 Wolf</h4>
+                        </div>
+                        <div class="game-info-content">
+                            <p><strong>How to play:</strong> One player is the "Wolf" each hole. They choose a partner OR go "Lone Wolf" for bigger stakes!</p>
+                            <p><strong>Betting logic:</strong> Wolf + Partner vs other team, OR Lone Wolf vs everyone else (3x payout!).</p>
+                            <p><strong>Strategy tip:</strong> Choose your battles wisely - going Lone Wolf is high risk, high reward!</p>
+                        </div>
+                    </div>
+
+                    <div class="side-games-footer">
+                        <h4>💡 Pro Tips</h4>
+                        <ul>
+                            <li><strong>Start Small:</strong> Begin with $1 bets to learn the games</li>
+                            <li><strong>Mix & Match:</strong> Play multiple games at once for more action</li>
+                            <li><strong>Stay Honest:</strong> All players should agree on rules before starting</li>
+                            <li><strong>Have Fun:</strong> These games make every shot matter!</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" id="closeSideGames" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Murph Modal -->
         <div id="murphModal" class="modal" style="display: none;">
@@ -684,10 +803,74 @@
             </div>
         </div>
 
-        <!-- New Game Button (always visible) -->
-        <div class="new-game-section">
-            <button type="button" id="newGame" class="btn btn-danger">🔄 New Game</button>
+        <!-- About Modal -->
+        <div id="aboutModal" class="modal" style="display: none;">
+            <div class="modal-content about-modal-content">
+                <h3>ℹ️ About Savage Side Bets</h3>
+                
+                <div class="about-section">
+                    <h4>📱 App Information</h4>
+                    <p><strong>Version:</strong> 1.0.0</p>
+                    <p><strong>Release Date:</strong> August 2025</p>
+                    <p><strong>Developer:</strong> Daniel Savage</p>
+                </div>
+
+                <div class="about-section">
+                    <h4>🎯 What is this app?</h4>
+                    <p>Savage Side Bets is a mobile-friendly web application designed to track golf side games and betting. Perfect for making every shot count and adding excitement to your golf rounds!</p>
+                </div>
+
+                <div class="about-section">
+                    <h4>🎮 Supported Games</h4>
+                    <ul>
+                        <li><strong>Murph:</strong> Call your shot and risk it all</li>
+                        <li><strong>Skins:</strong> Best score wins, ties carry over</li>
+                        <li><strong>KP:</strong> Closest to the pin on par 3s</li>
+                        <li><strong>Snake:</strong> Avoid the dreaded 3-putt</li>
+                        <li><strong>Wolf:</strong> Advanced team-based betting</li>
+                    </ul>
+                </div>
+
+                <div class="about-section">
+                    <h4>⚡ Features</h4>
+                    <ul>
+                        <li>Real-time score tracking</li>
+                        <li>Automatic financial calculations</li>
+                        <li>Quick action recording</li>
+                        <li>Game state persistence</li>
+                        <li>Mobile-optimized interface</li>
+                        <li>Privacy-first analytics</li>
+                    </ul>
+                </div>
+
+                <div class="about-section">
+                    <h4>⚖️ License</h4>
+                    <p><strong>PROPRIETARY SOFTWARE</strong></p>
+                    <p>© 2025 Daniel Savage. All rights reserved.<br>
+                    No commercial use, copying, forking, or reuse permitted without explicit written permission.</p>
+                </div>
+
+                <div class="about-section">
+                    <h4>🛡️ Privacy</h4>
+                    <p>We respect your privacy. This app:</p>
+                    <ul>
+                        <li>Stores data locally on your device</li>
+                        <li>Uses privacy-first analytics</li>
+                        <li>Does not collect personal information</li>
+                        <li>No advertising or tracking cookies</li>
+                    </ul>
+                </div>
+
+                <div class="about-footer">
+                    <p><em>"Track your golf bets, not your birdies & bogeys"</em></p>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" id="closeAbout" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
         </div>
+
         
         <!-- Copyright Footer -->
         <footer class="copyright-footer">
@@ -696,14 +879,14 @@
         </footer>
     </div>
 
-    <script type="module" src="constants.js"></script>
-    <script type="module" src="ui/ui-manager.js"></script>
+    <script type="module" src="constants.js?v=8"></script>
+    <script type="module" src="ui/ui-manager.js?v=8"></script>
     <script type="module" src="managers/player-manager.js"></script>
     <script type="module" src="managers/game-manager.js?v=2"></script>
     <script type="module" src="managers/storage-manager.js"></script>
     <script type="module" src="utils/validation.js"></script>
     <script type="module" src="utils/analytics.js"></script>
     <script type="module" src="games/index.js"></script>
-            <script type="module" src="script.js?v=5"></script>
+            <script type="module" src="script.js?v=9"></script>
 </body>
 </html>
