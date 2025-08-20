@@ -9,7 +9,6 @@ import {
     DEFAULTS
 } from '../constants.js';
 import { createGame } from '../games/index.js';
-import ErrorHandler from '../utils/error-handler.js';
 
 export class GameManager {
     constructor(uiManager) {
@@ -18,6 +17,15 @@ export class GameManager {
         this.requiredPlayers = DEFAULTS.PLAYER_COUNT;
         this.gameConfigs = {};
         this.gameInstances = {};
+        
+        // Legacy game actions for backwards compatibility
+        this.gameActions = {
+            [GAME_TYPES.MURPH]: [],
+            [GAME_TYPES.SKINS]: [],
+            [GAME_TYPES.KP]: [],
+            [GAME_TYPES.SNAKE]: [],
+            [GAME_TYPES.WOLF]: []
+        };
         
         this.gameStarted = false;
         this.gameCompleted = false;
@@ -51,6 +59,10 @@ export class GameManager {
                 };
                 
                 this.gameInstances[gameType] = createGame(gameType, this.players, gameConfig);
+                
+                // Clear legacy actions for fresh start
+        
+                this.gameActions[gameType] = [];
             }
         });
     }
@@ -60,6 +72,13 @@ export class GameManager {
      */
     resetGames() {
         this.gameInstances = {};
+        this.gameActions = {
+            [GAME_TYPES.MURPH]: [],
+            [GAME_TYPES.SKINS]: [],
+            [GAME_TYPES.KP]: [],
+            [GAME_TYPES.SNAKE]: [],
+            [GAME_TYPES.WOLF]: []
+        };
         this.gameConfigs = {};
         this.players = [];
         this.requiredPlayers = DEFAULTS.PLAYER_COUNT;
@@ -80,21 +99,36 @@ export class GameManager {
             this.gameStarted = savedState.gameStarted || false;
             this.gameCompleted = savedState.gameCompleted || false;
 
+            // Restore legacy game actions for backwards compatibility
+            this.gameActions = savedState.gameActions || {
+                [GAME_TYPES.MURPH]: [],
+                [GAME_TYPES.SKINS]: [],
+                [GAME_TYPES.KP]: [],
+                [GAME_TYPES.SNAKE]: [],
+                [GAME_TYPES.WOLF]: []
+            };
+
             // Reinitialize game instances with restored data
             if (this.gameStarted && Object.keys(this.gameConfigs).length > 0) {
+                // Store the actions before initialization (they get cleared during init)
+                const actionsToRestore = { ...this.gameActions };
+                
                 this.initializeGames(this.gameConfigs, this.players, this.requiredPlayers);
                 
-                // Restore actions to game instances if they exist in saved state
-                if (savedState.gameActions) {
-                    Object.entries(savedState.gameActions).forEach(([gameType, actions]) => {
-                        if (this.gameInstances[gameType] && Array.isArray(actions)) {
-                            this.gameInstances[gameType].actions = [...actions];
-                        }
-                    });
-                }
+                // Restore actions to game instances
+                Object.entries(actionsToRestore).forEach(([gameType, actions]) => {
+                    if (this.gameInstances[gameType] && Array.isArray(actions)) {
+                
+                        this.gameInstances[gameType].actions = [...actions];
+                        // Also restore to legacy actions for backwards compatibility
+                        this.gameActions[gameType] = [...actions];
+                    }
+                });
             }
+
+    
         } catch (error) {
-            ErrorHandler.handleGameError(error, 'GameManager', 'restoreGameState');
+            console.error('Failed to restore game manager state:', error);
         }
     }
 
@@ -134,22 +168,28 @@ export class GameManager {
      * @returns {boolean} True if action was added successfully
      */
     addGameAction(gameType, action) {
+        // Always add to legacy system for backwards compatibility
+        if (!this.gameActions[gameType]) {
+            this.gameActions[gameType] = [];
+        }
+        
+        // Add to legacy actions first
+        this.gameActions[gameType].push(action);
+        
         // Try to add to game instance if available
         if (this.gameInstances[gameType]) {
             try {
                 const success = this.gameInstances[gameType].addAction(action);
                 
                 if (!success) {
-                    ErrorHandler.handleGameError(new Error(`Failed to add action to game instance for ${gameType}`), gameType, 'addAction');
+                    console.warn(`Failed to add action to game instance for ${gameType}`);
                 }
-                return success;
             } catch (error) {
-                ErrorHandler.handleGameError(error, gameType, 'addAction');
-                return false;
+                console.warn(`Error adding action to game instance for ${gameType}:`, error);
             }
         }
         
-        return false;
+        return true;
     }
 
     /**
@@ -159,12 +199,20 @@ export class GameManager {
      * @returns {boolean} True if action was removed successfully
      */
     removeGameAction(gameType, actionId) {
+        let success = false;
+
         // Remove from game instance if available
         if (this.gameInstances[gameType]) {
-            return this.gameInstances[gameType].removeAction(actionId);
+            success = this.gameInstances[gameType].removeAction(actionId);
         }
+
+        // Remove from legacy actions
+        const initialLength = this.gameActions[gameType].length;
+        this.gameActions[gameType] = this.gameActions[gameType].filter(
+            action => action.id !== actionId
+        );
         
-        return false;
+        return success || this.gameActions[gameType].length < initialLength;
     }
 
     /**
@@ -176,7 +224,7 @@ export class GameManager {
         if (this.gameInstances[gameType]) {
             return this.gameInstances[gameType].getActions();
         }
-        return [];
+        return this.gameActions[gameType] || [];
     }
 
     /**
@@ -187,8 +235,8 @@ export class GameManager {
     getActionsForHole(hole) {
         const actions = {};
         
-        Object.keys(this.gameInstances).forEach(gameType => {
-            actions[gameType] = this.gameInstances[gameType].getActions().filter(
+        Object.keys(this.gameActions).forEach(gameType => {
+            actions[gameType] = this.gameActions[gameType].filter(
                 action => action.hole === hole
             );
         });
@@ -206,17 +254,26 @@ export class GameManager {
      * @returns {Object} Player balances for the game
      */
     calculateGameSummary(gameType) {
-        // Use game instance if available
+        // Use new game instance if available, fallback to legacy method
         if (this.gameInstances[gameType]) {
             return this.gameInstances[gameType].calculateSummary();
         }
 
-        // Return empty balances if no game instance
-        const playerBalances = {};
-        this.players.forEach(player => {
-            playerBalances[player] = 0;
-        });
-        return playerBalances;
+        // Legacy calculation methods
+        switch (gameType) {
+            case GAME_TYPES.MURPH:
+                return this.calculateLegacyMurphSummary();
+            case GAME_TYPES.SKINS:
+                return this.calculateLegacySkinsSummary();
+            case GAME_TYPES.KP:
+                return this.calculateLegacyKPSummary();
+            case GAME_TYPES.SNAKE:
+                return this.calculateLegacySnakeSummary();
+            case GAME_TYPES.WOLF:
+                return this.calculateLegacyWolfSummary();
+            default:
+                return {};
+        }
     }
 
     /**
@@ -335,6 +392,236 @@ export class GameManager {
     }
 
     // =========================================================================
+    // LEGACY CALCULATION METHODS (for backwards compatibility)
+    // =========================================================================
+
+    /**
+     * Legacy Murph calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacyMurphSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        this.gameActions.murph.forEach(call => {
+            // Handle both 'success'/'fail' and 'made'/'failed' result formats
+            const isSuccess = call.result === 'success' || call.result === 'made';
+            
+            if (isSuccess) {
+                // Caller gets paid by all other players
+                this.players.forEach(player => {
+                    if (player !== call.player) {
+                        playerBalances[player] -= this.gameConfigs.murph.betAmount;
+                    }
+                });
+                playerBalances[call.player] += (this.players.length - 1) * this.gameConfigs.murph.betAmount;
+            } else {
+                // Caller pays all other players
+                this.players.forEach(player => {
+                    if (player !== call.player) {
+                        playerBalances[player] += this.gameConfigs.murph.betAmount;
+                    }
+                });
+                playerBalances[call.player] -= (this.players.length - 1) * this.gameConfigs.murph.betAmount;
+            }
+        });
+        
+        return playerBalances;
+    }
+
+    /**
+     * Legacy Skins calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacySkinsSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        this.gameActions.skins.forEach(skin => {
+            if (skin.winner === 'carryover') {
+                return;
+            }
+            
+            const betAmount = this.gameConfigs.skins.betAmount;
+            const skinsWon = skin.skinsWon;
+            
+            if (this.requiredPlayers === 4 && this.gameConfigs.skins.teams && this.gameConfigs.skins.teams.length > 0) {
+                // Team-based logic
+                if (skin.winner === 'team1') {
+                    const team1Players = this.gameConfigs.skins.teams[0];
+                    const team2Players = this.gameConfigs.skins.teams[1];
+                    
+                    team1Players.forEach(player => {
+                        playerBalances[player] += betAmount * skinsWon;
+                    });
+                    
+                    team2Players.forEach(player => {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    });
+                } else if (skin.winner === 'team2') {
+                    const team1Players = this.gameConfigs.skins.teams[0];
+                    const team2Players = this.gameConfigs.skins.teams[1];
+                    
+                    team1Players.forEach(player => {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    });
+                    
+                    team2Players.forEach(player => {
+                        playerBalances[player] += betAmount * skinsWon;
+                    });
+                }
+            } else {
+                // Individual player logic
+                const winner = skin.winner;
+                this.players.forEach(player => {
+                    if (player === winner) {
+                        playerBalances[player] += betAmount * skinsWon * (this.players.length - 1);
+                    } else {
+                        playerBalances[player] -= betAmount * skinsWon;
+                    }
+                });
+            }
+        });
+        
+        return playerBalances;
+    }
+
+    /**
+     * Legacy KP calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacyKPSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        this.gameActions.kp.forEach(kp => {
+            const betAmount = this.gameConfigs.kp.betAmount;
+            
+            this.players.forEach(player => {
+                if (player !== kp.winner) {
+                    playerBalances[player] -= betAmount;
+                }
+            });
+            playerBalances[kp.winner] += (this.players.length - 1) * betAmount;
+        });
+        
+        return playerBalances;
+    }
+
+    /**
+     * Legacy Snake calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacySnakeSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        if (this.gameActions.snake.length === 0) {
+            return playerBalances;
+        }
+        
+        const betAmount = this.gameConfigs.snake.betAmount;
+        const totalSnakes = this.gameActions.snake.length;
+        const snakePot = totalSnakes * betAmount;
+        
+        if (totalSnakes === 1) {
+            const singleSnake = this.gameActions.snake[0];
+            playerBalances[singleSnake.player] -= snakePot;
+            
+            const paymentPerPlayer = snakePot / (this.players.length - 1);
+            
+            this.players.forEach(player => {
+                if (player !== singleSnake.player) {
+                    playerBalances[player] += paymentPerPlayer;
+                }
+            });
+        } else {
+            const lastSnake = this.gameActions.snake[this.gameActions.snake.length - 1];
+            playerBalances[lastSnake.player] -= snakePot;
+            
+            const paymentPerPlayer = snakePot / (this.players.length - 1);
+            
+            this.players.forEach(player => {
+                if (player !== lastSnake.player) {
+                    playerBalances[player] += paymentPerPlayer;
+                }
+            });
+        }
+        
+        return playerBalances;
+    }
+
+    /**
+     * Legacy Wolf calculation method
+     * @returns {Object} Player balances
+     */
+    calculateLegacyWolfSummary() {
+        const playerBalances = {};
+        this.players.forEach(player => {
+            playerBalances[player] = 0;
+        });
+        
+        if (this.gameActions.wolf.length === 0) {
+            return playerBalances;
+        }
+        
+        const betAmount = this.gameConfigs.wolf.betAmount;
+        
+        this.gameActions.wolf.forEach(action => {
+            if (action.result === 'wolf_wins') {
+                if (action.wolfChoice === 'lone_wolf') {
+                    // Lone Wolf wins: gets 3x bet from each of the 3 other players
+                    playerBalances[action.wolf] += betAmount * 3 * 3; // 9x total
+                    this.players.forEach(player => {
+                        if (player !== action.wolf) {
+                            playerBalances[player] -= betAmount * 3; // Each pays 3x
+                        }
+                    });
+                } else {
+                    // Wolf + Partner win: each get 1x bet, others lose 1x bet each
+                    playerBalances[action.wolf] += betAmount;
+                    playerBalances[action.partner] += betAmount;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf && player !== action.partner) {
+                            playerBalances[player] -= betAmount;
+                        }
+                    });
+                }
+            } else {
+                // Wolf loses: others get 1x bet each, Wolf loses 3x bet
+                if (action.wolfChoice === 'lone_wolf') {
+                    // Lone Wolf loses: pays 3x bet to each of the 3 other players
+                    playerBalances[action.wolf] -= betAmount * 3 * 3; // 9x total
+                    this.players.forEach(player => {
+                        if (player !== action.wolf) {
+                            playerBalances[player] += betAmount * 3; // Each gets 3x
+                        }
+                    });
+                } else {
+                    // Wolf + Partner lose: others get 1x bet each
+                    playerBalances[action.wolf] -= betAmount * 3;
+                    playerBalances[action.partner] -= betAmount * 3;
+                    this.players.forEach(player => {
+                        if (player !== action.wolf && player !== action.partner) {
+                            playerBalances[player] += betAmount;
+                        }
+                    });
+                }
+            }
+        });
+        
+        return playerBalances;
+    }
+
+    // =========================================================================
     // GAME STATISTICS AND INFORMATION
     // =========================================================================
 
@@ -351,18 +638,11 @@ export class GameManager {
                     stats[gameType] = this.gameInstances[gameType].getStats();
                 } else {
                     stats[gameType] = {
-                        totalActions: 0,
+                        totalActions: this.gameActions[gameType].length,
                         betAmount: this.gameConfigs[gameType].betAmount,
                         enabled: true
                     };
                 }
-            } else {
-                // Return stats for disabled games
-                stats[gameType] = {
-                    totalActions: 0,
-                    betAmount: this.gameConfigs[gameType].betAmount,
-                    enabled: false
-                };
             }
         });
         
@@ -380,8 +660,8 @@ export class GameManager {
             players: [...this.players],
             requiredPlayers: this.requiredPlayers,
             enabledGames: this.getEnabledGameTypes(),
-            totalActions: Object.values(this.gameInstances).reduce(
-                (total, instance) => total + instance.getActions().length, 0
+            totalActions: Object.values(this.gameActions).reduce(
+                (total, actions) => total + actions.length, 0
             ),
             gameConfigs: { ...this.gameConfigs }
         };
@@ -400,6 +680,6 @@ export class GameManager {
      * @returns {boolean} True if any game has recorded actions
      */
     hasAnyActions() {
-        return Object.values(this.gameInstances).some(instance => instance.getActions().length > 0);
+        return Object.values(this.gameActions).some(actions => actions.length > 0);
     }
 }

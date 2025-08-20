@@ -75,10 +75,8 @@ Object.defineProperty(window, 'matchMedia', {
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,
-  // Suppress console output in tests for cleaner output
-  log: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  info: jest.fn(),
-  debug: jest.fn(),
+  // Uncomment to suppress console.log in tests
+  // log: jest.fn(),
+  // warn: jest.fn(),
+  // error: jest.fn(),
 };

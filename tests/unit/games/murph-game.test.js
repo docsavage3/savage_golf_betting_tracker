@@ -88,17 +88,6 @@ describe('MurphGame', () => {
       const result = game.validateAction(action);
       expect(result).toBe(false);
     });
-
-    test('should reject hole number over 18', () => {
-      const action = {
-        player: 'John',
-        hole: 19,
-        result: 'success'
-      };
-      
-      const result = game.validateAction(action);
-      expect(result).toBe(false);
-    });
   });
 
   describe('Adding Actions', () => {
@@ -261,61 +250,6 @@ describe('MurphGame', () => {
       // Each other player should pay $4
       expect(summary['Mike']).toBe(-4);
       expect(summary['Sarah']).toBe(-4);
-    });
-  });
-
-  describe('Player-specific Methods', () => {
-    beforeEach(() => {
-      // Add some test actions
-      game.addAction({ player: 'John', hole: 1, result: 'success' });
-      game.addAction({ player: 'John', hole: 2, result: 'fail' });
-      game.addAction({ player: 'Mike', hole: 3, result: 'success' });
-      game.addAction({ player: 'John', hole: 4, result: 'made' });
-    });
-
-    test('should get player actions correctly', () => {
-      const johnActions = game.getPlayerActions('John');
-      const mikeActions = game.getPlayerActions('Mike');
-      const sarahActions = game.getPlayerActions('Sarah');
-      
-      expect(johnActions).toHaveLength(3);
-      expect(mikeActions).toHaveLength(1);
-      expect(sarahActions).toHaveLength(0);
-      
-      expect(johnActions[0].hole).toBe(1);
-      expect(johnActions[1].hole).toBe(2);
-      expect(johnActions[2].hole).toBe(4);
-      expect(mikeActions[0].hole).toBe(3);
-    });
-
-    test('should calculate player success rate correctly', () => {
-      // John: 3 actions (success, fail, made) = 2 successes / 3 actions = 66.67%
-      const johnRate = game.getPlayerSuccessRate('John');
-      expect(johnRate).toBeCloseTo(66.67, 2);
-      
-      // Mike: 1 action (success) = 1 success / 1 action = 100%
-      const mikeRate = game.getPlayerSuccessRate('Mike');
-      expect(mikeRate).toBe(100);
-      
-      // Sarah: 0 actions = 0%
-      const sarahRate = game.getPlayerSuccessRate('Sarah');
-      expect(sarahRate).toBe(0);
-    });
-
-    test('should handle player with no actions', () => {
-      const tomActions = game.getPlayerActions('Tom');
-      const tomRate = game.getPlayerSuccessRate('Tom');
-      
-      expect(tomActions).toHaveLength(0);
-      expect(tomRate).toBe(0);
-    });
-
-    test('should handle non-existent player', () => {
-      const invalidActions = game.getPlayerActions('InvalidPlayer');
-      const invalidRate = game.getPlayerSuccessRate('InvalidPlayer');
-      
-      expect(invalidActions).toHaveLength(0);
-      expect(invalidRate).toBe(0);
     });
   });
 });

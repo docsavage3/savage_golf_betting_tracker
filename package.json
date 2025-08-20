@@ -12,24 +12,13 @@
     "test:validation": "jest --testPathPatterns=\"validation.test.js\"",
     "test:games": "jest --testPathPatterns=\"games\"",
     "test:managers": "jest --testPathPatterns=\"managers\"",
-    "test:integration": "jest --testPathPatterns=\"integration\"",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "test:integration": "jest --testPathPatterns=\"integration\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/docsavage3/savage_golf_betting_tracker.git"
   },
-  "keywords": [
-    "golf",
-    "betting",
-    "side-games",
-    "murph",
-    "skins",
-    "kp",
-    "snake",
-    "tracker"
-  ],
+  "keywords": ["golf", "betting", "side-games", "murph", "skins", "kp", "snake", "tracker"],
   "author": "Daniel Savage",
   "license": "PROPRIETARY",
   "type": "commonjs",
@@ -40,8 +29,6 @@
   "devDependencies": {
     "@babel/core": "^7.28.3",
     "@babel/preset-env": "^7.28.3",
-    "@eslint/js": "^9.33.0",
-    "eslint": "^9.33.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "jsdom": "^26.1.0"
