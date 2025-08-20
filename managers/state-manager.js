@@ -36,7 +36,6 @@ export class StateManager {
 
             const success = this.storage.saveGameState(gameState);
             if (success) {
-                console.log('Game state saved successfully');
                 return true;
             }
             return false;
@@ -90,8 +89,6 @@ export class StateManager {
             // Track game resume analytics
             const resumedGames = Object.keys(this.gameManager.gameConfigs || {});
             AnalyticsUtils.trackGameResume(resumedGames, savedState.currentHole);
-
-            console.log('Game state restored successfully');
 
         } catch (error) {
             ErrorHandler.handleStorageError(error, 'restoreGameState');
@@ -260,7 +257,6 @@ export class StateManager {
     clearGameState() {
         try {
             this.storage.clearGameState();
-            console.log('Game state cleared');
         } catch (error) {
             ErrorHandler.handle(error, {
                 context: 'StateManager.clearGameState',
