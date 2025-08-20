@@ -134,14 +134,9 @@ export class PlayerManager {
      * @returns {Array} Array of player names
      */
     getCurrentPlayerNames() {
-        const names = [];
-        for (let i = 1; i <= this.requiredPlayers; i++) {
-            const name = this.ui.getInputValue(`player${i}`).trim();
-            if (name.length > 0) {
-                names.push(name);
-            }
-        }
-        return names;
+        return Array.from(document.querySelectorAll('.player-input input'))
+            .map(input => input.value.trim())
+            .filter(name => name.length > 0);
     }
 
     /**
