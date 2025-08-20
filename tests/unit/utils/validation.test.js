@@ -228,4 +228,44 @@ describe('ValidationManager', () => {
       expect(validator.validateHole('').success).toBe(false);
     });
   });
+
+  test('validateMurphInput valid case', () => {
+    expect(validator.validateMurphInput('Player1', 1, 'success', 10).success).toBe(true);
+  });
+
+  test('validateMurphInput invalid player', () => {
+    expect(validator.validateMurphInput('', 1, 'success', 10).success).toBe(false);
+  });
+
+  // Similarly for validateSkinsInput, validateKPInput, validateSnakeInput, validateWolfInput
+  // Cover numeric ranges, required fields, etc.
+
+  test('validateKPInput valid case', () => {
+    expect(validator.validateKPInput('Player1', 1).success).toBe(true);
+  });
+
+  test('validateKPInput invalid player', () => {
+    expect(validator.validateKPInput('', 1).success).toBe(false);
+  });
+
+  test('validateKPInput invalid hole', () => {
+    expect(validator.validateKPInput('Player1', 0).success).toBe(false);
+    expect(validator.validateKPInput('Player1', 19).success).toBe(false);
+  });
+
+  test('validateSkinsInput valid case', () => {
+    expect(validator.validateSkinsInput('Player1', 1).success).toBe(true);
+  });
+
+  test('validateSkinsInput invalid hole', () => {
+    expect(validator.validateSkinsInput('Player1', 0).success).toBe(false);
+  });
+
+  test('validateSnakeInput valid case', () => {
+    expect(validator.validateSnakeInput('Player1', 1).success).toBe(true);
+  });
+
+  test('validateSnakeInput invalid hole', () => {
+    expect(validator.validateSnakeInput('Player1', 19).success).toBe(false);
+  });
 });

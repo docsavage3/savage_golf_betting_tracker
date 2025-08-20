@@ -22,6 +22,21 @@ describe('WolfGame', () => {
             expect(() => new WolfGame(['Daniel', 'Bill', 'Josh', 'Steve'], { betAmount: 1.00 }))
                 .not.toThrow();
         });
+
+        test('should create Wolf game with custom config', () => {
+            const customConfig = {
+                betAmount: 5.00,
+                enabled: true,
+                customProperty: 'test'
+            };
+            const customWolfGame = new WolfGame(players, customConfig);
+            
+            expect(customWolfGame.config.betAmount).toBe(5.00);
+            expect(customWolfGame.config.enabled).toBe(true);
+            expect(customWolfGame.config.customProperty).toBe('test');
+            expect(customWolfGame.config.wolfRotation).toBeDefined();
+            expect(customWolfGame.config.holesPerWolf).toBeDefined();
+        });
     });
 
     describe('Wolf Rotation', () => {
@@ -125,6 +140,102 @@ describe('WolfGame', () => {
                 result: 'wolf_wins'
             };
             expect(wolfGame.validateAction(invalidAction)).toBe(false);
+        });
+
+        test('should reject action with missing required fields', () => {
+            const noHole = {
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(noHole)).toBe(false);
+
+            const noWolf = {
+                hole: 1,
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(noWolf)).toBe(false);
+
+            const noWolfChoice = {
+                hole: 1,
+                wolf: 'Daniel',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(noWolfChoice)).toBe(false);
+
+            const noResult = {
+                hole: 1,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill'
+            };
+            expect(wolfGame.validateAction(noResult)).toBe(false);
+        });
+
+        test('should reject action with invalid hole numbers', () => {
+            const hole0 = {
+                hole: 0,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(hole0)).toBe(false);
+
+            const hole19 = {
+                hole: 19,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(hole19)).toBe(false);
+
+            const holeNegative = {
+                hole: -1,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(holeNegative)).toBe(false);
+        });
+
+        test('should reject action with invalid wolf player', () => {
+            const invalidWolf = {
+                hole: 1,
+                wolf: 'InvalidPlayer',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(invalidWolf)).toBe(false);
+        });
+
+        test('should reject action with wrong wolf for hole', () => {
+            // Daniel is wolf for holes 1-4, so Bill can't be wolf on hole 1
+            const wrongWolf = {
+                hole: 1,
+                wolf: 'Bill',
+                wolfChoice: 'partner',
+                partner: 'Josh',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(wrongWolf)).toBe(false);
+
+            // Bill is wolf for holes 5-8, so Daniel can't be wolf on hole 5
+            const wrongWolf2 = {
+                hole: 5,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Josh',
+                result: 'wolf_wins'
+            };
+            expect(wolfGame.validateAction(wrongWolf2)).toBe(false);
         });
     });
 
@@ -312,6 +423,47 @@ describe('WolfGame', () => {
             expect(wolfGame.getNextWolfHole('Bill')).toBe(5);   // Bill is wolf on holes 5-8
             expect(wolfGame.getNextWolfHole('Josh')).toBe(9);   // Josh is wolf on holes 9-12
             expect(wolfGame.getNextWolfHole('Steve')).toBe(13); // Steve is wolf on holes 13-16
+        });
+
+        test('should return null for invalid player in getNextWolfHole', () => {
+            expect(wolfGame.getNextWolfHole('InvalidPlayer')).toBe(null);
+            expect(wolfGame.getNextWolfHole('')).toBe(null);
+            expect(wolfGame.getNextWolfHole(null)).toBe(null);
+        });
+
+        test('should return null when all wolf holes are played', () => {
+            // Play all of Daniel's holes (1-4)
+            wolfGame.addAction({
+                hole: 1,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            });
+            wolfGame.addAction({
+                hole: 2,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            });
+            wolfGame.addAction({
+                hole: 3,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            });
+            wolfGame.addAction({
+                hole: 4,
+                wolf: 'Daniel',
+                wolfChoice: 'partner',
+                partner: 'Bill',
+                result: 'wolf_wins'
+            });
+
+            // Now Daniel should have no more holes
+            expect(wolfGame.getNextWolfHole('Daniel')).toBe(null);
         });
     });
 });

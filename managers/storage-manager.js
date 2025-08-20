@@ -9,6 +9,7 @@ import {
     DEFAULTS,
     PAGE_NAMES
 } from '../constants.js';
+import ErrorHandler from '../utils/error-handler.js';
 
 export class StorageManager {
     constructor() {
@@ -52,7 +53,7 @@ export class StorageManager {
             
             return true;
         } catch (error) {
-            console.error('Failed to save game state:', error);
+            ErrorHandler.handleStorageError(error, 'saveGameState');
             return false;
         }
     }
@@ -86,7 +87,7 @@ export class StorageManager {
                 return null;
             }
         } catch (error) {
-            console.error('Failed to load game state:', error);
+            ErrorHandler.handleStorageError(error, 'loadGameState');
             this.clearGameState();
             return null;
         }
