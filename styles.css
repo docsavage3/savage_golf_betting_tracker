@@ -21,6 +21,68 @@
  * =============================================================================
  */
 
+/* Alpha Release Banner */
+.alpha-banner {
+    background: linear-gradient(135deg, var(--warning-color), var(--warning-hover));
+    color: var(--simplex-dark);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--warning-hover);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 1;
+}
+
+.alpha-banner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+.alpha-badge {
+    background: var(--simplex-dark);
+    color: var(--warning-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.alpha-message {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Responsive adjustments for the banner */
+@media (max-width: 480px) {
+    .alpha-banner {
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .alpha-banner-content {
+        gap: 0.375rem;
+    }
+    
+    .alpha-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+    }
+    
+    .alpha-message {
+        font-size: 0.8rem;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
