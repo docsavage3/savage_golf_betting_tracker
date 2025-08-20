@@ -2769,13 +2769,11 @@ class SavageGolf {
     populateDropdown(selectId, options) {
         const select = document.getElementById(selectId);
         if (!select) {
-            console.log(`Select element not found: ${selectId}`);
             return;
         }
         
         // Store current value before repopulating
         const currentValue = select.value;
-        console.log(`Populating dropdown ${selectId} with options:`, options, `(current value: '${currentValue}')`);
         
         // Clear existing options except the first placeholder
         select.innerHTML = '';
@@ -2807,26 +2805,19 @@ class SavageGolf {
             // Restore previous value if it still exists in the new options
             if (currentValue && options.includes(currentValue)) {
                 select.value = currentValue;
-                console.log(`Restored value '${currentValue}' to ${selectId}`);
             }
-        } else {
-            console.log(`Invalid options for ${selectId}:`, options);
         }
     }
     
     populateDropdownIfEmpty(selectId, options) {
         const select = document.getElementById(selectId);
         if (!select) {
-            console.log(`Select element not found: ${selectId}`);
             return;
         }
         
         // Only populate if the dropdown is empty or has no selection
         if (select.value === '' || select.options.length <= 1) {
-            console.log(`Populating empty dropdown ${selectId}`);
             this.populateDropdown(selectId, options);
-        } else {
-            console.log(`Skipping population of ${selectId} - already has value: '${select.value}'`);
         }
     }
     
@@ -2878,24 +2869,12 @@ class SavageGolf {
     }
     
     handleQuickMurph() {
-        console.log('=== Quick Murph Save Button Clicked ===');
-        
         const playerElement = document.getElementById('quickMurphPlayer');
         const resultElement = document.getElementById('quickMurphResult');
         const player = playerElement ? playerElement.value : '';
         const result = resultElement ? resultElement.value : '';
         
-        console.log('Quick Murph validation:', {
-            playerElement: !!playerElement,
-            resultElement: !!resultElement,
-            player: player,
-            result: result,
-            playerOptions: playerElement ? playerElement.options.length : 0,
-            allPlayerOptions: playerElement ? Array.from(playerElement.options).map(opt => opt.value) : []
-        });
-        
         if (!player || !result) {
-            console.log('Validation failed - missing player or result');
             alert('Please select both player and result');
             return;
         }

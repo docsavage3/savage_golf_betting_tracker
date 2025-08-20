@@ -11,6 +11,7 @@ import {
     PAGE_NAMES 
 } from '../constants.js';
 import { AnalyticsUtils } from '../utils/analytics.js';
+import ErrorHandler from '../utils/error-handler.js';
 
 export class GameController {
     constructor(gameManager, playerManager, uiManager, storageManager, validator) {
@@ -187,7 +188,7 @@ export class GameController {
         
         const saved = this.storage.saveGameState(gameState);
         if (!saved) {
-            console.warn('Failed to save game state');
+            ErrorHandler.handleStorageError(new Error('Failed to save game state'), 'saveGameState');
         }
     }
 

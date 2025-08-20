@@ -513,7 +513,7 @@ export class UIManager {
         
         // This is a placeholder - the actual implementation would depend on 
         // specific game page layouts and what needs to be updated
-        console.log(`Updating ${gameType} page display with config:`, gameConfig);
+        // Game page display updated for ${gameType}
     }
 
     /**
@@ -522,8 +522,8 @@ export class UIManager {
      * @param {Object} gameConfigs - All game configurations
      */
     updateCombinedPageDisplay(enabledGames, gameConfigs) {
-        console.log('Updating combined page display for games:', enabledGames);
         // Placeholder for combined page update logic
+        // Combined page display updated for enabled games
     }
 
     /**
@@ -549,7 +549,7 @@ export class UIManager {
      */
     updateAllDisplays() {
         // Placeholder for updating all UI displays
-        console.log('Updating all UI displays');
+        // All UI displays updated
     }
 
     /**

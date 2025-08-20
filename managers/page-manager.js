@@ -71,7 +71,7 @@ export class PageManager {
     navigateToPreviousPage() {
         // Implementation depends on your page flow logic
         // This is a placeholder for navigation flow
-        console.log('Navigate to previous page from:', this.currentPage);
+        // Navigate to previous page from: ${this.currentPage}
     }
 
     /**
@@ -80,7 +80,7 @@ export class PageManager {
     navigateToNextPage() {
         // Implementation depends on your page flow logic
         // This is a placeholder for navigation flow
-        console.log('Navigate to next page from:', this.currentPage);
+        // Navigate to next page from: ${this.currentPage}
     }
 
     /**
